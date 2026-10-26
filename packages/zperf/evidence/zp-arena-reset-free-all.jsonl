@@ -1,0 +1,2 @@
+{"rule":"zp-arena-reset-free-all","case":"arena_reset_free_all","role":"before","zig":"0.17.0","optimize":"fast","median_ms":2.252394,"ops":50000,"ratio":3.180063,"ts":"2026-10-21T11:24:26Z"}
+{"rule":"zp-arena-reset-free-all","case":"arena_reset_retain","role":"after","zig":"0.17.0","optimize":"fast","median_ms":0.708286,"ops":50000,"ratio":1.0,"ts":"2026-10-21T11:24:26Z"}

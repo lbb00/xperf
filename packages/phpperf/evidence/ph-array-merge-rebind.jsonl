@@ -1,0 +1,6 @@
+{"rule":"ph-array-merge-rebind","case":"scalar_push","role":"after","php":"PHP 8.5.12","median_ms":0.234334,"ops":20000,"ratio":1.000000,"ts":"2026-10-23T12:24:58Z"}
+{"rule":"ph-array-merge-rebind","case":"scalar_array_merge","role":"before","php":"PHP 8.5.12","median_ms":243.228792,"ops":20000,"ratio":1037.957753,"ts":"2026-10-23T12:24:58Z"}
+{"rule":"ph-array-merge-rebind","case":"chunk8_push","role":"after","php":"PHP 8.5.12","median_ms":0.267416,"ops":5000,"ratio":1.000000,"ts":"2026-10-23T12:24:58Z"}
+{"rule":"ph-array-merge-rebind","case":"chunk8_array_merge","role":"before","php":"PHP 8.5.12","median_ms":153.428625,"ops":5000,"ratio":573.745120,"ts":"2026-10-23T12:24:58Z"}
+{"rule":"ph-array-merge-rebind","case":"small_n_push","role":"after","php":"PHP 8.5.12","median_ms":0.001458,"ops":100,"ratio":1.000000,"ts":"2026-10-23T12:24:58Z"}
+{"rule":"ph-array-merge-rebind","case":"small_n_array_merge","role":"before","php":"PHP 8.5.12","median_ms":0.018709,"ops":100,"ratio":12.831962,"ts":"2026-10-23T12:24:58Z"}

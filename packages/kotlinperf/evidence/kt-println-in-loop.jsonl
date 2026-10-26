@@ -1,0 +1,2 @@
+{"rule":"kt-println-in-loop","case":"println_once","role":"after","kotlin":"2.4.21","jre":"27","median_ms":0.031875,"ops":20000,"ratio":1.0,"ts":"2026-10-23T12:34:25.219588Z"}
+{"rule":"kt-println-in-loop","case":"println_in_loop","role":"before","kotlin":"2.4.21","jre":"27","median_ms":8.620792,"ops":20000,"ratio":270.45621960784314,"ts":"2026-10-23T12:34:25.219588Z"}

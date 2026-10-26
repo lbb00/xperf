@@ -1,0 +1,2 @@
+{"rule":"zp-page-allocator-small","case":"page_allocator_64B","role":"before","zig":"0.17.0","optimize":"fast","median_ms":137.08971,"ops":20000,"ratio":341.177037,"ts":"2026-10-21T11:24:26Z"}
+{"rule":"zp-page-allocator-small","case":"process_gpa_64B","role":"after","zig":"0.17.0","optimize":"fast","median_ms":0.401814,"ops":20000,"ratio":1.0,"ts":"2026-10-21T11:24:26Z"}

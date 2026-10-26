@@ -1,0 +1,2 @@
+{"rule":"cs-clock-in-loop","case":"sample_once","role":"after","dotnet":"10.0.13","median_ms":0.0347,"ops":100000,"ratio":1,"ts":"2026-10-23T14:26:46.5806274Z"}
+{"rule":"cs-clock-in-loop","case":"sample_each_iter","role":"before","dotnet":"10.0.13","median_ms":1.2729,"ops":100000,"ratio":36.68299711815562,"ts":"2026-10-23T14:26:46.5806274Z"}

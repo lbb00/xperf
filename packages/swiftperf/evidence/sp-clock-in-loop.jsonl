@@ -1,0 +1,2 @@
+{"rule":"sp-clock-in-loop","case":"sample_once","role":"after","swiftc":"swiftc -O","median_ms":0.008,"ops":100000,"ratio":1,"ts":"2026-10-23T06:40:00Z"}
+{"rule":"sp-clock-in-loop","case":"sample_each_iter","role":"before","swiftc":"swiftc -O","median_ms":1.946,"ops":100000,"ratio":243.642,"ts":"2026-10-23T06:40:00Z"}

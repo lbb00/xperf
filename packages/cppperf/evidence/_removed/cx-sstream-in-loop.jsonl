@@ -1,0 +1,2 @@
+{"rule":"cx-sstream-in-loop","case":"reuse_stream","role":"after","node":null,"v8":null,"cc":"clang++ -std=c++17 -O2","median_ms":1.006,"ops":20000,"ratio":1,"ts":"2026-10-23T05:08:52Z"}
+{"rule":"cx-sstream-in-loop","case":"stream_each_iter","role":"before","node":null,"v8":null,"cc":"clang++ -std=c++17 -O2","median_ms":1.806,"ops":20000,"ratio":1.795229,"ts":"2026-10-23T05:08:52Z"}

@@ -1,0 +1,4 @@
+examples/bench/cp001_malloc_vs_arena
+examples/bench/cp002_realloc_growth
+examples/bench/cp003_printf_hot
+examples/bench/build/

@@ -1,0 +1,4 @@
+{"rule":"gp-append-nil-slice","case":"presize_make","role":"after","go":"go1.27.3","median_ms":0.336292,"ops":500000,"ratio":1.000000,"ts":"2026-10-23T12:18:37Z"}
+{"rule":"gp-append-nil-slice","case":"append_grow","role":"before","go":"go1.27.3","median_ms":2.448459,"ops":500000,"ratio":7.280753,"ts":"2026-10-23T12:18:37Z"}
+{"rule":"gp-append-nil-slice","case":"small_presize","role":"after","go":"go1.27.3","median_ms":0.000167,"ops":100,"ratio":1.000000,"ts":"2026-10-23T12:18:37Z"}
+{"rule":"gp-append-nil-slice","case":"small_append_grow","role":"before","go":"go1.27.3","median_ms":0.000166,"ops":100,"ratio":0.994012,"ts":"2026-10-23T12:18:37Z"}

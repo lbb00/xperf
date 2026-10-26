@@ -1,0 +1,16 @@
+*.o
+*.a
+*.so
+*.dylib
+*.exe
+*.class
+__pycache__/
+*.pyc
+.DS_Store
+/.build/
+/bin/
+/obj/
+*.user
+cppperf-lint/cppperf-lint
+csharpperf-lint/bin/
+csharpperf-lint/obj/

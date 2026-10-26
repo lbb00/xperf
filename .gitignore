@@ -1,0 +1,125 @@
+# --- Build / tooling ---
+.zig-cache/
+**/zig-cache/
+zig-out/
+**/zig-out/
+*.o
+*.obj
+*.a
+*.so
+*.dylib
+*.dll
+*.exe
+*.class
+*.jar
+# Intentionally NOT un-ignoring packages/*/lib/*.jar — bench deps are fetched
+# locally (see packages/jvmperf/lib/README.md). Only the Gradle wrapper jar ships.
+!**/gradle/wrapper/gradle-wrapper.jar
+node_modules/
+.npm/
+.gradle/
+**/build/
+!**/docs/**/build/
+target/
+out/
+dist/
+*.pyc
+__pycache__/
+.venv/
+venv/
+.tools/
+*.egg-info/
+.pytest_cache/
+.swiftpm/
+.build/
+vendor/
+# Go
+**/goperf-lint/goperf-lint
+**/pyperf-lint/__pycache__/
+
+# Package lint binaries (built locally)
+# Crash dumps / compiled helpers that must never ship
+erl_crash.dump
+**/erl_crash.dump
+# Exact lint helper binaries (avoid blanket *.bin — Gradle caches use .bin)
+packages/nimperf/nimperf-lint/nimperf-lint.bin
+packages/*/*-lint/*.bin
+# Bench build dirs (ELF case* etc.)
+**/examples/bench/build/
+packages/*/examples/bench/out/
+# Rust cargo target (any depth; root `target/` also matches)
+**/target/
+packages/cperf/cperf-lint/cperf-lint
+packages/cperf/examples/bench/cp001_malloc_vs_arena
+packages/cperf/examples/bench/cp00*
+packages/*/examples/**/.j*-build/
+packages/*/examples/**/.k-*-build/
+
+# Built bench binaries (ELF / Mach-O) — keep sources only
+packages/zperf/examples/bench/evidence_fill
+packages/*/examples/bench/*
+!packages/*/examples/bench/*.*
+!packages/*/examples/bench/**/
+packages/*/examples/bench/**/a.out
+
+# --- Evidence / regen temps (keep committed JSONL + stubs) ---
+**/evidence/.tmp/
+**/evidence/_regen/
+**/evidence/*.tmp
+**/_perf-runs/
+*.sarif
+
+# --- Archives / sync blobs (never commit) ---
+*.tar
+*.tar.gz
+*.tgz
+*.zip
+
+# --- Local corpora (must not live under packages; belt-and-suspenders) ---
+**/corpus/
+**/*-corpus/
+
+# --- Research scratch under packages (keep intentional .java/.kt/.yml sources) ---
+packages/*/research/*.log
+packages/*/research/*.txt
+packages/*/research/**/*.log
+packages/*/research/**/*.txt
+packages/*/research/**/*.class
+
+# --- IDE / OS ---
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*~
+.project
+.classpath
+.settings/
+
+# --- Editor / local env ---
+.env
+.env.*
+!.env.example
+
+# --- Docs site (generated) ---
+site/
+site-src/
+mkdocs.built.yml
+.cache/
+site-app/.next/
+site-app/out/
+site-app/.source/
+site-app/content/
+site-app/public/
+site-app/AGENTS.md
+
+# Local agent notes. Not part of the published tree.
+.claude/
+
+# .NET SDK output. Some kits keep source entrypoints in bin/*.js — do not ignore every bin/.
+**/obj/
+**/bin/Release/
+**/bin/Debug/
+*.pdb
+*.dll

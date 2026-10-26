@@ -1,0 +1,25 @@
+.DS_Store
+*.class
+*.sarif
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.idea/
+.vscode/
+.gradle/
+build/
+out/
+target/
+examples/java/.j31-build/
+examples/kotlin/.k-alloc-build/
+# Bench jars are fetched locally — never commit (see lib/README.md, scripts/fetch-lib.sh)
+*.jar
+!**/gradle/wrapper/gradle-wrapper.jar
+!jvmperf-lint/gradle/wrapper/gradle-wrapper.jar
+# Research probe dumps
+research/*.log
+research/*.txt
+# Local JMH/JOL/correlate output written by scripts/*.sh
+research/bench-results/
+research/benches/

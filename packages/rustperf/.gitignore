@@ -1,0 +1,20 @@
+*.o
+*.a
+*.so
+*.dylib
+__pycache__/
+*.pyc
+.DS_Store
+/.build/
+/bin/
+*.exe
+*.class
+*.jar
+.dart_tool/
+.packages
+pubspec.lock
+rustperf-lint/rustperf-lint
+rustperf-lint/target/
+
+# evidence harness build output
+examples/bench/out/

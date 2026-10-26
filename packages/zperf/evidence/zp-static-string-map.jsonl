@@ -1,0 +1,2 @@
+{"rule":"zp-static-string-map","case":"string_hashmap_get","role":"before","zig":"0.17.0","optimize":"fast","median_ms":1.515205,"ops":200000,"ratio":2.527528,"ts":"2026-10-21T11:24:26Z"}
+{"rule":"zp-static-string-map","case":"static_string_map_get","role":"after","zig":"0.17.0","optimize":"fast","median_ms":0.599481,"ops":200000,"ratio":1.0,"ts":"2026-10-21T11:24:26Z"}

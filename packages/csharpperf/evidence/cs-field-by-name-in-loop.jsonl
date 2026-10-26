@@ -1,0 +1,2 @@
+{"rule":"cs-field-by-name-in-loop","case":"direct_field","role":"after","dotnet":"10.0.13","median_ms":0.0133,"ops":20000,"ratio":1,"ts":"2026-10-23T14:28:35.4448901Z"}
+{"rule":"cs-field-by-name-in-loop","case":"getfield_each","role":"before","dotnet":"10.0.13","median_ms":0.7084,"ops":20000,"ratio":53.26315789473685,"ts":"2026-10-23T14:28:35.4448901Z"}

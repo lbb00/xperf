@@ -1,0 +1,3 @@
+{"rule":"CX001","n":500000,"method":"retained capacity_bytes + mallinfo2 while alive","opt":"-O2"}
+{"label":"vec_noreserve","capacity_bytes":2097152,"size":500000,"alloc_delta_bytes":2656,"rss_delta_kb":2084}
+{"label":"vec_reserve","capacity_bytes":2000000,"size":500000,"alloc_delta_bytes":2000016,"rss_delta_kb":1956}

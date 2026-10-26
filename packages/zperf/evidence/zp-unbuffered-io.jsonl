@@ -1,0 +1,2 @@
+{"rule":"zp-unbuffered-io","case":"writer_empty_buf","role":"before","zig":"0.17.0","optimize":"fast","median_ms":7.290192,"ops":50000,"ratio":49.009694,"ts":"2026-10-21T11:24:26Z"}
+{"rule":"zp-unbuffered-io","case":"writer_4kib_buf","role":"after","zig":"0.17.0","optimize":"fast","median_ms":0.14875,"ops":50000,"ratio":1.0,"ts":"2026-10-21T11:24:26Z"}

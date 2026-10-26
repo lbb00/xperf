@@ -1,0 +1,4 @@
+{"rule":"gp-string-plus-in-loop","case":"strings_builder","role":"after","go":"go1.27.3","median_ms":0.217000,"ops":50000,"ratio":1.000000,"ts":"2026-10-23T12:18:37Z"}
+{"rule":"gp-string-plus-in-loop","case":"string_plus","role":"before","go":"go1.27.3","median_ms":321.424750,"ops":50000,"ratio":1481.220046,"ts":"2026-10-23T12:18:37Z"}
+{"rule":"gp-string-plus-in-loop","case":"small_builder","role":"after","go":"go1.27.3","median_ms":0.000334,"ops":100,"ratio":1.000000,"ts":"2026-10-23T12:18:37Z"}
+{"rule":"gp-string-plus-in-loop","case":"small_string_plus","role":"before","go":"go1.27.3","median_ms":0.001667,"ops":100,"ratio":4.991018,"ts":"2026-10-23T12:18:37Z"}

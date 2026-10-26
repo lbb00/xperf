@@ -1,0 +1,3 @@
+/cperf-lint
+*.o
+*.a

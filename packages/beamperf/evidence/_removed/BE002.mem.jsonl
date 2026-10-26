@@ -1,0 +1,5 @@
+{"rule":"BE002","n_chunk":20000,"n_digits":50000,"otp":"27","method":"erlang.memory total/binary"}
+{"label":"diamond_chunk32","total_delta_bytes":663696,"total_after_bytes":49409128,"binary_delta_bytes":655352,"binary_after_bytes":1691592,"retained_byte_size":640000}
+{"label":"iodata_chunks","total_delta_bytes":648128,"total_after_bytes":49387192,"binary_delta_bytes":640056,"binary_after_bytes":1676296,"retained_byte_size":640000}
+{"label":"diamond_digits","total_delta_bytes":102536,"total_after_bytes":48836120,"binary_delta_bytes":66104,"binary_after_bytes":1102344,"retained_byte_size":50000}
+{"label":"iodata_digits","total_delta_bytes":5155624,"total_after_bytes":53889112,"binary_delta_bytes":50368,"binary_after_bytes":1086608,"retained_byte_size":50000}

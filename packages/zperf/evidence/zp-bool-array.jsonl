@@ -1,0 +1,2 @@
+{"rule":"zp-bool-array","case":"bool_array_count","role":"before","zig":"0.17.0","optimize":"fast","median_ms":0.089079,"ops":524288,"ratio":30.329928,"ts":"2026-10-21T11:24:26Z"}
+{"rule":"zp-bool-array","case":"bitset_count","role":"after","zig":"0.17.0","optimize":"fast","median_ms":0.002937,"ops":524288,"ratio":1.0,"ts":"2026-10-21T11:24:26Z"}

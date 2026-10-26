@@ -1,0 +1,2 @@
+{"rule":"zp-open-file-in-loop","case":"open_once","role":"after","zig":"0.17.0","median_ms":0.006,"ops":2000,"ratio":1,"ts":"2026-10-23T06:50:00Z"}
+{"rule":"zp-open-file-in-loop","case":"open_each_iter","role":"before","zig":"0.17.0","median_ms":13.072,"ops":2000,"ratio":2134.204,"ts":"2026-10-23T06:50:00Z"}

@@ -1,0 +1,2 @@
+{"rule":"gp-json-marshal-in-loop","case":"unmarshal_once","role":"after","go":"go1.27.3","median_ms":0.007416,"ops":20000,"ratio":1.000000,"ts":"2026-10-23T12:22:07Z"}
+{"rule":"gp-json-marshal-in-loop","case":"unmarshal_each_iter","role":"before","go":"go1.27.3","median_ms":5.870792,"ops":20000,"ratio":791.638619,"ts":"2026-10-23T12:22:07Z"}

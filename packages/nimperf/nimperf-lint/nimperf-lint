@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+# Run nimperf-lint (compile once into sibling binary when needed).
+set -euo pipefail
+DIR="$(cd "$(dirname "$0")" && pwd)"
+BIN="$DIR/nimperf-lint.bin"
+SRC="$DIR/nimperf_lint.nim"
+export PATH="${HOME}/.nimble/bin:${PATH}"
+if [[ ! -x "$BIN" ]] || [[ "$SRC" -nt "$BIN" ]]; then
+  if ! command -v nim >/dev/null 2>&1; then
+    echo "nimperf-lint: nim not found; install via choosenim (https://nim-lang.org/install.html)" >&2
+    exit 127
+  fi
+  nim c -d:release -o:"$BIN" "$SRC" >/dev/null
+fi
+exec "$BIN" "$@"

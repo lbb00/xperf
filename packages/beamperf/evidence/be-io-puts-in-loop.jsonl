@@ -1,0 +1,2 @@
+{"otp":"29","elixir":"1.20.4","case":"io_once_after","ops":5000,"rule":"be-io-puts-in-loop","ts":"2026-10-23T13:11:25.669863Z","role":"after","median_ms":8.34e-4,"ratio":1.0}
+{"otp":"29","elixir":"1.20.4","case":"io_puts_in_loop","ops":5000,"rule":"be-io-puts-in-loop","ts":"2026-10-23T13:11:25.669863Z","role":"before","median_ms":3.626708,"ratio":4348.570743405276}

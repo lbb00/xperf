@@ -1,0 +1,2 @@
+{"rule":"jp-readfile-sync-in-loop","case":"read_once","role":"after","node":"v26.12.1","v8":"14.6.202.34-node.40","median_ms":0.041,"ops":2000,"ratio":1,"ts":"2026-10-23T14:07:58.168Z"}
+{"rule":"jp-readfile-sync-in-loop","case":"read_each_iter","role":"before","node":"v26.12.1","v8":"14.6.202.34-node.40","median_ms":4.647,"ops":2000,"ratio":114.417,"ts":"2026-10-23T14:07:58.168Z"}

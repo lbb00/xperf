@@ -1,0 +1,2 @@
+{"rule":"OC001","case":"array_with_capacity","role":"after","runtime":"gnustep","median_ms":4.016130,"ops":200000,"ratio":1,"ts":"2026-10-22T08:08:09Z"}
+{"rule":"OC001","case":"add_loop_empty","role":"before","runtime":"gnustep","median_ms":4.726454,"ops":200000,"ratio":1.176868,"ts":"2026-10-22T08:08:09Z"}

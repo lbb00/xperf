@@ -1,0 +1,5 @@
+{"rule":"rs-vec-no-capacity","n_large":500000,"n_small":100,"reps":10000,"method":"counting GlobalAlloc bytes live"}
+{"label":"vec_new_push","live_alloc_bytes":2097152,"capacity_bytes":2097152,"len":500000}
+{"label":"with_capacity","live_alloc_bytes":2000000,"capacity_bytes":2000000,"len":500000}
+{"label":"small_vec_new_push_reps","live_alloc_bytes_after":0,"sink":1000000}
+{"label":"small_with_capacity_reps","live_alloc_bytes_after":0,"sink":1000000}

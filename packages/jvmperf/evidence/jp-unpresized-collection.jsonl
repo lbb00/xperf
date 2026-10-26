@@ -1,0 +1,2 @@
+{"rule":"jp-unpresized-collection","case":"growFromDefault_n10k","role":"before","jdk":"27 (27+35)","jvm_args":"-XX:+UseCompactObjectHeaders","ns_per_op":117725.103,"alloc_b_per_op":326832.742,"ratio":1.429,"jmh":"1.37","source":"J25_Presize.jsonl","ts":"2026-10-23T20:47:52.938247+08:00"}
+{"rule":"jp-unpresized-collection","case":"presized_n10k","role":"after","jdk":"27 (27+35)","jvm_args":"-XX:+UseCompactObjectHeaders","ns_per_op":82357.177,"alloc_b_per_op":197992.522,"ratio":1,"jmh":"1.37","source":"J25_Presize.jsonl","ts":"2026-10-23T20:47:52.938247+08:00"}

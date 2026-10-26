@@ -1,0 +1,2 @@
+{"rule":"CX003","case":"ostringstream_once","role":"after","gxx":"g++ (Debian 14.2.0-19) 14.2.0","opt":"O2","median_ms":1.790787,"ops":50000,"ratio":1.000000,"ts":"2026-10-22T08:17:15Z"}
+{"rule":"CX003","case":"iostream_in_loop","role":"before","gxx":"g++ (Debian 14.2.0-19) 14.2.0","opt":"O2","median_ms":1.834455,"ops":50000,"ratio":1.024385,"ts":"2026-10-22T08:17:15Z"}

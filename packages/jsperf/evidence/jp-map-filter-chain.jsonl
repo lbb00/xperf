@@ -1,0 +1,12 @@
+{"rule":"jp-map-filter-chain","case":"chain2_n3_x20000","role":"before","node":"v26.12.1","v8":"14.6.202.34-node.40","median_ms":1.02275,"ops":60000,"ratio":3.4640135478408127,"ts":"2026-10-23T12:24:00.423Z"}
+{"rule":"jp-map-filter-chain","case":"chain2_n3_x20000","role":"after","node":"v26.12.1","v8":"14.6.202.34-node.40","median_ms":0.29525,"ops":60000,"ratio":1,"ts":"2026-10-23T12:24:00.423Z"}
+{"rule":"jp-map-filter-chain","case":"chain4_n3_x20000","role":"before","node":"v26.12.1","v8":"14.6.202.34-node.40","median_ms":1.070083,"ops":60000,"ratio":3.7901449706552186,"ts":"2026-10-23T12:24:00.423Z"}
+{"rule":"jp-map-filter-chain","case":"chain4_n3_x20000","role":"after","node":"v26.12.1","v8":"14.6.202.34-node.40","median_ms":0.282333,"ops":60000,"ratio":1,"ts":"2026-10-23T12:24:00.423Z"}
+{"rule":"jp-map-filter-chain","case":"chain2_n100_x2000","role":"before","node":"v26.12.1","v8":"14.6.202.34-node.40","median_ms":2.770709,"ops":200000,"ratio":3.9740063223600415,"ts":"2026-10-23T12:24:00.423Z"}
+{"rule":"jp-map-filter-chain","case":"chain2_n100_x2000","role":"after","node":"v26.12.1","v8":"14.6.202.34-node.40","median_ms":0.697208,"ops":200000,"ratio":1,"ts":"2026-10-23T12:24:00.423Z"}
+{"rule":"jp-map-filter-chain","case":"chain4_n100_x2000","role":"before","node":"v26.12.1","v8":"14.6.202.34-node.40","median_ms":1.387458,"ops":200000,"ratio":1.9346399578340303,"ts":"2026-10-23T12:24:00.423Z"}
+{"rule":"jp-map-filter-chain","case":"chain4_n100_x2000","role":"after","node":"v26.12.1","v8":"14.6.202.34-node.40","median_ms":0.717166,"ops":200000,"ratio":1,"ts":"2026-10-23T12:24:00.423Z"}
+{"rule":"jp-map-filter-chain","case":"chain2_n35000_x20","role":"before","node":"v26.12.1","v8":"14.6.202.34-node.40","median_ms":15.305292,"ops":700000,"ratio":2.650190375447152,"ts":"2026-10-23T12:24:00.423Z"}
+{"rule":"jp-map-filter-chain","case":"chain2_n35000_x20","role":"after","node":"v26.12.1","v8":"14.6.202.34-node.40","median_ms":5.775167,"ops":700000,"ratio":1,"ts":"2026-10-23T12:24:00.423Z"}
+{"rule":"jp-map-filter-chain","case":"chain4_n35000_x20","role":"before","node":"v26.12.1","v8":"14.6.202.34-node.40","median_ms":13.55525,"ops":700000,"ratio":4.099163761822868,"ts":"2026-10-23T12:24:00.423Z"}
+{"rule":"jp-map-filter-chain","case":"chain4_n35000_x20","role":"after","node":"v26.12.1","v8":"14.6.202.34-node.40","median_ms":3.306833,"ops":700000,"ratio":1,"ts":"2026-10-23T12:24:00.423Z"}

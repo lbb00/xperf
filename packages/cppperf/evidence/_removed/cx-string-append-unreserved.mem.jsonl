@@ -1,0 +1,5 @@
+{"rule":"cx-string-append-unreserved","n_char":200000,"n_chunk":50000,"chunk":64,"method":"retained capacity_bytes + mallinfo2 while alive"}
+{"label":"str_plus_char","capacity_bytes":245760,"size":200000,"alloc_delta_bytes":247504,"rss_delta_kb":440}
+{"label":"str_reserve_char","capacity_bytes":200000,"size":200000,"alloc_delta_bytes":200016,"rss_delta_kb":196}
+{"label":"str_plus_chunk64","capacity_bytes":4194304,"size":3200000,"alloc_delta_bytes":0,"rss_delta_kb":3256}
+{"label":"str_reserve_chunk64","capacity_bytes":3200000,"size":3200000,"alloc_delta_bytes":3200016,"rss_delta_kb":3124}

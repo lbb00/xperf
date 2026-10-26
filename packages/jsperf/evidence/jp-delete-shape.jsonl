@@ -1,0 +1,2 @@
+{"rule":"jp-delete-shape","case":"tombstone_undefined","role":"after","node":"v26.12.1","v8":"14.6.202.34-node.40","median_ms":0.088084,"ops":200000,"ratio":1,"ts":"2026-10-23T12:23:58.047Z"}
+{"rule":"jp-delete-shape","case":"delete_obj_k","role":"before","node":"v26.12.1","v8":"14.6.202.34-node.40","median_ms":37.81275,"ops":200000,"ratio":429.28057308932387,"ts":"2026-10-23T12:23:58.047Z"}

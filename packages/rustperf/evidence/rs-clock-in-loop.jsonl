@@ -1,0 +1,2 @@
+{"rule":"rs-clock-in-loop","case":"sample_once","role":"after","rustc":"1.99.1","opt":"opt-level=3","median_ms":0.137,"ops":100000,"ratio":1,"ts":"2026-10-23T15:28:00Z"}
+{"rule":"rs-clock-in-loop","case":"sample_each_iter","role":"before","rustc":"1.99.1","opt":"opt-level=3","median_ms":2.721,"ops":100000,"ratio":19.899,"ts":"2026-10-23T15:28:00Z"}

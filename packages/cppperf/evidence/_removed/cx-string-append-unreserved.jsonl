@@ -1,0 +1,2 @@
+{"rule":"cx-string-append-unreserved","case":"string_reserve_plus","role":"after","gxx":"g++ (Debian 14.2.0-19) 14.2.0","opt":"O2","median_ms":1.162903,"ops":200000,"ratio":1.000000,"ts":"2026-10-22T08:17:15Z"}
+{"rule":"cx-string-append-unreserved","case":"string_plus_grow","role":"before","gxx":"g++ (Debian 14.2.0-19) 14.2.0","opt":"O2","median_ms":1.263970,"ops":200000,"ratio":1.086909,"ts":"2026-10-22T08:17:15Z"}

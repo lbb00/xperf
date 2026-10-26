@@ -1,0 +1,2 @@
+{"rule":"sp-file-read-in-loop","case":"read_once","role":"after","swiftc":"swiftc -O","median_ms":0.014,"ops":500,"ratio":1,"ts":"2026-10-23T06:26:22Z"}
+{"rule":"sp-file-read-in-loop","case":"read_each_iter","role":"before","swiftc":"swiftc -O","median_ms":5.819,"ops":500,"ratio":413.669,"ts":"2026-10-23T06:26:22Z"}

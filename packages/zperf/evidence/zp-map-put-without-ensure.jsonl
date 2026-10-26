@@ -1,0 +1,2 @@
+{"rule":"zp-map-put-without-ensure","case":"map_put_grow","role":"before","zig":"0.17.0","optimize":"fast","median_ms":0.829564,"ops":20000,"ratio":2.764098,"ts":"2026-10-21T11:24:26Z"}
+{"rule":"zp-map-put-without-ensure","case":"map_ensure_then_put","role":"after","zig":"0.17.0","optimize":"fast","median_ms":0.300121,"ops":20000,"ratio":1.0,"ts":"2026-10-21T11:24:26Z"}

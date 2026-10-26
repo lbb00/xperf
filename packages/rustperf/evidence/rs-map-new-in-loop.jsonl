@@ -1,0 +1,2 @@
+{"rule":"rs-map-new-in-loop","case":"map_reused","role":"after","rustc":"1.99.1","opt":"opt-level=3","median_ms":0.392946,"ops":20000,"ratio":1,"ts":"2026-10-23T16:10:37Z"}
+{"rule":"rs-map-new-in-loop","case":"map_new_each_iter","role":"before","rustc":"1.99.1","opt":"opt-level=3","median_ms":0.602298,"ops":20000,"ratio":1.533,"ts":"2026-10-23T16:10:37Z"}

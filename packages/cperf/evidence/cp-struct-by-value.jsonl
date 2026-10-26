@@ -1,0 +1,2 @@
+{"rule":"cp-struct-by-value","case":"pass_pointer","role":"after","node":null,"v8":null,"cc":"clang -std=c11 -O2","median_ms":0.152,"ops":128000,"ratio":1,"ts":"2026-10-23T08:17:46Z"}
+{"rule":"cp-struct-by-value","case":"pass_by_value","role":"before","node":null,"v8":null,"cc":"clang -std=c11 -O2","median_ms":1.864,"ops":128000,"ratio":12.263,"ts":"2026-10-23T08:17:46Z"}

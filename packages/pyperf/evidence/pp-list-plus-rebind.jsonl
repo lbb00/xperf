@@ -1,0 +1,4 @@
+{"rule":"pp-list-plus-rebind","case":"list_append","role":"after","python":"CPython 3.15.1","median_ms":0.302584,"ops":20000,"ratio":1.000000,"ts":"2026-10-23T12:11:44Z"}
+{"rule":"pp-list-plus-rebind","case":"list_plus_rebind","role":"before","python":"CPython 3.15.1","median_ms":566.717875,"ops":20000,"ratio":1872.927988,"ts":"2026-10-23T12:11:44Z"}
+{"rule":"pp-list-plus-rebind","case":"small_append","role":"after","python":"CPython 3.15.1","median_ms":0.006208,"ops":100,"ratio":1.000000,"ts":"2026-10-23T12:11:44Z"}
+{"rule":"pp-list-plus-rebind","case":"small_list_plus","role":"before","python":"CPython 3.15.1","median_ms":0.013167,"ops":100,"ratio":2.120912,"ts":"2026-10-23T12:11:44Z"}

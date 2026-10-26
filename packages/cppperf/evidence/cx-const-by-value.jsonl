@@ -1,0 +1,8 @@
+{"rule":"cx-const-by-value","case":"vec_one_ref","role":"after","node":null,"v8":null,"cc":"clang++ -std=c++17 -O2","median_ms":0.148417,"ops":200000,"ratio":1,"ts":"2026-10-23T08:21:51Z"}
+{"rule":"cx-const-by-value","case":"vec_one_value","role":"before","node":null,"v8":null,"cc":"clang++ -std=c++17 -O2","median_ms":2.471000,"ops":200000,"ratio":16.649,"ts":"2026-10-23T08:21:51Z"}
+{"rule":"cx-const-by-value","case":"str64_ref","role":"after","node":null,"v8":null,"cc":"clang++ -std=c++17 -O2","median_ms":0.039792,"ops":40000,"ratio":1,"ts":"2026-10-23T08:21:51Z"}
+{"rule":"cx-const-by-value","case":"str64_value","role":"before","node":null,"v8":null,"cc":"clang++ -std=c++17 -O2","median_ms":0.610709,"ops":40000,"ratio":15.348,"ts":"2026-10-23T08:21:51Z"}
+{"rule":"cx-const-by-value","case":"range_string_ref","role":"after","node":null,"v8":null,"cc":"clang++ -std=c++17 -O2","median_ms":0.016042,"ops":20000,"ratio":1,"ts":"2026-10-23T08:21:51Z"}
+{"rule":"cx-const-by-value","case":"range_string_value","role":"before","node":null,"v8":null,"cc":"clang++ -std=c++17 -O2","median_ms":0.329708,"ops":20000,"ratio":20.553,"ts":"2026-10-23T08:21:51Z"}
+{"rule":"cx-const-by-value","case":"range_vector_ref","role":"after","node":null,"v8":null,"cc":"clang++ -std=c++17 -O2","median_ms":0.005708,"ops":8000,"ratio":1,"ts":"2026-10-23T08:21:51Z"}
+{"rule":"cx-const-by-value","case":"range_vector_value","role":"before","node":null,"v8":null,"cc":"clang++ -std=c++17 -O2","median_ms":0.122083,"ops":8000,"ratio":21.388,"ts":"2026-10-23T08:21:51Z"}

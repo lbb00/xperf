@@ -1,0 +1,3 @@
+{"rule":"OC001/OC004","n":200000,"runtime":"gnustep","method":"mallinfo2 while array alive + VmRSS"}
+{"label":"empty_add","alloc_delta_bytes":9783808,"rss_delta_kb":12564,"count":200000}
+{"label":"array_with_capacity","alloc_delta_bytes":11199392,"rss_delta_kb":12504,"count":200000}

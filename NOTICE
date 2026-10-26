@@ -1,0 +1,37 @@
+XPerf
+Copyright (c) 2026 XPerf contributors
+
+This product is licensed under the MIT License. See LICENSE.
+
+---------------------------------------------------------------------------
+Third-party research corpora (NOT redistributed in this repository)
+---------------------------------------------------------------------------
+
+Large third-party source trees used for corpus linting and reverse-opt notes
+are cloned separately into a local directory outside this repository. They are:
+
+- not committed to this repository
+- not shipped in release archives of XPerf packages
+- cited only by URL + commit (or tag) in each kit’s `docs/corpus.md`
+
+Those upstream projects remain under their own licenses. Cloning or analyzing
+them is the user’s responsibility; this repository does not grant rights to
+redistribute those corpora.
+
+---------------------------------------------------------------------------
+Optional bench / example jars (NOT committed)
+---------------------------------------------------------------------------
+
+JMH, JOL, fastutil, Eclipse Collections, and similar jars used by jvmperf
+examples and benches are **not** part of the git tree. Fetch them locally with:
+
+  bash packages/jvmperf/scripts/fetch-lib.sh
+
+See `packages/jvmperf/lib/README.md` for Maven coordinates and SPDX ids.
+Those artifacts remain under their upstream licenses; this repository does not
+redistribute them.
+
+Runtime dependencies of individual kits (for example tree-sitter bindings for
+jvmperf-lint, or the Zig standard library) are fetched by the kit’s own build
+system and are not part of the MIT-licensed guide/lint sources except where
+explicitly vendored in-tree with accompanying license text.

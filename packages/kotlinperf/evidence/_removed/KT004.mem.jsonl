@@ -1,0 +1,3 @@
+{"rule":"KT004","n":200000,"runtime":"JRE ArrayList proxy (kotlinc absent)","method":"Runtime total-free + ArrayList.elementData.length + VmRSS"}
+{"label":"empty_grow","heap_delta_bytes":4152968,"heap_after_bytes":5716816,"rss_delta_kb":3288,"rss_after_kb":51596,"size":200000,"elementData_capacity":240097}
+{"label":"with_capacity","heap_delta_bytes":4597904,"heap_after_bytes":6061688,"rss_delta_kb":3180,"rss_after_kb":55072,"size":200000,"elementData_capacity":200000}

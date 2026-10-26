@@ -1,0 +1,2 @@
+{"rule":"dt-growable-add-empty","case":"list_filled","role":"after","dart":"3.13.7","median_ms":1.226,"ops":200000,"ratio":1.0,"ts":"2026-10-23T13:06:01.076462Z"}
+{"rule":"dt-growable-add-empty","case":"empty_add","role":"before","dart":"3.13.7","median_ms":3.82,"ops":200000,"ratio":3.1158238172920063,"ts":"2026-10-23T13:06:01.076462Z"}

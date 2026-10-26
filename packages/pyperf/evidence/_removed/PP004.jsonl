@@ -1,0 +1,4 @@
+{"rule":"PP004","case":"re_compiled","role":"after","python":"CPython 3.15.1","median_ms":19.821541,"ops":20000,"ratio":1.000000,"ts":"2026-10-23T12:11:44Z"}
+{"rule":"PP004","case":"re_adhoc","role":"before","python":"CPython 3.15.1","median_ms":27.422375,"ops":20000,"ratio":1.383463,"ts":"2026-10-23T12:11:44Z"}
+{"rule":"PP004","case":"small_compiled","role":"after","python":"CPython 3.15.1","median_ms":0.106041,"ops":100,"ratio":1.000000,"ts":"2026-10-23T12:11:44Z"}
+{"rule":"PP004","case":"small_adhoc","role":"before","python":"CPython 3.15.1","median_ms":0.128292,"ops":100,"ratio":1.209836,"ts":"2026-10-23T12:11:44Z"}

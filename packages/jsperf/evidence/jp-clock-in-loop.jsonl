@@ -1,0 +1,4 @@
+{"rule":"jp-clock-in-loop","case":"date_now_once","role":"after","node":"v26.12.1","v8":"14.6.202.34-node.40","median_ms":0.043,"ops":100000,"ratio":1,"ts":"2026-10-23T14:05:37Z"}
+{"rule":"jp-clock-in-loop","case":"date_now_each","role":"before","node":"v26.12.1","v8":"14.6.202.34-node.40","median_ms":2.982,"ops":100000,"ratio":69.712,"ts":"2026-10-23T14:05:37Z"}
+{"rule":"jp-clock-in-loop","case":"perf_now_once","role":"after","node":"v26.12.1","v8":"14.6.202.34-node.40","median_ms":0.027,"ops":100000,"ratio":1,"ts":"2026-10-23T14:05:37Z"}
+{"rule":"jp-clock-in-loop","case":"perf_now_each","role":"before","node":"v26.12.1","v8":"14.6.202.34-node.40","median_ms":2.980,"ops":100000,"ratio":110.209,"ts":"2026-10-23T14:05:37Z"}

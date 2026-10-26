@@ -1,0 +1,2 @@
+{"rule": "jp-boxed-stream", "case": "boxedReduce_n10k", "role": "before", "jdk": "27 (27+35)", "jvm_args": "-XX:+UseCompactObjectHeaders", "ns_per_op": 745977.453, "ratio": 37.206, "source": "J32_RuleEvidenceBatch", "ts": "2026-10-23T20:58:00+08:00", "jmh": "1.37", "alloc_b_per_op": 160178.813}
+{"rule": "jp-boxed-stream", "case": "mapToInt_n10k", "role": "after", "jdk": "27 (27+35)", "jvm_args": "-XX:+UseCompactObjectHeaders", "ns_per_op": 20050.141, "ratio": 1, "source": "J32_RuleEvidenceBatch", "ts": "2026-10-23T20:58:00+08:00", "jmh": "1.37", "alloc_b_per_op": 207.420}

@@ -1,0 +1,4 @@
+{"rule":"CX004","case":"operator_index","role":"after","gxx":"g++ (Debian 14.2.0-19) 14.2.0","opt":"O2","median_ms":2.543612,"ops":5000000,"ratio":1.000000,"ts":"2026-10-22T08:17:15Z"}
+{"rule":"CX004","case":"vector_at","role":"before","gxx":"g++ (Debian 14.2.0-19) 14.2.0","opt":"O2","median_ms":2.149288,"ops":5000000,"ratio":0.844975,"ts":"2026-10-22T08:17:15Z"}
+{"rule":"CX004","case":"small_operator_index","role":"after","gxx":"g++ (Debian 14.2.0-19) 14.2.0","opt":"O2","median_ms":2.364059,"ops":1000,"ratio":1.000000,"ts":"2026-10-22T08:17:15Z"}
+{"rule":"CX004","case":"small_vector_at","role":"before","gxx":"g++ (Debian 14.2.0-19) 14.2.0","opt":"O2","median_ms":2.297841,"ops":1000,"ratio":0.971990,"ts":"2026-10-22T08:17:15Z"}

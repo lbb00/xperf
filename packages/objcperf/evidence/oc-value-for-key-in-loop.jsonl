@@ -1,0 +1,2 @@
+{"rule":"oc-value-for-key-in-loop","case":"direct_field","role":"after","cc":"clang -O2","median_ms":0.051,"ops":200000,"ratio":1,"ts":"2026-10-23T07:20:00Z"}
+{"rule":"oc-value-for-key-in-loop","case":"value_for_key_each","role":"before","cc":"clang -O2","median_ms":6.334,"ops":200000,"ratio":124.145,"ts":"2026-10-23T07:20:00Z"}

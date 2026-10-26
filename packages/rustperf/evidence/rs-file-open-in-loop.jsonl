@@ -1,0 +1,2 @@
+{"rule":"rs-file-open-in-loop","case":"open_once","role":"after","rustc":"1.99.1","opt":"opt-level=3","median_ms":0.00478,"ops":2000,"ratio":1,"ts":"2026-10-23T15:31:00Z"}
+{"rule":"rs-file-open-in-loop","case":"open_each_iter","role":"before","rustc":"1.99.1","opt":"opt-level=3","median_ms":1.987266,"ops":2000,"ratio":415.746,"ts":"2026-10-23T15:31:00Z"}

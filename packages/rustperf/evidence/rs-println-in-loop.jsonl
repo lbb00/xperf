@@ -1,0 +1,2 @@
+{"rule":"rs-println-in-loop","case":"buffer_then_write","role":"after","rustc":"1.99.1","opt":"opt-level=3","median_ms":0.219792,"ops":20000,"ratio":1.000000,"ts":"2026-10-23T12:31:22Z"}
+{"rule":"rs-println-in-loop","case":"writeln_each_iter","role":"before","rustc":"1.99.1","opt":"opt-level=3","median_ms":14.254000,"ops":20000,"ratio":64.852224,"ts":"2026-10-23T12:31:22Z"}

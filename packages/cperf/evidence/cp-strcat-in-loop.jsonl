@@ -1,0 +1,2 @@
+{"rule":"cp-strcat-in-loop","case":"memcpy_end","role":"after","node":null,"v8":null,"cc":"clang -std=c11 -O2","median_ms":0.014,"ops":15000,"ratio":1,"ts":"2026-10-23T10:00:20Z"}
+{"rule":"cp-strcat-in-loop","case":"strcat_each","role":"before","node":null,"v8":null,"cc":"clang -std=c11 -O2","median_ms":3.097,"ops":15000,"ratio":221.214,"ts":"2026-10-23T10:00:20Z"}

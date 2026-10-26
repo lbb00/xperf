@@ -1,0 +1,17 @@
+*.o
+*.a
+*.so
+*.dylib
+__pycache__/
+*.pyc
+.DS_Store
+/.build/
+/bin/
+*.exe
+*.class
+*.jar
+.dart_tool/
+.packages
+pubspec.lock
+kotlinperf-lint/kotlinperf-lint
+kotlinperf-lint/target/

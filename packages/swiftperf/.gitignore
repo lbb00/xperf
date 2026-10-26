@@ -1,0 +1,11 @@
+*.o
+*.a
+*.so
+*.dylib
+__pycache__/
+*.pyc
+.DS_Store
+/.build/
+/bin/
+*.exe
+goperf-lint/goperf-lint

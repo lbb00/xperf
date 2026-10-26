@@ -1,0 +1,4 @@
+{"otp":"29","elixir":"1.20.4","case":"one_pass_reduce","ops":200000,"rule":"be-enum-map-filter-chain","ts":"2026-10-23T13:11:26.297019Z","role":"after","median_ms":0.655584,"ratio":1.0}
+{"otp":"29","elixir":"1.20.4","case":"map_filter_chain","ops":200000,"rule":"be-enum-map-filter-chain","ts":"2026-10-23T13:11:26.297019Z","role":"before","median_ms":4.54625,"ratio":6.9346567335383416}
+{"otp":"29","elixir":"1.20.4","case":"one_pass_reject","ops":200000,"rule":"be-enum-map-filter-chain","ts":"2026-10-23T13:11:26.297019Z","role":"after","median_ms":0.889541,"ratio":1.0}
+{"otp":"29","elixir":"1.20.4","case":"map_reject_chain","ops":200000,"rule":"be-enum-map-filter-chain","ts":"2026-10-23T13:11:26.297019Z","role":"before","median_ms":5.497584,"ratio":6.1802480155495925}

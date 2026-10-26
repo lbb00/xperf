@@ -1,0 +1,5 @@
+# Baseline Profile 规则示例（通常由 Macrobenchmark 的 BaselineProfileRule 自动生成，放在 src/main/baseline-prof.txt）
+# H = 热方法, S = 启动时调用, P = 启动后调用；L 开头的是类描述符
+HSPLcom/example/app/MainActivity;->onCreate(Landroid/os/Bundle;)V
+HSPLcom/example/app/feed/FeedRepository;->**(**)**
+Lcom/example/app/feed/FeedItem;

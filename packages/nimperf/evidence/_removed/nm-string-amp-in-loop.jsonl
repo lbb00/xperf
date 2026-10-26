@@ -1,0 +1,2 @@
+{"rule":"nm-string-amp-in-loop","case":"join","role":"after","nim":"2.2.12","opt":"-d:release","median_ms":0.385,"ops":20000,"ratio":1,"ts":"2026-10-23T15:42:47Z"}
+{"rule":"nm-string-amp-in-loop","case":"amp_assign","role":"before","nim":"2.2.12","opt":"-d:release","median_ms":0.303,"ops":20000,"ratio":0.787013,"ts":"2026-10-23T15:42:47Z"}

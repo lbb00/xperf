@@ -1,0 +1,5 @@
+name: dartperf_lint
+description: Heuristic Dart performance smell checker (xperf dartperf)
+publish_to: none
+environment:
+  sdk: ">=3.0.0 <4.0.0"

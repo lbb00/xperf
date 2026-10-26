@@ -1,0 +1,2 @@
+{"rule": "jp-many-boolean-fields", "case": "ManyBool_8bools", "role": "before", "jdk": "25.0.4.1+1-1-deb13u1-Debian", "jvm_args": "-XX:+UseCompactObjectHeaders", "total_size_bytes": 16, "ratio": 1.0, "source": "JP009_BoolPackJol.jsonl", "ts": "2026-10-21T19:23:35.903584121+08:00"}
+{"rule": "jp-many-boolean-fields", "case": "Packed_int_flags", "role": "after", "jdk": "25.0.4.1+1-1-deb13u1-Debian", "jvm_args": "-XX:+UseCompactObjectHeaders", "total_size_bytes": 16, "ratio": 1, "source": "JP009_BoolPackJol.jsonl", "ts": "2026-10-21T19:23:35.903584121+08:00"}

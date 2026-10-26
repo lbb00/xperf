@@ -1,0 +1,2 @@
+{"rule":"at-object-delete","case":"map_delete_free","role":"after","runtime":"node-proxy","note":"Not ArkTS VM","node":"v20.19.2","v8":"11.3.244.8-node.38","median_ms":1.323362,"ops":1024,"ratio":1,"ts":"2026-10-22T08:08:45.532Z"}
+{"rule":"at-object-delete","case":"object_delete","role":"before","runtime":"node-proxy","note":"Not ArkTS VM","node":"v20.19.2","v8":"11.3.244.8-node.38","median_ms":1.340638,"ops":1024,"ratio":1.0130546290433005,"ts":"2026-10-22T08:08:45.532Z"}

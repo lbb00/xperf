@@ -1,0 +1,7 @@
+#!/usr/bin/env sh
+DIR="$(cd "$(dirname "$0")/.." && pwd)"
+JAR="$DIR/build/libs/jvmperf-lint.jar"
+if [ ! -f "$JAR" ]; then
+  (cd "$DIR" && ./gradlew --quiet jar) || exit 2
+fi
+exec java -jar "$JAR" "$@"

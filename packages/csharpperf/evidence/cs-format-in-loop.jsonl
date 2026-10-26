@@ -1,0 +1,2 @@
+{"rule":"cs-format-in-loop","case":"tostring","role":"after","dotnet":"10.0.13","median_ms":0.3132,"ops":50000,"ratio":1,"ts":"2026-10-23T14:29:09.2150774Z"}
+{"rule":"cs-format-in-loop","case":"format_each_iter","role":"before","dotnet":"10.0.13","median_ms":1.565,"ops":50000,"ratio":4.996807151979566,"ts":"2026-10-23T14:29:09.2150774Z"}

@@ -1,0 +1,16 @@
+{
+  "rules": {
+    "homeless-try": "error",
+    "returned-stack-reference": "error",
+    "no-unresolved": "error",
+    "must-return-ref": "warn",
+    "suppressed-errors": "warn",
+    "useless-error-return": "warn",
+    "no-catch-return": "warn",
+    "unused-decls": "warn",
+    "empty-file": "warn",
+    "unsafe-undefined": "off",
+    "no-print": "off",
+    "line-length": "off"
+  }
+}

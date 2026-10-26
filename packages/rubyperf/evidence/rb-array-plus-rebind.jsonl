@@ -1,0 +1,4 @@
+{"rule":"rb-array-plus-rebind","case":"shovel","role":"after","ruby":"Ruby 4.0.8","median_ms":0.441000,"ops":20000,"ratio":1.000000,"ts":"2026-10-23T12:15:20Z"}
+{"rule":"rb-array-plus-rebind","case":"array_plus_rebind","role":"before","ruby":"Ruby 4.0.8","median_ms":57.921000,"ops":20000,"ratio":131.340176,"ts":"2026-10-23T12:15:20Z"}
+{"rule":"rb-array-plus-rebind","case":"small_shovel","role":"after","ruby":"Ruby 4.0.8","median_ms":0.003000,"ops":100,"ratio":1.000000,"ts":"2026-10-23T12:15:20Z"}
+{"rule":"rb-array-plus-rebind","case":"small_array_plus","role":"before","ruby":"Ruby 4.0.8","median_ms":0.005000,"ops":100,"ratio":1.666615,"ts":"2026-10-23T12:15:20Z"}

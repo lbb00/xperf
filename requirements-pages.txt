@@ -1,0 +1,2 @@
+# The documentation site is the Next.js app in site-app/.
+# Preview: bash scripts/build-pages.sh serve

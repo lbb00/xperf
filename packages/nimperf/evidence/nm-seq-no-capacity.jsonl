@@ -1,0 +1,2 @@
+{"rule":"nm-seq-no-capacity","case":"newSeqOfCap","role":"after","nim":"2.2.12","median_ms":0.493,"ops":200000,"ratio":1.0,"ts":"2026-10-23T13:09:37Z"}
+{"rule":"nm-seq-no-capacity","case":"empty_add","role":"before","nim":"2.2.12","median_ms":0.699,"ops":200000,"ratio":1.4178498985801216,"ts":"2026-10-23T13:09:37Z"}

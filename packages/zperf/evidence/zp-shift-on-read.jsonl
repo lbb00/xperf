@@ -1,0 +1,2 @@
+{"rule":"zp-shift-on-read","case":"copy_forwards_consume","role":"before","zig":"0.17.0","optimize":"fast","median_ms":0.28249,"ops":20000,"ratio":16.753054,"ts":"2026-10-21T11:24:26Z"}
+{"rule":"zp-shift-on-read","case":"cursor_head","role":"after","zig":"0.17.0","optimize":"fast","median_ms":0.016862,"ops":20000,"ratio":1.0,"ts":"2026-10-21T11:24:26Z"}

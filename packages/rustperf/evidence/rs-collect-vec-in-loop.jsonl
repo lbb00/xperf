@@ -1,0 +1,4 @@
+{"rule":"rs-collect-vec-in-loop","case":"count_no_collect","role":"after","rustc":"1.99.1","opt":"opt-level=3","median_ms":0.333875,"ops":5000,"ratio":1.000000,"ts":"2026-10-23T12:31:22Z"}
+{"rule":"rs-collect-vec-in-loop","case":"collect_in_loop","role":"before","rustc":"1.99.1","opt":"opt-level=3","median_ms":0.714542,"ops":5000,"ratio":2.140148,"ts":"2026-10-23T12:31:22Z"}
+{"rule":"rs-collect-vec-in-loop","case":"small_count","role":"after","rustc":"1.99.1","opt":"opt-level=3","median_ms":7.044250,"ops":50,"ratio":1.000000,"ts":"2026-10-23T12:31:22Z"}
+{"rule":"rs-collect-vec-in-loop","case":"small_collect","role":"before","rustc":"1.99.1","opt":"opt-level=3","median_ms":13.768250,"ops":50,"ratio":1.954537,"ts":"2026-10-23T12:31:22Z"}

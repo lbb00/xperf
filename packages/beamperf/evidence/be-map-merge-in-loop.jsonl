@@ -1,0 +1,6 @@
+{"otp":"29","elixir":"1.20.4","case":"map_put_kv","ops":5000,"rule":"be-map-merge-in-loop","ts":"2026-10-23T13:11:26.123756Z","role":"after","median_ms":0.912,"ratio":1.0}
+{"otp":"29","elixir":"1.20.4","case":"map_merge_reduce","ops":5000,"rule":"be-map-merge-in-loop","ts":"2026-10-23T13:11:26.123756Z","role":"before","median_ms":2.098917,"ratio":2.3014440789473687}
+{"otp":"29","elixir":"1.20.4","case":"map_put_single","ops":5000,"rule":"be-map-merge-in-loop","ts":"2026-10-23T13:11:26.123756Z","role":"after","median_ms":0.972583,"ratio":1.0}
+{"otp":"29","elixir":"1.20.4","case":"map_merge_single","ops":5000,"rule":"be-map-merge-in-loop","ts":"2026-10-23T13:11:26.123756Z","role":"before","median_ms":1.725667,"ratio":1.774313349092057}
+{"otp":"29","elixir":"1.20.4","case":"keyword_put","ops":2000,"rule":"be-map-merge-in-loop","ts":"2026-10-23T13:11:26.123756Z","role":"after","median_ms":1.153125,"ratio":1.0}
+{"otp":"29","elixir":"1.20.4","case":"keyword_merge_reduce","ops":2000,"rule":"be-map-merge-in-loop","ts":"2026-10-23T13:11:26.123756Z","role":"before","median_ms":2.304209,"ratio":1.9982300271002713}

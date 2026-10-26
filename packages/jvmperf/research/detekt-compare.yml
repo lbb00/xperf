@@ -1,0 +1,9 @@
+performance:
+  CouldBeSequence:
+    active: true
+style:
+  MagicNumber:
+    active: false
+naming:
+  MatchingDeclarationName:
+    active: false

@@ -1,0 +1,4 @@
+{"rule":"rb-hash-merge-in-loop","case":"hash_literal_build","role":"after","ruby":"Ruby 4.0.8","median_ms":7.947000,"ops":50000,"ratio":1.000000,"ts":"2026-10-23T12:15:20Z"}
+{"rule":"rb-hash-merge-in-loop","case":"hash_merge","role":"before","ruby":"Ruby 4.0.8","median_ms":6.228000,"ops":50000,"ratio":0.783692,"ts":"2026-10-23T12:15:20Z"}
+{"rule":"rb-hash-merge-in-loop","case":"small_literal_build","role":"after","ruby":"Ruby 4.0.8","median_ms":3.229000,"ops":100,"ratio":1.000000,"ts":"2026-10-23T12:15:20Z"}
+{"rule":"rb-hash-merge-in-loop","case":"small_hash_merge","role":"before","ruby":"Ruby 4.0.8","median_ms":2.452000,"ops":100,"ratio":0.759368,"ts":"2026-10-23T12:15:20Z"}

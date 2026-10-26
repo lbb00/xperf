@@ -1,0 +1,4 @@
+{"rule":"CX001","case":"reserve_then_push","role":"after","gxx":"g++ (Debian 14.2.0-19) 14.2.0","opt":"O2","median_ms":1.256536,"ops":500000,"ratio":1.000000,"ts":"2026-10-22T08:17:15Z"}
+{"rule":"CX001","case":"push_no_reserve","role":"before","gxx":"g++ (Debian 14.2.0-19) 14.2.0","opt":"O2","median_ms":1.980669,"ops":500000,"ratio":1.576293,"ts":"2026-10-22T08:17:15Z"}
+{"rule":"CX001","case":"small_reserve","role":"after","gxx":"g++ (Debian 14.2.0-19) 14.2.0","opt":"O2","median_ms":0.000277,"ops":100,"ratio":1.000000,"ts":"2026-10-22T08:17:15Z"}
+{"rule":"CX001","case":"small_push_no_reserve","role":"before","gxx":"g++ (Debian 14.2.0-19) 14.2.0","opt":"O2","median_ms":0.000197,"ops":100,"ratio":0.711190,"ts":"2026-10-22T08:17:15Z"}

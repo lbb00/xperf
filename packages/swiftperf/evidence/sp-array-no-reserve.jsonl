@@ -1,0 +1,4 @@
+{"rule":"sp-array-no-reserve","case":"reserve_large","role":"after","swift":"Apple Swift 6.3.2","opt":"-O","median_ms":0.180,"ops":200000,"ratio":1,"ts":"2026-10-23T10:00:20Z"}
+{"rule":"sp-array-no-reserve","case":"push_large","role":"before","swift":"Apple Swift 6.3.2","opt":"-O","median_ms":0.293,"ops":200000,"ratio":1.628,"ts":"2026-10-23T10:00:20Z"}
+{"rule":"sp-array-no-reserve","case":"reserve_small","role":"after","swift":"Apple Swift 6.3.2","opt":"-O","median_ms":0.221,"ops":128000,"ratio":1,"ts":"2026-10-23T10:00:20Z"}
+{"rule":"sp-array-no-reserve","case":"push_small","role":"before","swift":"Apple Swift 6.3.2","opt":"-O","median_ms":1.133,"ops":128000,"ratio":5.129,"ts":"2026-10-23T10:00:20Z"}

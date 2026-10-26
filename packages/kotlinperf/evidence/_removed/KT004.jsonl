@@ -1,0 +1,4 @@
+{"rule":"KT004","case":"arraylist_capacity","role":"after","kotlin":"2.4.21","jre":"27","median_ms":3.082875,"ops":2000000,"ratio":1.0,"ts":"2026-10-23T12:34:21.589247Z"}
+{"rule":"KT004","case":"arraylist_empty_add","role":"before","kotlin":"2.4.21","jre":"27","median_ms":5.123291,"ops":2000000,"ratio":1.661854924380651,"ts":"2026-10-23T12:34:21.589247Z"}
+{"rule":"KT004","case":"arraylist_capacity_b","role":"after","kotlin":"2.4.21","jre":"27","median_ms":3.082875,"ops":2000000,"ratio":1.0,"ts":"2026-10-23T12:34:21.589247Z"}
+{"rule":"KT004","case":"mutableListOf_empty_add","role":"before","kotlin":"2.4.21","jre":"27","median_ms":5.101209,"ops":2000000,"ratio":1.654692129911203,"ts":"2026-10-23T12:34:21.589247Z"}

@@ -1,0 +1,2 @@
+{"rule":"zp-append-without-reserve","case":"append_no_reserve","role":"before","zig":"0.17.0","optimize":"fast","median_ms":0.130806,"ops":50000,"ratio":2.07919,"ts":"2026-10-21T11:24:26Z"}
+{"rule":"zp-append-without-reserve","case":"ensure_then_assume","role":"after","zig":"0.17.0","optimize":"fast","median_ms":0.062912,"ops":50000,"ratio":1.0,"ts":"2026-10-21T11:24:26Z"}

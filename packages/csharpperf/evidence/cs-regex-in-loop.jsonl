@@ -1,0 +1,2 @@
+{"rule":"cs-regex-in-loop","case":"compiled_regex","role":"after","dotnet":"10.0.13","median_ms":1.6045,"ops":50000,"ratio":1,"ts":"2026-10-23T12:29:26.2025810Z"}
+{"rule":"cs-regex-in-loop","case":"regex_ismatch_loop","role":"before","dotnet":"10.0.13","median_ms":4.1372,"ops":50000,"ratio":2.578497974446868,"ts":"2026-10-23T12:29:26.2025810Z"}

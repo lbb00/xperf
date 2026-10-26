@@ -1,0 +1,2 @@
+{"rule":"zp-aos-single-field","case":"aos_sum_hp","role":"before","zig":"0.17.0","optimize":"fast","median_ms":4.800846,"ops":4000000,"ratio":6.567783,"ts":"2026-10-21T11:24:26Z"}
+{"rule":"zp-aos-single-field","case":"soa_sum_hp","role":"after","zig":"0.17.0","optimize":"fast","median_ms":0.730969,"ops":4000000,"ratio":1.0,"ts":"2026-10-21T11:24:26Z"}

@@ -1,0 +1,8 @@
+{"rule":"rs-string-plus-in-loop","case":"plus_with_capacity","role":"after","rustc":"1.99.1","opt":"opt-level=3","median_ms":0.176875,"ops":500000,"ratio":1.000000,"ts":"2026-10-23T12:31:21Z"}
+{"rule":"rs-string-plus-in-loop","case":"plus_eq_loop","role":"before","rustc":"1.99.1","opt":"opt-level=3","median_ms":0.169375,"ops":500000,"ratio":0.957597,"ts":"2026-10-23T12:31:21Z"}
+{"rule":"rs-string-plus-in-loop","case":"chunk32_with_capacity","role":"after","rustc":"1.99.1","opt":"opt-level=3","median_ms":0.254750,"ops":100000,"ratio":1.000000,"ts":"2026-10-23T12:31:21Z"}
+{"rule":"rs-string-plus-in-loop","case":"chunk32_push_str_loop","role":"before","rustc":"1.99.1","opt":"opt-level=3","median_ms":0.213166,"ops":100000,"ratio":0.836765,"ts":"2026-10-23T12:31:21Z"}
+{"rule":"rs-string-plus-in-loop","case":"digits_write","role":"after","rustc":"1.99.1","opt":"opt-level=3","median_ms":0.169750,"ops":20000,"ratio":1.000000,"ts":"2026-10-23T12:31:21Z"}
+{"rule":"rs-string-plus-in-loop","case":"digits_format_accum","role":"before","rustc":"1.99.1","opt":"opt-level=3","median_ms":17.018000,"ops":20000,"ratio":100.253314,"ts":"2026-10-23T12:31:21Z"}
+{"rule":"rs-string-plus-in-loop","case":"small_n_with_capacity","role":"after","rustc":"1.99.1","opt":"opt-level=3","median_ms":0.762917,"ops":100,"ratio":1.000000,"ts":"2026-10-23T12:31:21Z"}
+{"rule":"rs-string-plus-in-loop","case":"small_n_plus_eq","role":"before","rustc":"1.99.1","opt":"opt-level=3","median_ms":2.733208,"ops":100,"ratio":3.582576,"ts":"2026-10-23T12:31:21Z"}

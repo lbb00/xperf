@@ -1,0 +1,2 @@
+{"rule":"oc-json-in-loop","case":"json_once","role":"after","cc":"clang -O2 -framework Foundation","median_ms":0.997,"ops":20000,"ratio":1,"ts":"2026-10-23T05:08:54Z"}
+{"rule":"oc-json-in-loop","case":"json_each_iter","role":"before","cc":"clang -O2 -framework Foundation","median_ms":15.723,"ops":20000,"ratio":15.770315,"ts":"2026-10-23T05:08:54Z"}

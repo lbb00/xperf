@@ -1,0 +1,44 @@
+/* XPerf docs. Serif body, mono code, ink and copper — not the theme default. */
+
+:root {
+  --md-text-font: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+  --md-code-font: "SFMono-Regular", "SF Mono", ui-monospace, Menlo, Consolas, monospace;
+}
+
+[data-md-color-scheme="default"] {
+  --md-primary-fg-color: #14352c;
+  --md-primary-fg-color--light: #1e4a3e;
+  --md-primary-fg-color--dark: #0c241e;
+  --md-primary-bg-color: #f4efe6;
+  --md-accent-fg-color: #b85c38;
+  --md-typeset-a-color: #8d4328;
+  --md-default-bg-color: #f7f4ee;
+  --md-default-fg-color: #1c1915;
+  --md-typeset-color: #1c1915;
+}
+
+[data-md-color-scheme="slate"] {
+  --md-primary-fg-color: #1c4a3e;
+  --md-primary-fg-color--light: #2a6556;
+  --md-primary-fg-color--dark: #102e27;
+  --md-primary-bg-color: #f4efe6;
+  --md-accent-fg-color: #e08a62;
+  --md-typeset-a-color: #e08a62;
+  --md-default-bg-color: #121816;
+  --md-default-fg-color: #ece7df;
+  --md-typeset-color: #ece7df;
+  --md-code-bg-color: #1b2420;
+}
+
+.md-typeset h1,
+.md-typeset h2,
+.md-typeset h3 {
+  font-weight: 650;
+  letter-spacing: -0.015em;
+}
+
+.md-header__button.md-logo img,
+.md-header__button.md-logo svg {
+  height: 1.6rem;
+  width: 1.6rem;
+}

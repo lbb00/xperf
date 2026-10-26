@@ -1,0 +1,16 @@
+{
+  "name": "arktsperf",
+  "private": true,
+  "description": "ArkTS performance guide and arktsperf-lint (pure Node, zero deps)",
+  "bin": {
+    "arktsperf-lint": "./arktsperf-lint/bin/arktsperf-lint.js"
+  },
+  "scripts": {
+    "test": "bash scripts/smoke-lint.sh",
+    "self-lint": "bash scripts/self-lint.sh"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "license": "MIT"
+}

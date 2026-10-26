@@ -1,0 +1,2 @@
+{"rule":"rs-regex-new-in-loop","case":"regex_once","role":"after","rustc":"1.99.1","regex":"1.13.1","opt":"opt-level=3","median_ms":0.133901,"ops":2000,"ratio":1,"ts":"2026-10-23T15:33:07Z"}
+{"rule":"rs-regex-new-in-loop","case":"regex_new_each_iter","role":"before","rustc":"1.99.1","regex":"1.13.1","opt":"opt-level=3","median_ms":128.901984,"ops":2000,"ratio":962.666,"ts":"2026-10-23T15:33:07Z"}

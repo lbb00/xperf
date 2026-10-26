@@ -1,0 +1,11 @@
+[package]
+name = "rustperf-lint"
+version = "0.0.0"
+edition = "2021"
+license = "MIT"
+description = "Heuristic Rust performance smell checker (xperf rustperf)"
+publish = false
+
+[[bin]]
+name = "rustperf-lint"
+path = "src/main.rs"

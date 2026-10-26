@@ -1,0 +1,2 @@
+{"rule":"jp-boxed-primitive-collection","case":"sumArrayList_n1e6","role":"before","jdk":"27 (27+35)","jvm_args":"-XX:+UseCompactObjectHeaders","ns_per_op":478817.125,"alloc_b_per_op":3.029,"ratio":1.319,"jmh":"1.37","source":"J20_BoxingSum.jsonl","ts":"2026-10-23T20:41:02.020832+08:00"}
+{"rule":"jp-boxed-primitive-collection","case":"sumIntArray_n1e6","role":"after","jdk":"27 (27+35)","jvm_args":"-XX:+UseCompactObjectHeaders","ns_per_op":363120.071,"alloc_b_per_op":2.297,"ratio":1,"jmh":"1.37","source":"J20_BoxingSum.jsonl","ts":"2026-10-23T20:41:02.020832+08:00"}

@@ -1,0 +1,2 @@
+{"rule": "jp-hot-payload-copy", "case": "newFrameEach_1k", "role": "before", "jdk": "27 (27+35)", "jvm_args": "-XX:+UseCompactObjectHeaders", "ns_per_op": 2655.939, "ratio": 157.903, "source": "J32_RuleEvidenceBatch", "ts": "2026-10-23T20:58:00+08:00", "jmh": "1.37", "alloc_b_per_op": 1040.037}
+{"rule": "jp-hot-payload-copy", "case": "reuseBuffer_1k", "role": "after", "jdk": "27 (27+35)", "jvm_args": "-XX:+UseCompactObjectHeaders", "ns_per_op": 16.820, "ratio": 1, "source": "J32_RuleEvidenceBatch", "ts": "2026-10-23T20:58:00+08:00", "jmh": "1.37", "alloc_b_per_op": 0.000}

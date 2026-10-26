@@ -1,0 +1,16 @@
+<?xml version="1.0"?>
+<ruleset name="perf-compare" xmlns="http://pmd.sourceforge.net/ruleset/2.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://pmd.sourceforge.net/ruleset/2.0.0 https://pmd.sourceforge.io/ruleset_2_0_0.xsd">
+  <description>PMD performance + selected perf-related rules</description>
+  <rule ref="category/java/performance.xml"/>
+  <rule ref="category/java/bestpractices.xml/ReplaceVectorWithList"/>
+  <rule ref="category/java/bestpractices.xml/ReplaceHashtableWithMap"/>
+  <rule ref="category/java/bestpractices.xml/AvoidStringBufferField"/>
+  <rule ref="category/java/design.xml/ExceptionAsFlowControl"/>
+  <rule ref="category/java/errorprone.xml/AvoidCallingFinalize"/>
+  <rule ref="category/java/errorprone.xml/FinalizeShouldBeProtected"/>
+  <rule ref="category/java/errorprone.xml/FinalizeDoesNotCallSuperFinalize"/>
+  <rule ref="category/java/errorprone.xml/FinalizeOnlyCallsSuperFinalize"/>
+  <rule ref="category/java/errorprone.xml/EmptyCatchBlock"/>
+  <rule ref="category/java/multithreading.xml/AvoidSynchronizedAtMethodLevel"/>
+  <rule ref="category/java/multithreading.xml/UseConcurrentHashMap"/>
+</ruleset>

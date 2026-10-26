@@ -1,0 +1,2 @@
+{"rule":"gp-time-now-in-loop","case":"sample_once","role":"after","go":"go1.27.3","median_ms":0.078625,"ops":100000,"ratio":1.000000,"ts":"2026-10-23T12:22:07Z"}
+{"rule":"gp-time-now-in-loop","case":"sample_each_iter","role":"before","go":"go1.27.3","median_ms":3.337792,"ops":100000,"ratio":42.452045,"ts":"2026-10-23T12:22:07Z"}

@@ -1,0 +1,2 @@
+{"rule":"nm-seq-add-in-loop","case":"index_assign","role":"after","nim":"2.2.12","median_ms":0.063,"ops":200000,"ratio":1.0,"ts":"2026-10-23T13:09:37Z"}
+{"rule":"nm-seq-add-in-loop","case":"seq_add","role":"before","nim":"2.2.12","median_ms":0.565,"ops":200000,"ratio":8.968253968253967,"ts":"2026-10-23T13:09:37Z"}

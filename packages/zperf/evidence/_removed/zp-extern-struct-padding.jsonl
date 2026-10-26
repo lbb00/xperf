@@ -1,0 +1,2 @@
+{"rule":"zp-extern-struct-padding","case":"extern_padded_walk","role":"before","zig":"0.17.0","optimize":"fast","median_ms":2.593811,"ops":2000000,"ratio":1.208018,"ts":"2026-10-21T11:24:26Z"}
+{"rule":"zp-extern-struct-padding","case":"extern_packed_walk","role":"after","zig":"0.17.0","optimize":"fast","median_ms":2.147163,"ops":2000000,"ratio":1.0,"ts":"2026-10-21T11:24:26Z"}

@@ -1,0 +1,2 @@
+{"otp":"29","elixir":"1.20.4","case":"iodata_to_binary","ops":20000,"rule":"BE002","ts":"2026-10-23T13:11:25.618448Z","role":"after","median_ms":0.835375,"ratio":1.0}
+{"otp":"29","elixir":"1.20.4","case":"string_diamond_append","ops":20000,"rule":"BE002","ts":"2026-10-23T13:11:25.618448Z","role":"before","median_ms":0.450875,"ratio":0.5397276672153225}

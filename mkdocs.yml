@@ -1,0 +1,206 @@
+# Page checklist for site-app/assemble.js. The published site is site-app/.
+site_name: XPerf
+site_description: A lint hit means look here, not this will be faster.
+site_url: https://lbb00.github.io/xperf/
+repo_url: https://github.com/lbb00/xperf
+repo_name: lbb00/xperf
+edit_uri: edit/main/
+docs_dir: site-src
+site_dir: site
+copyright: Copyright &copy; 2026 XPerf contributors
+
+theme:
+  name: material
+  variant: classic
+  logo: assets/logo.svg
+  favicon: assets/logo.svg
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.top
+    - navigation.footer
+    - navigation.tracking
+    - navigation.instant
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+    - toc.follow
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: custom
+      accent: custom
+      toggle:
+        icon: material/weather-night
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: custom
+      accent: custom
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to light mode
+
+extra_css:
+  - stylesheets/extra.css
+
+nav:
+  - Home: index.md
+  - Start:
+      - Overview: docs/overview.md
+      - Quick start: docs/quickstart.md
+      - Kits: docs/kits.md
+      - Smell catalog: docs/smell-catalog.md
+      - Rule regression: docs/rule-regression.md
+  - Languages:
+      - Zig:
+          - Overview: packages/zperf/README.md
+          - Guide: packages/zperf/docs/zig-performance-guide.md
+          - 中文: packages/zperf/docs/zh-CN/zig-performance-guide.md
+          - Rules: packages/zperf/docs/rule-ids.md
+          - Corpus: packages/zperf/docs/corpus.md
+          - Evidence: packages/zperf/docs/evidence-policy.md
+          - Lint: packages/zperf/zperf-lint/README.md
+          - Tooling: packages/zperf/docs/community-tooling.md
+      - C:
+          - Overview: packages/cperf/README.md
+          - Guide: packages/cperf/docs/c-performance-guide.md
+          - Rules: packages/cperf/docs/rule-ids.md
+          - Corpus: packages/cperf/docs/corpus.md
+          - Evidence: packages/cperf/docs/evidence-policy.md
+          - Lint: packages/cperf/cperf-lint/README.md
+      - JavaScript:
+          - Overview: packages/jsperf/README.md
+          - Guide: packages/jsperf/docs/js-performance-guide.md
+          - Rules: packages/jsperf/docs/rule-ids.md
+          - Corpus: packages/jsperf/docs/corpus.md
+          - Evidence: packages/jsperf/docs/evidence-policy.md
+          - Lint: packages/jsperf/jsperf-lint/README.md
+      - Java:
+          - Overview: packages/jvmperf/README.md
+          - Guide: packages/jvmperf/docs/en/performance-guide.md
+          - 中文: packages/jvmperf/docs/zh-CN/performance-guide.md
+          - Rules: packages/jvmperf/docs/rule-ids.md
+          - Corpus: packages/jvmperf/docs/corpus.md
+          - Evidence: packages/jvmperf/docs/evidence-policy.md
+          - Lint: packages/jvmperf/jvmperf-lint/README.md
+      - Go:
+          - Overview: packages/goperf/README.md
+          - Guide: packages/goperf/docs/go-performance-guide.md
+          - Rules: packages/goperf/docs/rule-ids.md
+          - Corpus: packages/goperf/docs/corpus.md
+          - Evidence: packages/goperf/docs/evidence-policy.md
+          - Lint: packages/goperf/goperf-lint/README.md
+      - Python:
+          - Overview: packages/pyperf/README.md
+          - Guide: packages/pyperf/docs/python-performance-guide.md
+          - Rules: packages/pyperf/docs/rule-ids.md
+          - Corpus: packages/pyperf/docs/corpus.md
+          - Evidence: packages/pyperf/docs/evidence-policy.md
+          - Lint: packages/pyperf/pyperf-lint/README.md
+      - Swift:
+          - Overview: packages/swiftperf/README.md
+          - Guide: packages/swiftperf/docs/swift-performance-guide.md
+          - Rules: packages/swiftperf/docs/rule-ids.md
+          - Corpus: packages/swiftperf/docs/corpus.md
+          - Evidence: packages/swiftperf/docs/evidence-policy.md
+          - Lint: packages/swiftperf/swiftperf-lint/README.md
+      - ArkTS:
+          - Overview: packages/arktsperf/README.md
+          - Guide: packages/arktsperf/docs/arkts-performance-guide.md
+          - Rules: packages/arktsperf/docs/rule-ids.md
+          - Corpus: packages/arktsperf/docs/corpus.md
+          - Evidence: packages/arktsperf/docs/evidence-policy.md
+          - Lint: packages/arktsperf/arktsperf-lint/README.md
+      - "C++":
+          - Overview: packages/cppperf/README.md
+          - Guide: packages/cppperf/docs/cpp-performance-guide.md
+          - Rules: packages/cppperf/docs/rule-ids.md
+          - Corpus: packages/cppperf/docs/corpus.md
+          - Evidence: packages/cppperf/docs/evidence-policy.md
+          - Lint: packages/cppperf/cppperf-lint/README.md
+      - "C#":
+          - Overview: packages/csharpperf/README.md
+          - Guide: packages/csharpperf/docs/csharp-performance-guide.md
+          - Rules: packages/csharpperf/docs/rule-ids.md
+          - Corpus: packages/csharpperf/docs/corpus.md
+          - Evidence: packages/csharpperf/docs/evidence-policy.md
+          - Lint: packages/csharpperf/csharpperf-lint/README.md
+      - PHP:
+          - Overview: packages/phpperf/README.md
+          - Guide: packages/phpperf/docs/php-performance-guide.md
+          - Rules: packages/phpperf/docs/rule-ids.md
+          - Corpus: packages/phpperf/docs/corpus.md
+          - Evidence: packages/phpperf/docs/evidence-policy.md
+          - Lint: packages/phpperf/phpperf-lint/README.md
+      - Ruby:
+          - Overview: packages/rubyperf/README.md
+          - Guide: packages/rubyperf/docs/ruby-performance-guide.md
+          - Rules: packages/rubyperf/docs/rule-ids.md
+          - Corpus: packages/rubyperf/docs/corpus.md
+          - Evidence: packages/rubyperf/docs/evidence-policy.md
+          - Lint: packages/rubyperf/rubyperf-lint/README.md
+      - Rust:
+          - Overview: packages/rustperf/README.md
+          - Guide: packages/rustperf/docs/rust-performance-guide.md
+          - Rules: packages/rustperf/docs/rule-ids.md
+          - Corpus: packages/rustperf/docs/corpus.md
+          - Evidence: packages/rustperf/docs/evidence-policy.md
+          - Lint: packages/rustperf/rustperf-lint/README.md
+      - Kotlin:
+          - Overview: packages/kotlinperf/README.md
+          - Guide: packages/kotlinperf/docs/kotlin-performance-guide.md
+          - Rules: packages/kotlinperf/docs/rule-ids.md
+          - Corpus: packages/kotlinperf/docs/corpus.md
+          - Evidence: packages/kotlinperf/docs/evidence-policy.md
+          - Lint: packages/kotlinperf/kotlinperf-lint/README.md
+      - Objective-C:
+          - Overview: packages/objcperf/README.md
+          - Guide: packages/objcperf/docs/objc-performance-guide.md
+          - Rules: packages/objcperf/docs/rule-ids.md
+          - Corpus: packages/objcperf/docs/corpus.md
+          - Evidence: packages/objcperf/docs/evidence-policy.md
+          - Lint: packages/objcperf/objcperf-lint/README.md
+      - Dart:
+          - Overview: packages/dartperf/README.md
+          - Guide: packages/dartperf/docs/dart-performance-guide.md
+          - Rules: packages/dartperf/docs/rule-ids.md
+          - Corpus: packages/dartperf/docs/corpus.md
+          - Evidence: packages/dartperf/docs/evidence-policy.md
+          - Lint: packages/dartperf/dartperf-lint/README.md
+      - Lua:
+          - Overview: packages/luaperf/README.md
+          - Guide: packages/luaperf/docs/lua-performance-guide.md
+          - Rules: packages/luaperf/docs/rule-ids.md
+          - Corpus: packages/luaperf/docs/corpus.md
+          - Evidence: packages/luaperf/docs/evidence-policy.md
+          - Lint: packages/luaperf/luaperf-lint/README.md
+      - Elixir:
+          - Overview: packages/beamperf/README.md
+          - Guide: packages/beamperf/docs/beam-performance-guide.md
+          - Rules: packages/beamperf/docs/rule-ids.md
+          - Corpus: packages/beamperf/docs/corpus.md
+          - Evidence: packages/beamperf/docs/evidence-policy.md
+          - Lint: packages/beamperf/beamperf-lint/README.md
+      - Nim:
+          - Overview: packages/nimperf/README.md
+          - Guide: packages/nimperf/docs/nim-performance-guide.md
+          - Rules: packages/nimperf/docs/rule-ids.md
+          - Corpus: packages/nimperf/docs/corpus.md
+          - Evidence: packages/nimperf/docs/evidence-policy.md
+          - Lint: packages/nimperf/nimperf-lint/README.md
+  - Method:
+      - Playbook: docs/playbook.md
+      - Rule ID map: docs/rule-id-map.md
+      - Sources: docs/static-check-sources.md
+      - Roadmap: docs/roadmap-next.md
+      - Doc index: docs/README.md
+      - Doc style: docs/doc-style.md
+      - Branding: docs/branding.md
+  - Project:
+      - Contributing: CONTRIBUTING.md
+      - Changelog: CHANGELOG.md
+      - Releases: docs/release.md
+      - Security: SECURITY.md
+      - Code of conduct: CODE_OF_CONDUCT.md
+      - Agent contract: AGENT.md
