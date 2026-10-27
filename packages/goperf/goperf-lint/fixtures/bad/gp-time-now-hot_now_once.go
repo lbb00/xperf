@@ -1,4 +1,6 @@
-package p
+//go:build ignore
+
+package bad
 
 import "time"
 

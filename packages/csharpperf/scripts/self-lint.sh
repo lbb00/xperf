@@ -13,5 +13,5 @@ if ! command -v dotnet >/dev/null 2>&1; then
 fi
 cd "$ROOT/csharpperf-lint"
 dotnet build -c Release -v q
-dotnet run -c Release --no-build -- Program.cs --strict-hints
+dotnet run -c Release --no-build -- Program.cs --scope loop --strict-hints
 echo "csharpperf-lint self-lint ok"

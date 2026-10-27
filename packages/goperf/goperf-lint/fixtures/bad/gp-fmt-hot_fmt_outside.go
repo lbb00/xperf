@@ -1,4 +1,6 @@
-package good
+//go:build ignore
+
+package bad
 
 import "fmt"
 

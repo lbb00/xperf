@@ -1,3 +1,5 @@
+//go:build ignore
+
 package good
 
 func cidr(ips []string) []string {

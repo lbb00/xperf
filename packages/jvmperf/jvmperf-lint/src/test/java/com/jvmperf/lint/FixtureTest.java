@@ -27,9 +27,20 @@ public class FixtureTest {
     static final Path FIX = ROOT.resolve("fixtures");
     static final Set<String> ALL = Rule.RULES.stream().map(Rule::code).collect(java.util.stream.Collectors.toSet());
 
+    /** Classic bad/good fixture pairs use loop-only matching (same as zperf fixture_test). */
     static Result lintFile(Path path, Set<String> enabled) throws IOException {
-        byte[] src = Files.readAllBytes(path);
-        return Engine.lintSource(path.toString(), src, Engine.langOf(path.toString()), enabled);
+        return lintFile(path, enabled, false);
+    }
+
+    static Result lintFile(Path path, Set<String> enabled, boolean scopeAll) throws IOException {
+        boolean prev = LintConfig.CONFIG.scopeAll;
+        LintConfig.CONFIG.scopeAll = scopeAll;
+        try {
+            byte[] src = Files.readAllBytes(path);
+            return Engine.lintSource(path.toString(), src, Engine.langOf(path.toString()), enabled);
+        } finally {
+            LintConfig.CONFIG.scopeAll = prev;
+        }
     }
 
     record CliRun(int code, String out, String err) {}
@@ -150,7 +161,7 @@ public class FixtureTest {
     @Test
     void exitCodes() {
         assertEquals(1, runCli(FIX.resolve("bad").toString()).code);
-        assertEquals(0, runCli(FIX.resolve("good").toString()).code);
+        assertEquals(0, runCli("--scope", "loop", FIX.resolve("good").toString()).code);
         assertEquals(0, runCli("--no-fail", FIX.resolve("bad").toString()).code);
         assertEquals(2, runCli("--enable", "jp-does-not-exist", FIX.resolve("bad").toString()).code);
         assertEquals(2, runCli(FIX.resolve("does-not-exist.java").toString()).code);
@@ -159,7 +170,7 @@ public class FixtureTest {
 
     @Test
     void disableByName() {
-        assertEquals(0, runCli("--disable", "log-in-loop", FIX.resolve("bad/jp-log-hot.java").toString()).code);
+        assertEquals(0, runCli("--disable", "log-hot", FIX.resolve("bad/jp-log-hot.java").toString()).code);
     }
 
     @Test

@@ -1,3 +1,5 @@
+//go:build ignore
+
 package good
 
 func fanout(n int) []chan struct{} {

@@ -1,3 +1,5 @@
+//go:build ignore
+
 package good
 
 func register(paths []string) []func() {

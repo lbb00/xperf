@@ -1,3 +1,5 @@
+//go:build ignore
+
 package bad
 
 func fill(n int) [][]byte {

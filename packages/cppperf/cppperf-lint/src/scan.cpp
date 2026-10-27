@@ -138,7 +138,7 @@ static bool marker_arg_uses(const std::string& code, const char* marker, const s
   return false;
 }
 
-std::vector<Finding> scan_file(const std::string& path, const std::string& scope = "all") {
+std::vector<Finding> scan_file(const std::string& path, const std::string& scope) {
   const std::string scope_mode = (scope == "loop") ? "loop" : "all";
   std::ifstream in(path);
   if (!in) return {};
@@ -233,7 +233,7 @@ static bool skip_dir(const std::string& name) {
   return false;
 }
 
-std::vector<Finding> scan_path(const std::string& root, const std::string& scope = "all") {
+std::vector<Finding> scan_path(const std::string& root, const std::string& scope) {
   fs::path r(root);
   std::vector<Finding> all;
   all.reserve(128);
