@@ -9,6 +9,8 @@ Kits are not released separately and carry no version of their own.
 
 ## [Unreleased]
 
+- jsperf-lint: cut loop-header and nested-function false positives; skip `e2e/`, `playwright-report/`, and `*.test.*` / `*.spec.*`. New hints `jp-query-all-star`, `jp-execjs-in-timer`, and `jp-clone-per-event` (stay hint); scanner reads JS inside `executeJavaScript` / `evaluate` templates. No severity escalations; `jp-string-plus-in-loop` stays tombstoned.
+
 - Documentation site uses a Fumadocs layout: sidebar, command search, and Geist. The pages are assembled with Node.
 
 

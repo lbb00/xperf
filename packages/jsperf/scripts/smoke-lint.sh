@@ -54,4 +54,51 @@ check_pair jp-dom-query-in-loop "$ROOT/jsperf-lint/fixtures/bad/jp-dom-query-in-
 check_pair jp-intl-datetimeformat-in-loop "$ROOT/jsperf-lint/fixtures/bad/jp-intl-datetimeformat-in-loop_format_loop.js" "$ROOT/jsperf-lint/fixtures/good/jp-intl-datetimeformat-in-loop_format_once.js"
 check_pair jp-readfile-sync-in-loop "$ROOT/jsperf-lint/fixtures/bad/jp-readfile-sync-in-loop_read_loop.js" "$ROOT/jsperf-lint/fixtures/good/jp-readfile-sync-in-loop_read_once.js"
 check_pair jp-clock-in-loop "$ROOT/jsperf-lint/fixtures/bad/jp-clock-in-loop_clock_loop.js" "$ROOT/jsperf-lint/fixtures/good/jp-clock-in-loop_clock_once.js"
+check_pair jp-query-all-star "$ROOT/jsperf-lint/fixtures/bad/jp-query-all-star_star_query.js" "$ROOT/jsperf-lint/fixtures/good/jp-query-all-star_narrow.js"
+check_pair jp-query-all-star "$ROOT/jsperf-lint/fixtures/bad/jp-query-all-star_in_template.js" "$ROOT/jsperf-lint/fixtures/good/jp-query-all-star_template_narrow.js"
+check_pair jp-execjs-in-timer "$ROOT/jsperf-lint/fixtures/bad/jp-execjs-in-timer_interval.js" "$ROOT/jsperf-lint/fixtures/good/jp-execjs-in-timer_once.js"
+check_pair jp-clone-per-event "$ROOT/jsperf-lint/fixtures/bad/jp-clone-per-event_structured.js" "$ROOT/jsperf-lint/fixtures/good/jp-clone-per-event_field.js"
+check_pair jp-clone-per-event "$ROOT/jsperf-lint/fixtures/bad/jp-clone-per-event_json_roundtrip.js" "$ROOT/jsperf-lint/fixtures/good/jp-clone-per-event_unrelated.js"
+# G3 reverse-opt: loop header / nested fn bodies must stay clean
+set +e
+node "$BIN" "$ROOT/jsperf-lint/fixtures/good/jp-dom-query-in-loop_for_of_header.js" --strict-hints
+h1=$?
+node "$BIN" "$ROOT/jsperf-lint/fixtures/good/jp-clock-in-loop_nested_fn_later.js" --strict-hints
+h2=$?
+node "$BIN" "$ROOT/jsperf-lint/fixtures/good/jp-clock-in-loop_arrow_nested.js" --strict-hints
+h3=$?
+set -e
+[[ "$h1" -eq 0 ]] || { echo "for-of header query must stay clean, got $h1"; exit 1; }
+[[ "$h2" -eq 0 ]] || { echo "nested fn Date.now must stay clean, got $h2"; exit 1; }
+[[ "$h3" -eq 0 ]] || { echo "nested arrow performance.now must stay clean, got $h3"; exit 1; }
+# Path skips: *.test.ts and e2e/ must not be walked when scanning a tree
+SKIP_ROOT=$(mktemp -d)
+mkdir -p "$SKIP_ROOT/e2e" "$SKIP_ROOT/playwright-report" "$SKIP_ROOT/src"
+cat > "$SKIP_ROOT/src/ok_probe.js" <<'PROBE'
+for (let i = 0; i < 3; i++) {
+  Date.now();
+}
+PROBE
+cat > "$SKIP_ROOT/e2e/should_skip.js" <<'PROBE'
+for (let i = 0; i < 3; i++) {
+  Date.now();
+}
+PROBE
+cat > "$SKIP_ROOT/playwright-report/should_skip.js" <<'PROBE'
+for (let i = 0; i < 3; i++) {
+  Date.now();
+}
+PROBE
+cat > "$SKIP_ROOT/src/thing.test.ts" <<'PROBE'
+for (let i = 0; i < 3; i++) {
+  Date.now();
+}
+PROBE
+set +e
+skip_out=$(node "$BIN" "$SKIP_ROOT" --format json --no-fail --severity jp-clock-in-loop=hint)
+set -e
+echo "$skip_out" | grep -q 'ok_probe' || { echo "expected finding in src/ok_probe.js"; rm -rf "$SKIP_ROOT"; exit 1; }
+echo "$skip_out" | grep -q 'should_skip' && { echo "e2e/playwright-report must be skipped"; rm -rf "$SKIP_ROOT"; exit 1; }
+echo "$skip_out" | grep -q 'thing.test' && { echo "*.test.ts must be skipped"; rm -rf "$SKIP_ROOT"; exit 1; }
+rm -rf "$SKIP_ROOT"
 echo "jsperf-lint smoke ok"

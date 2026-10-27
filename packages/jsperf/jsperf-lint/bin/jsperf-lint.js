@@ -30,6 +30,7 @@ function applyPreset(name) {
       "jp-map-filter-chain": SEV_ERROR,
       "jp-regex-ctor-in-loop": SEV_ERROR, "jp-json-in-loop": SEV_ERROR, "jp-dom-query-in-loop": SEV_ERROR,
       "jp-intl-datetimeformat-in-loop": SEV_ERROR, "jp-readfile-sync-in-loop": SEV_ERROR, "jp-clock-in-loop": SEV_ERROR,
+      "jp-query-all-star": SEV_ERROR, "jp-execjs-in-timer": SEV_ERROR, "jp-clone-per-event": SEV_ERROR,
     };
   }
   if (name === "engine") {
@@ -39,6 +40,7 @@ function applyPreset(name) {
       "jp-map-filter-chain": SEV_HINT,
       "jp-regex-ctor-in-loop": SEV_HINT, "jp-json-in-loop": SEV_HINT, "jp-dom-query-in-loop": SEV_HINT,
       "jp-intl-datetimeformat-in-loop": SEV_HINT, "jp-readfile-sync-in-loop": SEV_HINT, "jp-clock-in-loop": SEV_HINT,
+      "jp-query-all-star": SEV_HINT, "jp-execjs-in-timer": SEV_HINT, "jp-clone-per-event": SEV_HINT,
     };
   }
   /* app: jp-alloc-in-loop/jp-console-in-loop/jp-delete-shape off; jp-delete-array-hole error (G4); newer rules hint */
@@ -47,6 +49,7 @@ function applyPreset(name) {
     "jp-map-filter-chain": SEV_HINT,
     "jp-regex-ctor-in-loop": SEV_HINT, "jp-json-in-loop": SEV_HINT, "jp-dom-query-in-loop": SEV_HINT,
     "jp-intl-datetimeformat-in-loop": SEV_HINT, "jp-readfile-sync-in-loop": SEV_HINT, "jp-clock-in-loop": SEV_HINT,
+    "jp-query-all-star": SEV_HINT, "jp-execjs-in-timer": SEV_HINT, "jp-clone-per-event": SEV_HINT,
   };
 }
 
@@ -61,7 +64,8 @@ function applySeverityOverride(rs, spec) {
     rule !== "jp-map-filter-chain" &&
     rule !== "jp-regex-ctor-in-loop" && rule !== "jp-json-in-loop" && rule !== "jp-dom-query-in-loop" &&
     rule !== "jp-intl-datetimeformat-in-loop" &&
-    rule !== "jp-readfile-sync-in-loop" && rule !== "jp-clock-in-loop"
+    rule !== "jp-readfile-sync-in-loop" && rule !== "jp-clock-in-loop" &&
+    rule !== "jp-query-all-star" && rule !== "jp-execjs-in-timer" && rule !== "jp-clone-per-event"
   ) {
     return false;
   }

@@ -6,7 +6,7 @@
 |-----|----------|----------|
 | [zperf](../packages/zperf/) | Zig | zp-alloc-in-loop–zp-alloc-print-in-loop |
 | [cperf](../packages/cperf/) | C | cp-alloc-in-loop–cp-struct-by-value |
-| [jsperf](../packages/jsperf/) | JS/TS (V8) | jp-alloc-in-loop–jp-clock-in-loop |
+| [jsperf](../packages/jsperf/) | JS/TS (V8) | jp-alloc-in-loop–jp-clone-per-event |
 | [jvmperf](../packages/jvmperf/) | Java/Kotlin | 29 active `jp-*` slugs, `jp-boxed-primitive-collection`…`jp-non-static-field-updater` (see its `docs/rule-ids.md`; **≠** jsperf) |
 | [goperf](../packages/goperf/) | Go | gp-make-in-loop–gp-time-now-in-loop |
 | [pyperf](../packages/pyperf/) | Python | pp-str-plus-in-loop–pp-open-in-loop |
@@ -161,6 +161,10 @@ These slugs are **hint**. Fixtures are paired. There is no JSONL, and they are n
 | jsperf | jp-regex-ctor-in-loop | `new RegExp` in loop |
 | jsperf | jp-json-in-loop | `JSON.parse` / `stringify` in loop |
 | jsperf | jp-dom-query-in-loop | `querySelector` / `getElementById` in loop |
+
+| jsperf | jp-query-all-star | `querySelectorAll('*')` full-tree walk (templates too) |
+| jsperf | jp-execjs-in-timer | built `executeJavaScript`/`evaluate` inside timers |
+| jsperf | jp-clone-per-event | `structuredClone` / JSON round-trip of event-like args |
 | goperf | gp-regexp-compile-in-loop | `regexp.Compile` in loop |
 | goperf | gp-json-marshal-in-loop | `json.Marshal` / `Unmarshal` in loop |
 | goperf | gp-reflect-in-loop | `reflect.TypeOf` / `ValueOf` in loop |

@@ -48,7 +48,10 @@ Descriptive fixture names. Defaults: `--preset app` (jp-console-in-loop=off).
 | jp-dom-query-in-loop | `bad/jp-dom-query-in-loop_query_loop.js` | `good/jp-dom-query-in-loop_query_once.js`, selector-varies | jsonl | hint | Node 26 tiny linkedom document ~16×; loop binding not reported |
 | jp-intl-datetimeformat-in-loop | `bad/jp-intl-datetimeformat-in-loop_format_loop.js` | `good/jp-intl-datetimeformat-in-loop_format_once.js`, locale-varies | jsonl | hint | Node 26 ~36×; loop binding not reported |
 | jp-readfile-sync-in-loop | `bad/jp-readfile-sync-in-loop_read_loop.js` | `good/jp-readfile-sync-in-loop_read_once.js`, for-of header, path-varies | jsonl | hint | body only; Node 26 ~114× when the path stays the same |
-| jp-clock-in-loop | `bad/jp-clock-in-loop_clock_loop.js` | `good/jp-clock-in-loop_clock_once.js`, await loop | jsonl | hint | tight loop ~26×/~19×; `await` loops not reported |
+| jp-clock-in-loop | `bad/jp-clock-in-loop_clock_loop.js` | `good/jp-clock-in-loop_clock_once.js`, await loop, nested fn/arrow | jsonl | hint | tight loop ~26×/~19×; `await` loops not reported; nested fn bodies skipped |
+| jp-query-all-star | `bad/jp-query-all-star_star_query.js`, `jp-query-all-star_in_template.js` | `good/jp-query-all-star_narrow.js`, template narrow | none yet | hint | full-tree `*`; message does not say cache that node; sees template scripts |
+| jp-execjs-in-timer | `bad/jp-execjs-in-timer_interval.js` | `good/jp-execjs-in-timer_once.js` | none yet | hint | built script in setInterval/setTimeout; install once + short drain is clean |
+| jp-clone-per-event | `bad/jp-clone-per-event_structured.js`, `jp-clone-per-event_json_roundtrip.js` | `good/jp-clone-per-event_field.js`, unrelated clone | none yet | hint | only event-like args (`e`/`event`/…) |
 
 ---
 

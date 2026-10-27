@@ -17,6 +17,11 @@ Zero-dependency **Node / pure JS** heuristics over `.js` / `.mjs` / `.cjs` / `.t
 | jp-intl-datetimeformat-in-loop | **hint** | **hint** | error | `new Intl.DateTimeFormat` in a loop when locale and options are not a loop binding |
 | jp-readfile-sync-in-loop | **hint** | **hint** | error | `readFileSync` in the loop body when the path is not a loop binding |
 | jp-clock-in-loop | **hint** | **hint** | error | `Date.now` / `performance.now` in a tight loop with no `await` |
+| jp-query-all-star | **hint** | **hint** | error | `querySelectorAll('*')` full-tree walk (also sees scripts inside `executeJavaScript` templates) |
+| jp-execjs-in-timer | **hint** | **hint** | error | built `executeJavaScript` / `evaluate` script re-sent from `setInterval` / `setTimeout` |
+| jp-clone-per-event | **hint** | **hint** | error | `structuredClone` / `JSON.parse(JSON.stringify(...))` on an event-like payload |
+
+Loop **headers** (e.g. `for (const x of querySelectorAll(...))`) and **nested function/arrow bodies** defined inside a loop but called later are not treated as per-iteration smells. Path skips include `e2e/`, `playwright-report/`, and `*.test.*` / `*.spec.*`. Template-string scripts passed to `executeJavaScript` / `evaluate` are scanned.
 
 Does **not** detect IC polymorphism, elements-kind at runtime, or deopts — see guide §4.5.
 

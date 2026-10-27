@@ -15,6 +15,9 @@ Canonical ids are **slugs only**. Numerics from the old map are historical and *
 | `jp-intl-datetimeformat-in-loop` |
 | `jp-readfile-sync-in-loop` |
 | `jp-clock-in-loop` |
+| `jp-query-all-star` |
+| `jp-execjs-in-timer` |
+| `jp-clone-per-event` |
 
 ## Removed (tombstone; never reuse)
 
