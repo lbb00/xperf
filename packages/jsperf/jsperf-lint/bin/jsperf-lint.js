@@ -26,29 +26,29 @@ function sevName(s) {
 function applyPreset(name) {
   if (name === "all") {
     return {
-      "jp-alloc-in-loop": SEV_ERROR, "jp-console-in-loop": SEV_ERROR, "jp-delete-shape": SEV_ERROR, "jp-delete-array-hole": SEV_ERROR,
+      "jp-alloc-hot": SEV_ERROR, "jp-console-hot": SEV_ERROR, "jp-delete-shape": SEV_ERROR, "jp-delete-array-hole": SEV_ERROR,
       "jp-map-filter-chain": SEV_ERROR,
-      "jp-regex-ctor-in-loop": SEV_ERROR, "jp-json-in-loop": SEV_ERROR, "jp-dom-query-in-loop": SEV_ERROR,
-      "jp-intl-datetimeformat-in-loop": SEV_ERROR, "jp-readfile-sync-in-loop": SEV_ERROR, "jp-clock-in-loop": SEV_ERROR,
+      "jp-regex-ctor-hot": SEV_ERROR, "jp-json-hot": SEV_ERROR, "jp-dom-query-hot": SEV_ERROR,
+      "jp-intl-datetimeformat-hot": SEV_ERROR, "jp-readfile-sync-hot": SEV_ERROR, "jp-clock-hot": SEV_ERROR,
       "jp-query-all-star": SEV_ERROR, "jp-execjs-in-timer": SEV_ERROR, "jp-clone-per-event": SEV_ERROR,
     };
   }
   if (name === "engine") {
-    /* G3: jp-alloc-in-loop/jp-delete-shape OK-idiom → off; jp-console-in-loop hint; jp-delete-array-hole error; jp-map-filter-chain hint */
+    /* G3: jp-alloc-hot/jp-delete-shape OK-idiom → off; jp-console-hot hint; jp-delete-array-hole error; jp-map-filter-chain hint */
     return {
-      "jp-alloc-in-loop": SEV_OFF, "jp-console-in-loop": SEV_HINT, "jp-delete-shape": SEV_OFF, "jp-delete-array-hole": SEV_ERROR,
+      "jp-alloc-hot": SEV_OFF, "jp-console-hot": SEV_HINT, "jp-delete-shape": SEV_OFF, "jp-delete-array-hole": SEV_ERROR,
       "jp-map-filter-chain": SEV_HINT,
-      "jp-regex-ctor-in-loop": SEV_HINT, "jp-json-in-loop": SEV_HINT, "jp-dom-query-in-loop": SEV_HINT,
-      "jp-intl-datetimeformat-in-loop": SEV_HINT, "jp-readfile-sync-in-loop": SEV_HINT, "jp-clock-in-loop": SEV_HINT,
+      "jp-regex-ctor-hot": SEV_HINT, "jp-json-hot": SEV_HINT, "jp-dom-query-hot": SEV_HINT,
+      "jp-intl-datetimeformat-hot": SEV_HINT, "jp-readfile-sync-hot": SEV_HINT, "jp-clock-hot": SEV_HINT,
       "jp-query-all-star": SEV_HINT, "jp-execjs-in-timer": SEV_HINT, "jp-clone-per-event": SEV_HINT,
     };
   }
-  /* app: jp-alloc-in-loop/jp-console-in-loop/jp-delete-shape off; jp-delete-array-hole error (G4); newer rules hint */
+  /* app: jp-alloc-hot/jp-console-hot/jp-delete-shape off; jp-delete-array-hole error (G4); newer rules hint */
   return {
-    "jp-alloc-in-loop": SEV_OFF, "jp-console-in-loop": SEV_OFF, "jp-delete-shape": SEV_OFF, "jp-delete-array-hole": SEV_ERROR,
+    "jp-alloc-hot": SEV_OFF, "jp-console-hot": SEV_OFF, "jp-delete-shape": SEV_OFF, "jp-delete-array-hole": SEV_ERROR,
     "jp-map-filter-chain": SEV_HINT,
-    "jp-regex-ctor-in-loop": SEV_HINT, "jp-json-in-loop": SEV_HINT, "jp-dom-query-in-loop": SEV_HINT,
-    "jp-intl-datetimeformat-in-loop": SEV_HINT, "jp-readfile-sync-in-loop": SEV_HINT, "jp-clock-in-loop": SEV_HINT,
+    "jp-regex-ctor-hot": SEV_HINT, "jp-json-hot": SEV_HINT, "jp-dom-query-hot": SEV_HINT,
+    "jp-intl-datetimeformat-hot": SEV_HINT, "jp-readfile-sync-hot": SEV_HINT, "jp-clock-hot": SEV_HINT,
     "jp-query-all-star": SEV_HINT, "jp-execjs-in-timer": SEV_HINT, "jp-clone-per-event": SEV_HINT,
   };
 }
@@ -60,11 +60,11 @@ function applySeverityOverride(rs, spec) {
   const s = parseSev(spec.slice(eq + 1));
   if (s < 0) return false;
   if (
-    rule !== "jp-alloc-in-loop" && rule !== "jp-console-in-loop" && rule !== "jp-delete-shape" && rule !== "jp-delete-array-hole" &&
+    rule !== "jp-alloc-hot" && rule !== "jp-console-hot" && rule !== "jp-delete-shape" && rule !== "jp-delete-array-hole" &&
     rule !== "jp-map-filter-chain" &&
-    rule !== "jp-regex-ctor-in-loop" && rule !== "jp-json-in-loop" && rule !== "jp-dom-query-in-loop" &&
-    rule !== "jp-intl-datetimeformat-in-loop" &&
-    rule !== "jp-readfile-sync-in-loop" && rule !== "jp-clock-in-loop" &&
+    rule !== "jp-regex-ctor-hot" && rule !== "jp-json-hot" && rule !== "jp-dom-query-hot" &&
+    rule !== "jp-intl-datetimeformat-hot" &&
+    rule !== "jp-readfile-sync-hot" && rule !== "jp-clock-hot" &&
     rule !== "jp-query-all-star" && rule !== "jp-execjs-in-timer" && rule !== "jp-clone-per-event"
   ) {
     return false;
@@ -113,7 +113,7 @@ function dumpTextFindings(findings, rs) {
 }
 
 function rowFromFinding(f, sev) {
-  /* Build outside scan loops so jp-alloc-in-loop does not self-hit .push({ */
+  /* Build outside scan loops so jp-alloc-hot does not self-hit .push({ */
   const row = Object.create(null);
   row.rule = f.rule;
   row.severity = sevName(sev);
@@ -229,7 +229,7 @@ function main(argv) {
   let nhint = 0;
   if (format === "json") {
     const filtered = filterJson(findings, rs);
-    /* Indirect call so jp-json-in-loop does not self-hit CLI JSON output. */
+    /* Indirect call so jp-json-hot does not self-hit CLI JSON output. */
     const stringify = JSON.stringify.bind(JSON);
     console.log(stringify(filtered, null, 2));
     const c = countBySev(findings, rs);

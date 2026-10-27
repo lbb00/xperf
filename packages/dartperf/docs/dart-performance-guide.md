@@ -26,15 +26,15 @@ Companion lint: **dt-list-add-empty**, **dt-growable-add-empty** (empty growable
 
 `s = s + x` in a loop builds many strings. Prefer `StringBuffer`. Keep `print` out of tight loops.
 
-Companion lint: **dt-string-plus-in-loop**, **dt-print-in-loop**.
+Companion lint: **dt-string-plus-hot**, **dt-print-hot**.
 
 ## Lint map
 
 | ID | Smell | Default |
 |----|-------|---------|
 | dt-list-add-empty | List grow / `add` without capacity cue | off |
-| dt-string-plus-in-loop | string `+` in loop | off |
-| dt-print-in-loop | `print` in loop | off |
+| dt-string-plus-hot | string `+` in loop | off |
+| dt-print-hot | `print` in loop | off |
 | dt-growable-add-empty | empty growable list + `add` in size-hinted loop | hint |
 
 Escalate only with `evidence/<rule>.jsonl` — see [evidence-policy.md](evidence-policy.md).

@@ -4,7 +4,7 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 BIN=(ruby "$ROOT/rubyperf-lint/rubyperf-lint.rb")
 set +e
 "${BIN[@]}" "$ROOT/rubyperf-lint/fixtures/bad" \
-  --severity rb-string-plus-in-loop=error --severity rb-array-plus-rebind=error --severity rb-puts-in-loop=error
+  --severity rb-string-plus-hot=error --severity rb-array-plus-rebind=error --severity rb-puts-hot=error
 b=$?
 "${BIN[@]}" "$ROOT/rubyperf-lint/fixtures/good"
 g=$?
@@ -22,7 +22,7 @@ check_pair() {
   [[ "$be" -eq 1 ]] || { echo "$rule bad should exit 1, got $be"; exit 1; }
   [[ "$ge" -eq 0 ]] || { echo "$rule good should exit 0, got $ge"; exit 1; }
 }
-check_pair rb-regexp-new-in-loop "$ROOT/rubyperf-lint/fixtures/bad/rb-regexp-new-in-loop_regexp_loop.rb" "$ROOT/rubyperf-lint/fixtures/good/rb-regexp-new-in-loop_regexp_once.rb"
-check_pair rb-json-in-loop "$ROOT/rubyperf-lint/fixtures/bad/rb-json-in-loop_json_loop.rb" "$ROOT/rubyperf-lint/fixtures/good/rb-json-in-loop_json_once.rb"
-check_pair rb-file-read-in-loop "$ROOT/rubyperf-lint/fixtures/bad/rb-file-read-in-loop_read_loop.rb" "$ROOT/rubyperf-lint/fixtures/good/rb-file-read-in-loop_read_once.rb"
+check_pair rb-regexp-new-hot "$ROOT/rubyperf-lint/fixtures/bad/rb-regexp-new-hot_regexp_loop.rb" "$ROOT/rubyperf-lint/fixtures/good/rb-regexp-new-hot_pattern_varies.rb"
+check_pair rb-json-hot "$ROOT/rubyperf-lint/fixtures/bad/rb-json-hot_json_loop.rb" "$ROOT/rubyperf-lint/fixtures/good/rb-json-hot_text_varies.rb"
+check_pair rb-file-read-hot "$ROOT/rubyperf-lint/fixtures/bad/rb-file-read-hot_read_loop.rb" "$ROOT/rubyperf-lint/fixtures/good/rb-file-read-hot_path_varies.rb"
 echo "rubyperf-lint smoke ok"

@@ -1,2 +1,0 @@
-{"rule":"sp-dateformatter-in-loop","case":"formatter_once","role":"after","swiftc":"swiftc -O","median_ms":1.48201,"ops":2000,"ratio":1,"ts":"2026-10-23T05:09:02Z"}
-{"rule":"sp-dateformatter-in-loop","case":"formatter_each_iter","role":"before","swiftc":"swiftc -O","median_ms":44.153929,"ops":2000,"ratio":29.793275,"ts":"2026-10-23T05:09:02Z"}

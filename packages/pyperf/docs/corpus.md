@@ -20,7 +20,7 @@ This package is **XPerf’s Python smell kit**, not the PyPI `pyperf` benchmark 
 | flask | 0 | **1** | CLI OK-idiom |
 | requests | 0 | **0** | clean |
 
-**Verdict: corpus-ready `yes`.** Sample n=29: TP 51.7% / OK-idiom 48.3% / FP+DOC+SKIP 0%. Defaults: pp-str-plus-in-loop/pp-print-in-loop **off**; pp-list-plus-rebind **hint**. PP004 removed (jitter). Measured JSONL fills exist but do not change the defaults (see [evidence-policy.md](evidence-policy.md)).
+**Verdict: corpus-ready `yes`.** Sample n=29: TP 51.7% / OK-idiom 48.3% / FP+DOC+SKIP 0%. Defaults: pp-str-plus-hot/pp-print-hot **off**; pp-list-plus-rebind **hint**. PP004 removed (jitter). Measured JSONL fills exist but do not change the defaults (see [evidence-policy.md](evidence-policy.md)).
 
 ### Redesign notes
 
@@ -33,6 +33,6 @@ Do not commit corpus sources into `packages/pyperf`.
 
 The 2026-10-22 corpus-ready verdict does not cover the slugs below. They stay **hint** and have not been through G2/G3.
 
-- `pp-json-in-loop`, `pp-deepcopy-in-loop` — JSONL on disk; still hint
+- `pp-json-hot`, `pp-deepcopy-hot` — JSONL on disk; still hint
 
 `pp-regex-compile-in-loop` and `pp-datetime-format-in-loop` were removed. See `evidence/_removed/`. They are not part of that verdict.

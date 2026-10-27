@@ -10,13 +10,14 @@ const fs = require("fs");
 const path = require("path");
 
 const MSG = {
-  "sp-print-in-loop": "print( in loop; gate or buffer",
-  "sp-array-no-reserve": "empty Array then append in loop without reserveCapacity",
-  "sp-dateformatter-in-loop": "date formatter constructed in a loop; reuse one instance",
-  "sp-json-decode-in-loop": "JSON value decoded in a loop; reuse one decoder",
-  "sp-regex-in-loop": "regular expression constructed in a loop; compile it once",
-  "sp-file-read-in-loop": "file read in a loop; read once when the path stays the same",
-  "sp-clock-in-loop": "clock sample in a loop; sample once outside the steady state", "sp-value-for-key-in-loop": "lookup by name in a loop; use the field directly when the name is fixed",
+  "sp-print-hot": "print(; gate or buffer — cost adds up even off a hot path",
+  "sp-array-no-reserve": "empty Array then append without reserveCapacity — cost adds up even off a hot path",
+  "sp-dateformatter-hot": "date formatter constructed; reuse one instance — cost adds up even off a hot path",
+  "sp-json-decode-hot": "JSON value decoded; reuse one decoder — cost adds up even off a hot path",
+  "sp-regex-hot": "regular expression constructed; compile outside only when this pattern stays the same — cost adds up even off a hot path",
+  "sp-file-read-hot": "file read; read once when the path stays the same — cost adds up even off a hot path",
+  "sp-clock-hot": "clock sample; hoist only when this iteration does not need a fresh time — cost adds up even off a hot path",
+  "sp-value-for-key-hot": "lookup by name; use the field directly when the name is fixed — cost adds up even off a hot path",
 };
 
 const RE_LOOP = /\b(for|while)\b/;
@@ -126,6 +127,49 @@ function hasToken(code, parts, requireParen) {
   return false;
 }
 
+
+function identIn(s, name) {
+  if (!name) return false;
+  let i = 0;
+  while (i < s.length) {
+    const at = s.indexOf(name, i);
+    if (at < 0) return false;
+    const beforeOK = at === 0 || !isIdentChar(s[at - 1]);
+    const afterOK = at + name.length >= s.length || !isIdentChar(s[at + name.length]);
+    if (beforeOK && afterOK) return true;
+    i = at + 1;
+  }
+  return false;
+}
+
+function forNames(code) {
+  const m = /\bfor\s+(.+?)\s+in\b/.exec(code);
+  if (!m) return [];
+  const pat = m[1];
+  const names = [];
+  let cur = "";
+  function flush() {
+    if (cur && cur !== "_" && cur !== "for" && cur !== "in" && cur !== "let" && cur !== "var" && cur !== "case") {
+      names.push(cur);
+    }
+    cur = "";
+  }
+  for (const ch of pat) {
+    if (/[A-Za-z0-9_]/.test(ch)) cur += ch;
+    else flush();
+  }
+  flush();
+  return names;
+}
+
+function regionUses(code, marker, names) {
+  if (!names.length) return false;
+  const at = code.indexOf(marker);
+  if (at < 0) return false;
+  const rest = code.slice(at + marker.length);
+  return names.some((n) => identIn(rest, n));
+}
+
 function looksStringPlus(code) {
   const m = code.match(/(\w+)\s*\+=/);
   if (!m) return false;
@@ -138,7 +182,8 @@ function looksStringPlus(code) {
   return false;
 }
 
-function scanFile(filePath) {
+function scanFile(filePath, scope) {
+  const scopeMode = scope === "loop" ? "loop" : "all";
   let text;
   try {
     text = fs.readFileSync(filePath, "utf8");
@@ -148,7 +193,10 @@ function scanFile(filePath) {
   const findings = [];
   let depth = 0;
   let inLoop = 0;
-  /** @type {Map<string, {depth:number, reserved:boolean}>} */
+  let loopAwait = false;
+  let loopNames = [];
+  const clockHold = [];
+  /** @type {Map<string, {depth:number, reserved:boolean, fired?:boolean}>} */
   const empties = new Map();
   const lines = text.split(/\r?\n/);
   const dateFmtParts = ["Date", "Formatter"];
@@ -174,28 +222,32 @@ function scanFile(filePath) {
 
     if (RE_LOOP.test(code)) {
       inLoop = depth + 1;
+      loopNames = loopNames.concat(forNames(code));
+      if (/\bawait\b/.test(code)) loopAwait = true;
     }
-    if (inLoop > 0 && depth >= inLoop) {
+    const matchHere = scopeMode === "all" || (inLoop > 0 && depth >= inLoop);
+    if (matchHere) {
       if (RE_PRINT.test(code)) {
-        findings.push({ rule: "sp-print-in-loop", path: filePath, line: i + 1, message: MSG["sp-print-in-loop"] });
+        findings.push({ rule: "sp-print-hot", path: filePath, line: i + 1, message: MSG["sp-print-hot"] });
       }
       if (hasToken(code, dateFmtParts, true)) {
-        findings.push({ rule: "sp-dateformatter-in-loop", path: filePath, line: i + 1, message: MSG["sp-dateformatter-in-loop"] });
+        findings.push({ rule: "sp-dateformatter-hot", path: filePath, line: i + 1, message: MSG["sp-dateformatter-hot"] });
       }
       if (hasToken(code, jsonDecParts, true) || hasToken(code, jsonObjParts, false)) {
-        findings.push({ rule: "sp-json-decode-in-loop", path: filePath, line: i + 1, message: MSG["sp-json-decode-in-loop"] });
+        findings.push({ rule: "sp-json-decode-hot", path: filePath, line: i + 1, message: MSG["sp-json-decode-hot"] });
       }
-      if (hasToken(code, nsRegexParts, true)) {
-        findings.push({ rule: "sp-regex-in-loop", path: filePath, line: i + 1, message: MSG["sp-regex-in-loop"] });
+      if (/\bawait\b/.test(code)) loopAwait = true;
+      if (hasToken(code, nsRegexParts, true) && !regionUses(code, "pattern:", loopNames)) {
+        findings.push({ rule: "sp-regex-hot", path: filePath, line: i + 1, message: MSG["sp-regex-hot"] });
       }
-      if (hasToken(code, fileReadParts, false)) {
-        findings.push({ rule: "sp-file-read-in-loop", path: filePath, line: i + 1, message: MSG["sp-file-read-in-loop"] });
+      if (hasToken(code, fileReadParts, false) && !regionUses(code, "OfFile", loopNames)) {
+        findings.push({ rule: "sp-file-read-hot", path: filePath, line: i + 1, message: MSG["sp-file-read-hot"] });
       }
-      if (hasToken(code, clockParts, true)) {
-        findings.push({ rule: "sp-clock-in-loop", path: filePath, line: i + 1, message: MSG["sp-clock-in-loop"] });
+      if (hasToken(code, clockParts, true) && !loopAwait) {
+        clockHold.push({ rule: "sp-clock-hot", path: filePath, line: i + 1, message: MSG["sp-clock-hot"] });
       }
       if (hasToken(code, kvcParts, false)) {
-        findings.push({ rule: "sp-value-for-key-in-loop", path: filePath, line: i + 1, message: MSG["sp-value-for-key-in-loop"] });
+        findings.push({ rule: "sp-value-for-key-hot", path: filePath, line: i + 1, message: MSG["sp-value-for-key-hot"] });
       }
       const ap = code.match(RE_APPEND);
       if (ap) {
@@ -209,17 +261,24 @@ function scanFile(filePath) {
 
     depth += opens - closes;
     if (depth < 0) depth = 0;
-    if (inLoop > 0 && depth < inLoop) inLoop = 0;
+    if (inLoop > 0 && depth < inLoop) {
+      if (!loopAwait) findings.push.apply(findings, clockHold);
+      clockHold.length = 0;
+      loopAwait = false;
+      loopNames = [];
+      inLoop = 0;
+    }
     for (const [name, st] of empties) {
       if (st.depth > depth) empties.delete(name);
     }
   }
+  if (!loopAwait) findings.push.apply(findings, clockHold);
   return findings;
 }
 
-function scanPath(root) {
+function scanPath(root, scope) {
   const st = fs.statSync(root);
-  if (st.isFile()) return isSwift(root) ? scanFile(root) : [];
+  if (st.isFile()) return isSwift(root) ? scanFile(root, scope) : [];
   const out = [];
   function walk(dir) {
     let ents;
@@ -235,7 +294,7 @@ function scanPath(root) {
         if (skipDir(ent.name)) continue;
         walk(full);
       } else if (isSwift(ent.name)) {
-        out.push.apply(out, scanFile(full));
+        out.push.apply(out, scanFile(full, scope));
       }
     }
   }
@@ -245,7 +304,7 @@ function scanPath(root) {
 
 function usage(code) {
   console.error(
-    "Usage: text-lint.cjs PATH... [--format text|json] [--severity RULE=error|hint|off] [--strict-hints] [--no-fail] [--raw-paths]\n"
+    "Usage: text-lint.cjs PATH... [--format text|json] [--severity RULE=error|hint|off] [--scope all|loop] [--strict-hints] [--no-fail] [--raw-paths]\n"
   );
   process.exit(code);
 }
@@ -255,11 +314,12 @@ function main(argv) {
   if (!args.length) usage(2);
   // G3 redesign: print in a loop stays off; sp-array-no-reserve stays hint. Force-unwrap, string +=, and map/joined were removed.
   // 2026-10-23 hot-call rules stay hint until measured; not corpus-triaged.
-  const sev = { "sp-print-in-loop": "off", "sp-array-no-reserve": "hint", "sp-dateformatter-in-loop": "hint", "sp-json-decode-in-loop": "hint", "sp-regex-in-loop": "hint", "sp-file-read-in-loop": "hint", "sp-clock-in-loop": "hint", "sp-value-for-key-in-loop": "hint" };
+  const sev = { "sp-print-hot": "off", "sp-array-no-reserve": "hint", "sp-dateformatter-hot": "hint", "sp-json-decode-hot": "hint", "sp-regex-hot": "hint", "sp-file-read-hot": "hint", "sp-clock-hot": "hint", "sp-value-for-key-hot": "hint" };
   let format = "text";
   let strictHints = false;
   let noFail = false;
   let rawPaths = false;
+  let scope = "all";
   const paths = [];
   for (let i = 0; i < args.length; i++) {
     const a = args[i];
@@ -293,6 +353,16 @@ function main(argv) {
       rawPaths = true;
       continue;
     }
+    if (a === "--scope") {
+      scope = args[++i];
+      if (scope !== "all" && scope !== "loop") usage(2);
+      continue;
+    }
+    if (a.startsWith("--scope=")) {
+      scope = a.slice(8);
+      if (scope !== "all" && scope !== "loop") usage(2);
+      continue;
+    }
     if (a.startsWith("-")) usage(2);
     paths.push(a);
   }
@@ -301,9 +371,9 @@ function main(argv) {
   let findings = [];
   for (const p of paths) {
     if (rawPaths) {
-      findings = findings.concat(scanPathRaw(p));
+      findings = findings.concat(scanPathRaw(p, scope));
     } else {
-      findings = findings.concat(scanPath(p));
+      findings = findings.concat(scanPath(p, scope));
     }
   }
 
@@ -339,9 +409,9 @@ function skipDirRaw(name) {
   return name === ".git" || name === ".build" || name === "node_modules";
 }
 
-function scanPathRaw(root) {
+function scanPathRaw(root, scope) {
   const st = fs.statSync(root);
-  if (st.isFile()) return isSwift(root) ? scanFile(root) : [];
+  if (st.isFile()) return isSwift(root) ? scanFile(root, scope) : [];
   const out = [];
   function walk(dir) {
     let ents;
@@ -357,7 +427,7 @@ function scanPathRaw(root) {
         if (skipDirRaw(ent.name)) continue;
         walk(full);
       } else if (isSwift(ent.name)) {
-        out.push.apply(out, scanFile(full));
+        out.push.apply(out, scanFile(full, scope));
       }
     }
   }

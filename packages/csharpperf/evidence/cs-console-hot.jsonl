@@ -1,0 +1,2 @@
+{"rule":"cs-console-hot","case":"console_once","role":"after","dotnet":"10.0.13","median_ms":0.013,"ops":20000,"ratio":1,"ts":"2026-10-23T12:29:29.4666890Z"}
+{"rule":"cs-console-hot","case":"console_in_loop","role":"before","dotnet":"10.0.13","median_ms":0.2333,"ops":20000,"ratio":17.946153846153848,"ts":"2026-10-23T12:29:29.4666890Z"}

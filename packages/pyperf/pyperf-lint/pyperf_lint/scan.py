@@ -1,4 +1,4 @@
-"""Line-window scanner for pp-str-plus-in-loop-pp-print-in-loop (PP004 removed 2026-10-22)."""
+"""Line-window scanner for pp-str-plus-hot-pp-print-hot (PP004 removed 2026-10-22)."""
 from __future__ import annotations
 
 import os
@@ -32,12 +32,12 @@ COUNTER_LHS = re.compile(
 BARE_NAME = re.compile(r"^[A-Za-z_][\w\.]*$")
 
 MSG = {
-    "pp-str-plus-in-loop": "string += in loop; prefer str.join / StringIO",
-    "pp-list-plus-rebind": "list + rebinding in loop; prefer append",
-    "pp-print-in-loop": "print( in loop; gate or buffer",
-    "pp-json-in-loop": "json.loads/dumps in a loop; hoist only when this text stays the same",
-    "pp-deepcopy-in-loop": "deepcopy in loop; copy once or share the structure",
-    "pp-open-in-loop": "open() in a loop; open once when the path stays the same",
+    "pp-str-plus-hot": "string += ; prefer str.join / StringIO — cost adds up even off a hot path",
+    "pp-list-plus-rebind": "list + rebinding; prefer append — cost adds up even off a hot path",
+    "pp-print-hot": "print(; gate or buffer — cost adds up even off a hot path",
+    "pp-json-hot": "json.loads/dumps; hoist only when this text stays the same — cost adds up even off a hot path",
+    "pp-deepcopy-hot": "deepcopy; copy once or share the structure — cost adds up even off a hot path",
+    "pp-open-hot": "builtin open; open once when the path stays the same — cost adds up even off a hot path",
     # "PP004" removed 2026-10-22 — see evidence/_removed/
 }
 
@@ -129,8 +129,9 @@ def _arg_uses(code: str, arg_re: re.Pattern[str], names: list[str]) -> bool:
     return any(n in idents for n in names)
 
 
-def scan_file(path: str | Path) -> List[Finding]:
+def scan_file(path: str | Path, scope: str = "all") -> List[Finding]:
     path = str(path)
+    scope_mode = "loop" if scope == "loop" else "all"
     findings: List[Finding] = []
     try:
         text = Path(path).read_text(encoding="utf-8", errors="replace")
@@ -162,30 +163,31 @@ def scan_file(path: str | Path) -> List[Finding]:
             continue
         in_loop = loop_indent is not None and ind > loop_indent
         in_func = func_indent is not None and ind > func_indent
-        if in_loop:
+        match_here = True if scope_mode == "all" else in_loop
+        if match_here:
             m = RE_STR_PLUS.search(stripped)
             if m and _looks_string_plus(m.group(1), m.group(2), stripped):
-                findings.append(Finding("pp-str-plus-in-loop", path, i, MSG["pp-str-plus-in-loop"]))
+                findings.append(Finding("pp-str-plus-hot", path, i, MSG["pp-str-plus-hot"]))
             if RE_LIST_PLUS.search(stripped):
                 findings.append(Finding("pp-list-plus-rebind", path, i, MSG["pp-list-plus-rebind"]))
             if RE_PRINT.search(stripped):
-                findings.append(Finding("pp-print-in-loop", path, i, MSG["pp-print-in-loop"]))
-            if RE_JSON.search(stripped) and not _arg_uses(stripped, RE_JSON_ARG, loop_names):
-                findings.append(Finding("pp-json-in-loop", path, i, MSG["pp-json-in-loop"]))
+                findings.append(Finding("pp-print-hot", path, i, MSG["pp-print-hot"]))
+            if RE_JSON.search(stripped) and not (in_loop and _arg_uses(stripped, RE_JSON_ARG, loop_names)):
+                findings.append(Finding("pp-json-hot", path, i, MSG["pp-json-hot"]))
             if RE_DEEPCOPY.search(stripped):
-                findings.append(Finding("pp-deepcopy-in-loop", path, i, MSG["pp-deepcopy-in-loop"]))
-            if RE_OPEN.search(stripped) and not _arg_uses(stripped, RE_OPEN_ARG, loop_names):
-                findings.append(Finding("pp-open-in-loop", path, i, MSG["pp-open-in-loop"]))
+                findings.append(Finding("pp-deepcopy-hot", path, i, MSG["pp-deepcopy-hot"]))
+            if RE_OPEN.search(stripped) and not (in_loop and _arg_uses(stripped, RE_OPEN_ARG, loop_names)):
+                findings.append(Finding("pp-open-hot", path, i, MSG["pp-open-hot"]))
         # PP004 removed 2026-10-22 — id tombstoned.
     return findings
 
 
-def scan_path(root: str | Path) -> List[Finding]:
+def scan_path(root: str | Path, scope: str = "all") -> List[Finding]:
     root = Path(root)
     out: List[Finding] = []
     if root.is_file():
         if root.suffix == ".py":
-            out.extend(scan_file(root))
+            out.extend(scan_file(root, scope))
         return out
     for dirpath, dirnames, filenames in os.walk(root):
         dirnames[:] = [d for d in dirnames if d not in SKIP_DIRS and not d.startswith(".")]
@@ -199,5 +201,5 @@ def scan_path(root: str | Path) -> List[Finding]:
                 continue
             if name.startswith("test_") or name.endswith("_tests.py"):
                 continue
-            out.extend(scan_file(base / name))
+            out.extend(scan_file(base / name, scope))
     return out

@@ -32,21 +32,21 @@ fn sev_name(s: Sev) -> &'static str {
 
 fn usage(code: i32) -> ! {
     eprintln!(
-        "Usage: rustperf-lint PATH... [options]\n  --format text|json\n  --severity RULE=error|hint|off\n  --strict-hints\n  --no-fail\n  --raw-paths          include test/bench/examples (baseline dumps)"
+        "Usage: rustperf-lint PATH... [options]\n  --format text|json\n  --severity RULE=error|hint|off\n  --scope all|loop   (default: all)\n  --strict-hints\n  --no-fail\n  --raw-paths          include test/bench/examples (baseline dumps)"
     );
     process::exit(code);
 }
 
 fn default_sev() -> HashMap<&'static str, Sev> {
     HashMap::from([
-        ("rs-alloc-in-loop", Sev::Off),
-        ("rs-println-in-loop", Sev::Hint),
-        ("rs-format-rebind-in-loop", Sev::Error),
-        ("rs-collect-vec-in-loop", Sev::Hint),
-        ("rs-map-new-in-loop", Sev::Hint),
-        ("rs-regex-new-in-loop", Sev::Hint),
-        ("rs-file-open-in-loop", Sev::Hint),
-        ("rs-clock-in-loop", Sev::Hint),
+        ("rs-alloc-hot", Sev::Off),
+        ("rs-println-hot", Sev::Hint),
+        ("rs-format-rebind-hot", Sev::Error),
+        ("rs-collect-vec-hot", Sev::Hint),
+        ("rs-map-new-hot", Sev::Hint),
+        ("rs-regex-new-hot", Sev::Hint),
+        ("rs-file-open-hot", Sev::Hint),
+        ("rs-clock-hot", Sev::Hint),
     ])
 }
 
@@ -59,14 +59,14 @@ fn apply_sev(rs: &mut HashMap<&'static str, Sev>, spec: &str) -> bool {
     };
     // leak rule key into static map of known rules only
     let key = match rule {
-        "rs-alloc-in-loop" => "rs-alloc-in-loop",
-        "rs-println-in-loop" => "rs-println-in-loop",
-        "rs-format-rebind-in-loop" => "rs-format-rebind-in-loop",
-        "rs-collect-vec-in-loop" => "rs-collect-vec-in-loop",
-        "rs-map-new-in-loop" => "rs-map-new-in-loop",
-        "rs-regex-new-in-loop" => "rs-regex-new-in-loop",
-        "rs-file-open-in-loop" => "rs-file-open-in-loop",
-        "rs-clock-in-loop" => "rs-clock-in-loop",
+        "rs-alloc-hot" => "rs-alloc-hot",
+        "rs-println-hot" => "rs-println-hot",
+        "rs-format-rebind-hot" => "rs-format-rebind-hot",
+        "rs-collect-vec-hot" => "rs-collect-vec-hot",
+        "rs-map-new-hot" => "rs-map-new-hot",
+        "rs-regex-new-hot" => "rs-regex-new-hot",
+        "rs-file-open-hot" => "rs-file-open-hot",
+        "rs-clock-hot" => "rs-clock-hot",
         _ => return false,
     };
     rs.insert(key, sev);
@@ -132,6 +132,7 @@ fn main() {
     let mut rs = default_sev();
     let mut format = "text".to_string();
     let mut strict_hints = false;
+    let mut scope = String::from("all");
     let mut no_fail = false;
     let mut paths: Vec<PathBuf> = Vec::new();
     let mut i = 0;
@@ -160,6 +161,20 @@ fn main() {
             strict_hints = true;
         } else if a == "--no-fail" {
             no_fail = true;
+        } else if a == "--scope" {
+            i += 1;
+            if i >= args.len() {
+                usage(2);
+            }
+            scope = args[i].clone();
+            if scope != "all" && scope != "loop" {
+                usage(2);
+            }
+        } else if let Some(rest) = a.strip_prefix("--scope=") {
+            scope = rest.to_string();
+            if scope != "all" && scope != "loop" {
+                usage(2);
+            }
         } else if a == "--raw-paths" {
             ENABLE_REVERSE_OPT.store(false, std::sync::atomic::Ordering::Relaxed);
         } else if a.starts_with('-') {
@@ -174,7 +189,7 @@ fn main() {
     }
     let mut findings: Vec<Finding> = Vec::with_capacity(64);
     for p in &paths {
-        findings.extend(scan_path(p));
+        findings.extend(scan_path(p, &scope));
     }
     let (nerr, nhint) = emit(&findings, &rs, &format);
     if no_fail {

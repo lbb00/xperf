@@ -1,0 +1,2 @@
+{"rule":"kt-list-add-hot","case":"arraylist_capacity","role":"after","kotlin":"2.4.21","jre":"27","median_ms":3.358458,"ops":2000000,"ratio":1.0,"ts":"2026-10-23T12:34:21.919223Z"}
+{"rule":"kt-list-add-hot","case":"list_add_empty","role":"before","kotlin":"2.4.21","jre":"27","median_ms":5.303875,"ops":2000000,"ratio":1.5792589932641705,"ts":"2026-10-23T12:34:21.919223Z"}

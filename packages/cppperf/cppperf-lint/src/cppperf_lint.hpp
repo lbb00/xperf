@@ -9,5 +9,5 @@ struct Finding {
   std::string message;
 };
 
-std::vector<Finding> scan_file(const std::string& path);
-std::vector<Finding> scan_path(const std::string& root);
+std::vector<Finding> scan_file(const std::string& path, const std::string& scope = "all");
+std::vector<Finding> scan_path(const std::string& root, const std::string& scope = "all");

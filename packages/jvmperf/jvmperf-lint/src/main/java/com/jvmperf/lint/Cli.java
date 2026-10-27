@@ -43,6 +43,7 @@ public final class Cli {
         LintConfig.CONFIG.reset();
         LintConfig.CONFIG.includeTests = args.includeTests;
         LintConfig.CONFIG.strictStdioInLoop = args.strictStdioInLoop;
+        LintConfig.CONFIG.scopeAll = args.scopeAll;
 
         if (args.listRules) {
             listRules(System.out);
@@ -287,6 +288,7 @@ public final class Cli {
         String enable = "", disable = "";
         boolean noFail, strictParse, listRules, noHotPropagation;
         boolean includeTests, strictStdioInLoop;
+        boolean scopeAll = true;
         String hotFn = "", hotCallbacks = "";
         int jobs;
 
@@ -302,6 +304,12 @@ public final class Cli {
                     case "--no-hot-propagation" -> a.noHotPropagation = true;
                     case "--include-tests" -> a.includeTests = true;
                     case "--strict-stdio-in-loop" -> a.strictStdioInLoop = true;
+                    case "--scope" -> {
+                        String v = need(argv, ++i, s);
+                        if ("all".equals(v)) a.scopeAll = true;
+                        else if ("loop".equals(v)) a.scopeAll = false;
+                        else throw new UsageException(EXIT_ERROR, "jvmperf-lint: --scope all|loop");
+                    }
                     case "-f", "--format" -> a.format = need(argv, ++i, s);
                     case "--enable" -> a.enable = need(argv, ++i, s);
                     case "--disable" -> a.disable = need(argv, ++i, s);
@@ -333,6 +341,7 @@ public final class Cli {
                     --no-hot-propagation -j N --list-rules --no-fail
                     --include-tests              Also scan source_group=test (skipped by default)
                     --strict-stdio-in-loop       Flag System.out/err and Kotlin print/println in loops
+                    --scope all|loop             Default all; loop = former in-loop-only matching
                     """;
         }
     }

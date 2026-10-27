@@ -1,2 +1,0 @@
-{"rule":"nm-echo-in-loop","case":"echo_once","role":"after","nim":"2.2.12","median_ms":0.003,"ops":10000,"ratio":1.0,"ts":"2026-10-23T13:09:37Z"}
-{"rule":"nm-echo-in-loop","case":"echo_in_loop","role":"before","nim":"2.2.12","median_ms":5.011,"ops":10000,"ratio":1670.3333333333333,"ts":"2026-10-23T13:09:37Z"}

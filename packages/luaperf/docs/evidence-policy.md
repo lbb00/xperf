@@ -15,8 +15,8 @@ As of 2026-10-22.
 
 | Rule | Severity | Evidence | Smell |
 |------|----------|----------|-------|
-| lu-table-insert-in-loop | off | measured (`lu-table-insert-in-loop.md` + `lu-table-insert-in-loop.jsonl`); kept off | table.insert without size / growing table in loop |
-| lu-string-concat-in-loop | **error** | yes (`lu-string-concat-in-loop.md` + `lu-string-concat-in-loop.jsonl`) | string .. concatenation in loop |
-| lu-print-in-loop | hint | yes (`lu-print-in-loop.md` + `lu-print-in-loop.jsonl`) | print in loop |
+| lu-table-insert-hot | off | measured (`lu-table-insert-hot.md` + `lu-table-insert-hot.jsonl`); kept off | table.insert without size / growing table in loop |
+| lu-string-concat-hot | **error** | yes (`lu-string-concat-hot.md` + `lu-string-concat-hot.jsonl`) | string .. concatenation in loop |
+| lu-print-hot | hint | yes (`lu-print-hot.md` + `lu-print-hot.jsonl`) | print in loop |
 
-lu-string-concat-in-loop escalated after G4 microbench on Lua 5.4.7 (fixture-shaped digits ~6.6×; fixed 32-byte chunks ~117×; small N ~1×). lu-table-insert-in-loop stays `off` (G3 OK-idiom). lu-print-in-loop has G4 evidence (print/quiet ~85× to `/dev/null` on Lua 5.4.7) but stays **hint** — I/O sink–dependent, JP002/CP003-style (debug/CLI printers common; buffer-only ~2×).
+lu-string-concat-hot escalated after G4 microbench on Lua 5.4.7 (fixture-shaped digits ~6.6×; fixed 32-byte chunks ~117×; small N ~1×). lu-table-insert-hot stays `off` (G3 OK-idiom). lu-print-hot has G4 evidence (print/quiet ~85× to `/dev/null` on Lua 5.4.7) but stays **hint** — I/O sink–dependent, JP002/CP003-style (debug/CLI printers common; buffer-only ~2×).

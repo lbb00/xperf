@@ -16,7 +16,7 @@ Shallow clones, 2026-10-22 Asia/Shanghai.
 [`scripts/text-lint.cjs`](../scripts/text-lint.cjs) (heuristic parity with SPM sources).
 Install Swift 5.9+ to build `swiftperf-lint` and re-verify.
 
-**corpus-ready: yes** (r4 redesign; text-lint parity). Defaults: sp-array-no-reserve/sp-map-joined-chain **hint**; sp-force-unwrap-in-loop–sp-print-in-loop **off**. No G4.
+**corpus-ready: yes** (r4 redesign; text-lint parity). Defaults: sp-array-no-reserve/sp-map-joined-chain **hint**; sp-force-unwrap-in-loop–sp-print-hot **off**. No G4.
 
 Do not commit corpus sources into `packages/swiftperf`.
 
@@ -24,4 +24,4 @@ Do not commit corpus sources into `packages/swiftperf`.
 
 The slugs below are **hint**. Each has a JSONL microbench and has not been through G2/G3. The 2026-10-22 corpus-ready verdict does not cover them.
 
-- `sp-dateformatter-in-loop`, `sp-json-decode-in-loop`, `sp-regex-in-loop`
+- `sp-dateformatter-hot`, `sp-json-decode-hot`, `sp-regex-hot`

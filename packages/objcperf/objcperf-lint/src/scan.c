@@ -7,17 +7,18 @@
 #include <sys/stat.h>
 
 int g_enable_reverse_opt = 1;
+int g_scope_all = 1;
 
 /* OC001 removed 2026-10-22 — see evidence/_removed/ */
-static const char *MSG002 = "stringByAppendingString in loop; prefer NSMutableString";
-static const char *MSG003 = "NSLog in loop; gate or buffer";
+static const char *MSG002 = "stringByAppendingString; prefer NSMutableString — cost adds up even off a hot path";
+static const char *MSG003 = "NSLog; gate or buffer — cost adds up even off a hot path";
 /* OC004 removed 2026-10-22 */
-static const char *MSG_DATE = "date formatter created in a loop; create it once";
-static const char *MSG_JSON = "JSON parse or encode in a loop; hoist only when this value stays the same";
-static const char *MSG_RE = "regular expression compiled in a loop; compile outside only when this pattern stays the same";
-static const char *MSG_FILE = "file read in a loop; read once when the path stays the same";
-static const char *MSG_CLOCK = "clock sample in a tight loop; hoist only when this iteration does not need a fresh time";
-static const char *MSG_KEY = "lookup by name in a loop; use the field directly when the name is fixed";
+static const char *MSG_DATE = "date formatter created; create it once — cost adds up even off a hot path";
+static const char *MSG_JSON = "JSON parse or encode; hoist only when this value stays the same — cost adds up even off a hot path";
+static const char *MSG_RE = "regular expression compiled; compile outside only when this pattern stays the same — cost adds up even off a hot path";
+static const char *MSG_FILE = "file read; read once when the path stays the same — cost adds up even off a hot path";
+static const char *MSG_CLOCK = "clock sample; hoist only when this iteration does not need a fresh time — cost adds up even off a hot path";
+static const char *MSG_KEY = "lookup by name; use the field directly when the name is fixed — cost adds up even off a hot path";
 
 /* Needles are built from pieces so this translation unit never contains the
  * class or selector spellings as contiguous text. The scan loop is itself a
@@ -291,10 +292,11 @@ Finding *scan_file(const char *path, size_t *out_n) {
         loop_name_n++;
       }
     }
-    if (in_loop > 0 && depth >= in_loop) {
+    int match_here = g_scope_all || (in_loop > 0 && depth >= in_loop);
+    if (match_here) {
       /* OC001 removed 2026-10-22 */
       if (strstr(code, "stringByAppendingString"))
-        arr = push(arr, &n, &cap, "oc-nsstring-append-in-loop", path, line_no, MSG002);
+        arr = push(arr, &n, &cap, "oc-nsstring-append-hot", path, line_no, MSG002);
       if (oc003_signal(code, path)) {
         int skip_log = 0;
         if (g_enable_reverse_opt) {
@@ -306,24 +308,24 @@ Finding *scan_file(const char *path, size_t *out_n) {
           }
         }
         if (!skip_log)
-          arr = push(arr, &n, &cap, "oc-nslog-in-loop", path, line_no, MSG003);
+          arr = push(arr, &n, &cap, "oc-nslog-hot", path, line_no, MSG003);
       }
       if (message_after(code, nd_date, "alloc") || message_after(code, nd_date, "new"))
-        arr = push(arr, &n, &cap, "oc-dateformatter-in-loop", path, line_no, MSG_DATE);
+        arr = push(arr, &n, &cap, "oc-dateformatter-hot", path, line_no, MSG_DATE);
       if ((message_after(code, nd_json, nd_json_parse) || message_after(code, nd_json, nd_json_data)) &&
           !oc_after_uses(code, nd_json_parse, loop_names, loop_name_n) &&
           !oc_after_uses(code, nd_json_data, loop_names, loop_name_n))
-        arr = push(arr, &n, &cap, "oc-json-in-loop", path, line_no, MSG_JSON);
+        arr = push(arr, &n, &cap, "oc-json-hot", path, line_no, MSG_JSON);
       if (message_after(code, nd_re, nd_re_pat) &&
           !oc_after_uses(code, nd_re_pat, loop_names, loop_name_n))
-        arr = push(arr, &n, &cap, "oc-regex-in-loop", path, line_no, MSG_RE);
+        arr = push(arr, &n, &cap, "oc-regex-hot", path, line_no, MSG_RE);
       init_needles();
       if (strstr(code, nd_file) && !oc_after_uses(code, nd_file, loop_names, loop_name_n))
-        arr = push(arr, &n, &cap, "oc-file-read-in-loop", path, line_no, MSG_FILE);
+        arr = push(arr, &n, &cap, "oc-file-read-hot", path, line_no, MSG_FILE);
       if (message_after(code, nd_clock, "date"))
-        arr = push(arr, &n, &cap, "oc-clock-in-loop", path, line_no, MSG_CLOCK);
+        arr = push(arr, &n, &cap, "oc-clock-hot", path, line_no, MSG_CLOCK);
       if (strstr(code, nd_key))
-        arr = push(arr, &n, &cap, "oc-value-for-key-in-loop", path, line_no, MSG_KEY);
+        arr = push(arr, &n, &cap, "oc-value-for-key-hot", path, line_no, MSG_KEY);
       /* OC004 removed 2026-10-22 */
     }
     depth += opens - closes;

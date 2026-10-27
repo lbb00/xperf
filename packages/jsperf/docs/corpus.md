@@ -23,7 +23,7 @@ Checker: **jsperf-lint**.
 **yes** — post-redesign G3 2026-10-22 (Asia/Shanghai). Default residuals **31× jp-string-plus-in-loop**
 (22 TP / 9 OK-idiom). FP+DOC+SKIP **0%**. jp-delete-shape→`off` (was 100% OK-idiom). Triage notes are not shipped (post-redesign).
 
-jp-delete-array-hole stays **error** (G4). On that day jp-string-plus-in-loop and jp-map-filter-chain defaulted to **hint** (string-plus was removed 2026-10-23; see below). jp-alloc-in-loop/jp-console-in-loop/jp-delete-shape default **off**.
+jp-delete-array-hole stays **error** (G4). On that day jp-string-plus-in-loop and jp-map-filter-chain defaulted to **hint** (string-plus was removed 2026-10-23; see below). jp-alloc-hot/jp-console-hot/jp-delete-shape default **off**.
 
 ## Cloned — g3e (2026-10-22 redesign)
 
@@ -63,8 +63,8 @@ Keep guide advice usable for **embed JS and 小程序-like** runtimes (QuickJS).
 
 The 2026-10-22 corpus-ready verdict does not cover the slugs below. They stay **hint** and have not been through G2/G3.
 
-- `jp-regex-ctor-in-loop`, `jp-json-in-loop` — JSONL on disk; still hint. A pattern or text that is the loop binding is not reported.
-- `jp-dom-query-in-loop`, `jp-intl-datetimeformat-in-loop` — JSONL on disk; still hint. A selector, locale, or options value that is the loop binding is not reported.
-- `jp-readfile-sync-in-loop`, `jp-clock-in-loop` — JSONL on disk; still hint. The `for` iterable is not the body. A loop that `await`s is not the clock bench.
+- `jp-regex-ctor-hot`, `jp-json-hot` — JSONL on disk; still hint. A pattern or text that is the loop binding is not reported.
+- `jp-dom-query-hot`, `jp-intl-datetimeformat-hot` — JSONL on disk; still hint. A selector, locale, or options value that is the loop binding is not reported.
+- `jp-readfile-sync-hot`, `jp-clock-hot` — JSONL on disk; still hint. The `for` iterable is not the body. A loop that `await`s is not the clock bench.
 - `jp-map-filter-chain` — JSONL on disk; still hint. Long arrays were about 4.6×–9.8×; a 3-row filter+map was 1.28×.
 - `jp-string-plus-in-loop` — removed the same day. The 2026-10-22 residual counts above are historical. The matcher no longer runs, and those trees were not re-linted for this note.

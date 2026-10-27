@@ -1,6 +1,6 @@
 "use strict";
 /**
- * jp-dom-query-in-loop: querySelector(".item") once vs every pass on a one-element document.
+ * jp-dom-query-hot: querySelector(".item") once vs every pass on a one-element document.
  * linkedom, not a browser. Both sides read textContent. Warm 3, median of 9.
  */
 const fs = require("fs");
@@ -58,12 +58,12 @@ const node = process.version;
 const v8 = process.versions.v8;
 const ts = new Date().toISOString();
 const rows = [
-  { rule: "jp-dom-query-in-loop", case: "query_once", role: "after", node, v8, median_ms: Number(onceMs.toFixed(3)), ops: N, ratio: 1, ts },
-  { rule: "jp-dom-query-in-loop", case: "query_each_iter", role: "before", node, v8, median_ms: Number(eachMs.toFixed(3)), ops: N, ratio: Number((eachMs / onceMs).toFixed(3)), ts },
+  { rule: "jp-dom-query-hot", case: "query_once", role: "after", node, v8, median_ms: Number(onceMs.toFixed(3)), ops: N, ratio: 1, ts },
+  { rule: "jp-dom-query-hot", case: "query_each_iter", role: "before", node, v8, median_ms: Number(eachMs.toFixed(3)), ops: N, ratio: Number((eachMs / onceMs).toFixed(3)), ts },
 ];
 if (OUT_DIR) {
   fs.mkdirSync(OUT_DIR, { recursive: true });
-  const p = path.join(OUT_DIR, "jp-dom-query-in-loop.jsonl");
+  const p = path.join(OUT_DIR, "jp-dom-query-hot.jsonl");
   fs.writeFileSync(p, rows.map((r) => JSON.stringify(r)).join("\n") + "\n");
   console.log("wrote " + p);
 }

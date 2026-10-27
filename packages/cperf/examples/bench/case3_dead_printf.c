@@ -19,7 +19,7 @@ static uint64_t now_ns(void) {
     return (uint64_t)ts.tv_sec * 1000000000ull + (uint64_t)ts.tv_nsec;
 }
 
-/* Named dump_* — cp-printf-in-loop may still flag body depending on suppressions. */
+/* Named dump_* — cp-printf-hot may still flag body depending on suppressions. */
 static void dump_table(int n) {
     for (int i = 0; i < n; i++) {
         printf("%d\n", i);

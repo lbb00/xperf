@@ -1,0 +1,3 @@
+{"rule":"cp-printf-hot","case":"buffered_fprintf","role":"after","node":null,"v8":null,"cc":"cc -std=c11 -O2","median_ms":2.936479,"ops":80000,"ratio":1,"ts":"2026-10-21T11:19:02Z"}
+{"rule":"cp-printf-hot","case":"unbuffered_fprintf","role":"before","node":null,"v8":null,"cc":"cc -std=c11 -O2","median_ms":14.049167,"ops":80000,"ratio":4.784358,"ts":"2026-10-21T11:19:02Z"}
+{"rule":"cp-printf-hot","case":"silent_compute_ref","role":"ref","node":null,"v8":null,"cc":"cc -std=c11 -O2","median_ms":0.025048,"ops":80000,"ratio":560.889755,"ts":"2026-10-21T11:19:02Z"}

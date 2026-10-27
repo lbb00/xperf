@@ -1,2 +1,0 @@
-{"rule":"oc-nsstring-append-in-loop","case":"mutable_string","role":"after","runtime":"gnustep","median_ms":2.171691,"ops":15000,"ratio":1,"ts":"2026-10-22T08:08:34Z"}
-{"rule":"oc-nsstring-append-in-loop","case":"stringByAppending","role":"before","runtime":"gnustep","median_ms":1235.532606,"ops":15000,"ratio":568.926521,"ts":"2026-10-22T08:08:34Z"}

@@ -1,6 +1,0 @@
-{"rule":"lu-string-concat-in-loop","case":"digits_table_concat","role":"after","lua":"Lua 5.5.1","median_ms":3.396000,"ops":20000,"ratio":1.000000,"ts":"2026-10-23T12:27:05Z"}
-{"rule":"lu-string-concat-in-loop","case":"digits_concat_loop","role":"before","lua":"Lua 5.5.1","median_ms":33.485000,"ops":20000,"ratio":9.860130,"ts":"2026-10-23T12:27:05Z"}
-{"rule":"lu-string-concat-in-loop","case":"chunk32_table_concat","role":"after","lua":"Lua 5.5.1","median_ms":0.150000,"ops":10000,"ratio":1.000000,"ts":"2026-10-23T12:27:05Z"}
-{"rule":"lu-string-concat-in-loop","case":"chunk32_concat_loop","role":"before","lua":"Lua 5.5.1","median_ms":38.731000,"ops":10000,"ratio":258.206667,"ts":"2026-10-23T12:27:05Z"}
-{"rule":"lu-string-concat-in-loop","case":"small_n_table_concat","role":"after","lua":"Lua 5.5.1","median_ms":0.009000,"ops":100,"ratio":1.000000,"ts":"2026-10-23T12:27:05Z"}
-{"rule":"lu-string-concat-in-loop","case":"small_n_concat_loop","role":"before","lua":"Lua 5.5.1","median_ms":0.013000,"ops":100,"ratio":1.444444,"ts":"2026-10-23T12:27:05Z"}

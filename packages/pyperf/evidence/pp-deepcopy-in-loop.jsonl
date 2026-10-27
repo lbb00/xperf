@@ -1,2 +1,0 @@
-{"rule":"pp-deepcopy-in-loop","case":"reuse_tree","role":"after","python":"CPython 3.15.1","median_ms":0.154042,"ops":5000,"ratio":1.000000,"ts":"2026-10-23T12:14:45Z"}
-{"rule":"pp-deepcopy-in-loop","case":"deepcopy_each_iter","role":"before","python":"CPython 3.15.1","median_ms":29.745167,"ops":5000,"ratio":193.097584,"ts":"2026-10-23T12:14:45Z"}

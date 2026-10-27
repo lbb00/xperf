@@ -1,7 +1,7 @@
-/* cp-alloc-in-loop evidence: malloc-in-loop vs arena bump for N small ints.
+/* cp-alloc-hot evidence: malloc-in-loop vs arena bump for N small ints.
  *   cc -std=c11 -O2 -o cp001_malloc_vs_arena cp001_malloc_vs_arena.c
  *   ./cp001_malloc_vs_arena [N] [rounds]
- * Prints JSONL lines to stdout (rule cp-alloc-in-loop).
+ * Prints JSONL lines to stdout (rule cp-alloc-hot).
  */
 #define _POSIX_C_SOURCE 199309L
 #include <stdio.h>
@@ -54,7 +54,7 @@ static double median(double *xs, int n) {
     return 0.5 * (xs[n / 2 - 1] + xs[n / 2]);
 }
 
-/* Smell: malloc + free every iteration (cp-alloc-in-loop). */
+/* Smell: malloc + free every iteration (cp-alloc-hot). */
 static volatile int sink;
 
 static double run_malloc_loop(size_t n) {
@@ -130,17 +130,17 @@ int main(int argc, char **argv) {
 
     /* after = arena (clean); before = malloc-in-loop (smell) */
     printf(
-        "{\"rule\":\"cp-alloc-in-loop\",\"case\":\"arena_bump\",\"role\":\"after\","
+        "{\"rule\":\"cp-alloc-hot\",\"case\":\"arena_bump\",\"role\":\"after\","
         "\"node\":null,\"v8\":null,\"cc\":\"%s\",\"median_ms\":%.6f,"
         "\"ops\":%zu,\"ratio\":1,\"ts\":\"%s\"}\n",
         cc, med_a, N, ts);
     printf(
-        "{\"rule\":\"cp-alloc-in-loop\",\"case\":\"malloc_free_in_loop\",\"role\":\"before\","
+        "{\"rule\":\"cp-alloc-hot\",\"case\":\"malloc_free_in_loop\",\"role\":\"before\","
         "\"node\":null,\"v8\":null,\"cc\":\"%s\",\"median_ms\":%.6f,"
         "\"ops\":%zu,\"ratio\":%.6f,\"ts\":\"%s\"}\n",
         cc, med_m, N, ratio, ts);
 
-    fprintf(stderr, "cp-alloc-in-loop N=%zu malloc_ms=%.3f arena_ms=%.3f ratio=%.3f\n",
+    fprintf(stderr, "cp-alloc-hot N=%zu malloc_ms=%.3f arena_ms=%.3f ratio=%.3f\n",
             N, med_m, med_a, ratio);
     free(sm);
     free(sa);

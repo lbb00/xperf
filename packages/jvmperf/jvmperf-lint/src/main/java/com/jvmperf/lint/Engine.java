@@ -503,7 +503,7 @@ public final class Engine {
         return false;
     }
 
-    /** jp-expensive-alloc-in-loop: ThreadLocal / static format-cache fill loops. */
+    /** jp-expensive-alloc-hot: ThreadLocal / static format-cache fill loops. */
     public static boolean threadLocalOrCacheFill(Linter L, TSNode n) {
         TSNode fn = L.enclosingFunc(n);
         if (fn == null) return false;
@@ -569,6 +569,7 @@ public final class Engine {
         }
 
         boolean inLoop(TSNode n) {
+            if (LintConfig.CONFIG.scopeAll) return true;
             int a = n.getStartByte(), b = n.getEndByte();
             for (int[] r : loops) if (r[0] <= a && b <= r[1]) return true;
             return false;
@@ -738,7 +739,7 @@ public final class Engine {
                     case "object_creation_expression" -> creation(n);
                     case "array_creation_expression" -> {
                         if (L.inLoop(n) && loopInvariantDims(n) && !skipExpensiveAlloc(L, n))
-                            L.report(n, "jp-expensive-alloc-in-loop", text(L.src, n));
+                            L.report(n, "jp-expensive-alloc-hot", text(L.src, n));
                     }
                     case "catch_clause" -> catchClause(n);
                                         case "method_declaration" -> {
@@ -845,7 +846,7 @@ public final class Engine {
             if (!isStringVar(n, var)) return;
             String optext = op != null ? text(L.src, op) : "";
             if ("+=".equals(optext) || ("=".equals(optext) && right != null && accumulates(right, var)))
-                L.report(n, "jp-string-concat-in-loop", text(L.src, n).substring(0, Math.min(60, text(L.src, n).length())));
+                L.report(n, "jp-string-concat-hot", text(L.src, n).substring(0, Math.min(60, text(L.src, n).length())));
         }
 
         boolean accumulates(TSNode right, String var) {
@@ -895,33 +896,33 @@ public final class Engine {
             boolean loop = L.inLoop(n);
             if (loop) {
                 if (("Pattern".equals(recv) && "compile".equals(name)) || (recv.endsWith("Pattern") && "compile".equals(name)))
-                    L.report(n, "jp-regex-in-loop", "Pattern.compile(...)");
+                    L.report(n, "jp-regex-hot", "Pattern.compile(...)");
                 else if (Set.of("replaceAll","replaceFirst").contains(name) && argnodes.size() == 2)
-                    L.report(n, "jp-regex-in-loop", "." + name + "(...)：每次调用都编译正则");
+                    L.report(n, "jp-regex-hot", "." + name + "(...)：每次调用都编译正则");
                 else if ("matches".equals(name) && argnodes.size() == 1 && typeIs(argnodes.get(0), "string_literal") && !recv.isEmpty())
-                    L.report(n, "jp-regex-in-loop", ".matches(\"...\")：每次调用都编译正则");
+                    L.report(n, "jp-regex-hot", ".matches(\"...\")：每次调用都编译正则");
                 else if ("split".equals(name) && !argnodes.isEmpty() && typeIs(argnodes.get(0), "string_literal") && !splitFastpath(argnodes.get(0)))
-                    L.report(n, "jp-regex-in-loop", ".split(" + text(L.src, argnodes.get(0)) + ")：非单字符快路径，每次编译正则");
+                    L.report(n, "jp-regex-hot", ".split(" + text(L.src, argnodes.get(0)) + ")：非单字符快路径，每次编译正则");
                 if (("String".equals(recv) && "format".equals(name)) || "formatted".equals(name)) {
                     if (!skipFormatInLoop(L, n))
-                        L.report(n, "jp-format-in-loop", (recv.isEmpty() ? "" : recv + ".") + name + "(...)");
+                        L.report(n, "jp-format-hot", (recv.isEmpty() ? "" : recv + ".") + name + "(...)");
                 }
                 if ("intern".equals(name) && argnodes.isEmpty())
-                    L.report(n, "jp-string-intern-in-loop", (recv.isEmpty() ? "" : recv + ".") + "intern()");
+                    L.report(n, "jp-string-intern-hot", (recv.isEmpty() ? "" : recv + ".") + "intern()");
                 if (Set.of("System.out","System.err").contains(recv) && Set.of("println","print","printf","format").contains(name)) {
                     if (!skipLogInLoop(L, n, true))
-                        L.report(n, "jp-log-in-loop", recv + "." + name + "(...)");
+                        L.report(n, "jp-log-hot", recv + "." + name + "(...)");
                 } else if ("Log".equals(recv) && Set.of("v","d","i","w","e","wtf").contains(name)) {
                     if (!skipLogInLoop(L, n, false))
-                        L.report(n, "jp-log-in-loop", "Log." + name + "(...)");
+                        L.report(n, "jp-log-hot", "Log." + name + "(...)");
                 } else if (Set.of("debug","info","trace","warn","error").contains(name)
                         && Pattern.compile("log", Pattern.CASE_INSENSITIVE).matcher(recv).find()
                         && !argnodes.isEmpty() && isStringConcatArg(argnodes.get(0))) {
                     if (!skipLogInLoop(L, n, false))
-                        L.report(n, "jp-log-in-loop", recv + "." + name + "(\"...\" + ...): string concat before level check");
+                        L.report(n, "jp-log-hot", recv + "." + name + "(\"...\" + ...): string concat before level check");
                 }
                 if (expensiveFactory(recv, name) && !skipExpensiveAlloc(L, n))
-                    L.report(n, "jp-expensive-alloc-in-loop", recv + "." + name + "(...)");
+                    L.report(n, "jp-expensive-alloc-hot", recv + "." + name + "(...)");
                 if ((("Thread".equals(recv) || "SystemClock".equals(recv)) && "sleep".equals(name)
                         || ("TimeUnit.MILLISECONDS".equals(recv) && "sleep".equals(name))) && inWhile(n))
                     L.report(n, "jp-sleep-polling", recv + "." + name + "(...)");
@@ -980,7 +981,7 @@ public final class Engine {
             if (ctype == null) return;
             String cname = text(L.src, ctype).split("<",2)[0].replaceAll(".*\\.","");
             if (L.inLoop(n) && EXPENSIVE_NEW.contains(cname) && !skipExpensiveAlloc(L, n))
-                L.report(n, "jp-expensive-alloc-in-loop", "new " + cname + "(...)");
+                L.report(n, "jp-expensive-alloc-hot", "new " + cname + "(...)");
             if (isClientFactoryType(cname) && shouldFlagClientFactory(L, n))
                 L.report(n, "jp-client-factory-recreate", "new " + cname + "(...)");
         }
@@ -1307,7 +1308,7 @@ public final class Engine {
             String ops = text(L.src, op);
             if (ops.isEmpty()) ops = op.getType();
             if ("+=".equals(ops) || ("=".equals(ops) && accumulates(rhs, var)))
-                L.report(n, "jp-string-concat-in-loop", text(L.src, n).substring(0, Math.min(60, text(L.src, n).length())));
+                L.report(n, "jp-string-concat-hot", text(L.src, n).substring(0, Math.min(60, text(L.src, n).length())));
 
         }
 
@@ -1379,29 +1380,29 @@ public final class Engine {
             List<TSNode> a = args(n);
             if ((recv.isEmpty() && "Regex".equals(name)) || "toRegex".equals(name)
                     || (recv.endsWith("Pattern") && "compile".equals(name)))
-                L.report(n, "jp-regex-in-loop", text(L.src, n).substring(0, Math.min(40, text(L.src, n).length())));
+                L.report(n, "jp-regex-hot", text(L.src, n).substring(0, Math.min(40, text(L.src, n).length())));
             else if (Set.of("replaceAll","replaceFirst").contains(name) && a.size() == 2 && !typeIs(a.get(0), "call_expression"))
-                L.report(n, "jp-regex-in-loop", "." + name + "(...)：Java 的 String." + name + " 每次编译正则");
+                L.report(n, "jp-regex-hot", "." + name + "(...)：Java 的 String." + name + " 每次编译正则");
             if ("format".equals(name) && ("String".equals(recv) || (!children(n).isEmpty() && typeIs(children(n).get(0), "navigation_expression")
                     && !named(children(n).get(0)).isEmpty() && typeIs(named(children(n).get(0)).get(0), "string_literal")))) {
                 if (!skipFormatInLoop(L, n))
-                    L.report(n, "jp-format-in-loop", text(L.src, n).substring(0, Math.min(40, text(L.src, n).length())));
+                    L.report(n, "jp-format-hot", text(L.src, n).substring(0, Math.min(40, text(L.src, n).length())));
             } else if ("formatted".equals(name)) {
-                if (!skipFormatInLoop(L, n)) L.report(n, "jp-format-in-loop", ".formatted(...)");
+                if (!skipFormatInLoop(L, n)) L.report(n, "jp-format-hot", ".formatted(...)");
             }
             if ("intern".equals(name) && a.isEmpty())
-                L.report(n, "jp-string-intern-in-loop", (recv.isEmpty() ? "" : recv + ".") + "intern()");
+                L.report(n, "jp-string-intern-hot", (recv.isEmpty() ? "" : recv + ".") + "intern()");
             if (recv.isEmpty() && Set.of("println","print").contains(name)) {
-                if (!skipLogInLoop(L, n, true)) L.report(n, "jp-log-in-loop", name + "(...)");
+                if (!skipLogInLoop(L, n, true)) L.report(n, "jp-log-hot", name + "(...)");
             } else if (Set.of("System.out","System.err").contains(recv)) {
-                if (!skipLogInLoop(L, n, true)) L.report(n, "jp-log-in-loop", recv + "." + name + "(...)");
+                if (!skipLogInLoop(L, n, true)) L.report(n, "jp-log-hot", recv + "." + name + "(...)");
             } else if ("Log".equals(recv) && Set.of("v","d","i","w","e","wtf").contains(name)) {
-                if (!skipLogInLoop(L, n, false)) L.report(n, "jp-log-in-loop", recv + "." + name + "(...)");
+                if (!skipLogInLoop(L, n, false)) L.report(n, "jp-log-hot", recv + "." + name + "(...)");
             } else if (Set.of("debug","info","trace","warn","error").contains(name)
                     && Pattern.compile("log", Pattern.CASE_INSENSITIVE).matcher(recv).find()
                     && !a.isEmpty() && isStringConcatArg(a.get(0))) {
                 if (!skipLogInLoop(L, n, false))
-                    L.report(n, "jp-log-in-loop", recv + "." + name + "(\"...\" + ...)");
+                    L.report(n, "jp-log-hot", recv + "." + name + "(\"...\" + ...)");
             }
             if ((("Thread".equals(recv) || "SystemClock".equals(recv)) && "sleep".equals(name)) && inWhile(n))
                 L.report(n, "jp-sleep-polling", recv + "." + name + "(...)");
@@ -1411,21 +1412,21 @@ public final class Engine {
                     "DateTimeFormatter:ofPattern","NumberFormat:getInstance",
                     "ByteBuffer:allocate","ByteBuffer:allocateDirect","JsonMapper:builder").contains(recvLeaf + ":" + name))
                     && !skipExpensiveAlloc(L, n))
-                L.report(n, "jp-expensive-alloc-in-loop", text(L.src, n).substring(0, Math.min(40, text(L.src, n).length())));
+                L.report(n, "jp-expensive-alloc-hot", text(L.src, n).substring(0, Math.min(40, text(L.src, n).length())));
             else if (recv.isEmpty() && KT_ARRAY_CTORS.contains(name) && a.size() == 1
                     && text(L.src, a.get(0)).matches("\\d[\\d_]*")
                     && Integer.parseInt(text(L.src, a.get(0)).replace("_","")) >= BIG_BUFFER && !hasLambda(n)
                     && !skipExpensiveAlloc(L, n))
-                L.report(n, "jp-expensive-alloc-in-loop", text(L.src, n) + "：常量大小的缓冲在每次迭代都重新分配");
+                L.report(n, "jp-expensive-alloc-hot", text(L.src, n) + "：常量大小的缓冲在每次迭代都重新分配");
             if ("copy".equals(name) && !recv.isEmpty()) {
                 boolean namedArg = a.stream().anyMatch(c -> typeIs(c, "value_argument")
                         && children(c).stream().anyMatch(Ast::isIdent)
                         && text(L.src, c).contains("="));
-                if (namedArg) L.report(n, "jp-data-copy-in-loop", text(L.src, n).substring(0, Math.min(50, text(L.src, n).length())));
+                if (namedArg) L.report(n, "jp-data-copy-hot", text(L.src, n).substring(0, Math.min(50, text(L.src, n).length())));
             }
             if (hasLambda(n) && recv.isEmpty() && L.localFns.containsKey(name)) {
                 boolean[] info = L.localFns.get(name);
-                if (info[1] && !info[0]) L.report(n, "jp-lambda-to-non-inline-in-loop", name + " { ... }：" + name + " 不是 inline 函数");
+                if (info[1] && !info[0]) L.report(n, "jp-lambda-to-non-inline-hot", name + " { ... }：" + name + " 不是 inline 函数");
             }
             if (SHORT_CIRCUIT.contains(name) || CHAIN_OPS.contains(name)) chain(n);
         }

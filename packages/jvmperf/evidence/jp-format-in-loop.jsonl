@@ -1,2 +1,0 @@
-{"rule":"jp-format-in-loop","case":"stringFormat_reps1","role":"before","jdk":"27 (27+35)","jvm_args":"-XX:+UseCompactObjectHeaders","ns_per_op":1022.449,"alloc_b_per_op":1368.006,"ratio":29.091,"jmh":"1.37","source":"J27_FormatHot.jsonl","ts":"2026-10-23T20:51:37.656025+08:00"}
-{"rule":"jp-format-in-loop","case":"stringBuilderAppend_reps1","role":"after","jdk":"27 (27+35)","jvm_args":"-XX:+UseCompactObjectHeaders","ns_per_op":35.147,"alloc_b_per_op":88.000,"ratio":1,"jmh":"1.37","source":"J27_FormatHot.jsonl","ts":"2026-10-23T20:51:37.656025+08:00"}

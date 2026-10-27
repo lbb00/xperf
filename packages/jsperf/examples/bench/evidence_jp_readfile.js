@@ -1,6 +1,6 @@
 "use strict";
 /**
- * jp-readfile-sync-in-loop: readFileSync of one 1-byte file, once vs every pass.
+ * jp-readfile-sync-hot: readFileSync of one 1-byte file, once vs every pass.
  * Warm 3, median of 9. Writes JSONL only when EVIDENCE_DIR is set.
  */
 const fs = require("fs");
@@ -56,12 +56,12 @@ const node = process.version;
 const v8 = process.versions.v8;
 const ts = new Date().toISOString();
 const rows = [
-  { rule: "jp-readfile-sync-in-loop", case: "read_once", role: "after", node, v8, median_ms: Number(onceMs.toFixed(3)), ops: N, ratio: 1, ts },
-  { rule: "jp-readfile-sync-in-loop", case: "read_each_iter", role: "before", node, v8, median_ms: Number(eachMs.toFixed(3)), ops: N, ratio: Number((eachMs / onceMs).toFixed(3)), ts },
+  { rule: "jp-readfile-sync-hot", case: "read_once", role: "after", node, v8, median_ms: Number(onceMs.toFixed(3)), ops: N, ratio: 1, ts },
+  { rule: "jp-readfile-sync-hot", case: "read_each_iter", role: "before", node, v8, median_ms: Number(eachMs.toFixed(3)), ops: N, ratio: Number((eachMs / onceMs).toFixed(3)), ts },
 ];
 if (OUT_DIR) {
   fs.mkdirSync(OUT_DIR, { recursive: true });
-  const p = path.join(OUT_DIR, "jp-readfile-sync-in-loop.jsonl");
+  const p = path.join(OUT_DIR, "jp-readfile-sync-hot.jsonl");
   fs.writeFileSync(p, rows.map((r) => JSON.stringify(r)).join("\n") + "\n");
   console.log("wrote " + p);
 }

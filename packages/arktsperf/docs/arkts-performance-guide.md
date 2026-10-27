@@ -23,7 +23,7 @@ Less GC churn and shape pollution on embed / HarmonyOS hot paths.
 
 Object / array literals and `new` inside tight UI or animation loops increase GC pressure. Reuse buffers when profiles show pressure.
 
-Companion lint: **at-alloc-in-loop**.
+Companion lint: **at-alloc-hot**.
 
 ## 2. Shapes and delete
 
@@ -35,22 +35,22 @@ A Node proxy of `delete` versus `Map.delete` was about 1×, so there is no lint 
 
 `console.log` and frequent sync cross-language / worker bridge calls on the hot path stall frames. Gate debug I/O.
 
-Companion lint: **at-console-in-loop**.
+Companion lint: **at-console-hot**.
 
 ## 4. Lookups and JSON in loops
 
 `Array.includes` / `indexOf` over a list inside a hot loop is linear per iteration; build a `Set` once and use `has`. For short strings, a dense lookup table beats `Map` (a `Map` often loses on short haystacks). Parsing or stringifying many small JSON values in a loop repeats allocation and parsing work; parse one array blob or reuse buffers.
 
-Companion lint: **at-includes-in-loop**, **at-json-in-loop** (both default **hint**). Their JSONL evidence is a Node proxy, not an ArkTS VM, so it cannot raise severity on its own.
+Companion lint: **at-includes-hot**, **at-json-hot** (both default **hint**). Their JSONL evidence is a Node proxy, not an ArkTS VM, so it cannot raise severity on its own.
 
 ## Lint map
 
 | ID | Smell | Default |
 |----|-------|---------|
-| at-alloc-in-loop | alloc-like in loop | off |
-| at-console-in-loop | console / bridge chatter in loop | off |
-| at-includes-in-loop | `includes` / `indexOf` in loop | hint |
-| at-json-in-loop | `JSON.parse` / `stringify` in loop | hint |
+| at-alloc-hot | alloc-like in loop | off |
+| at-console-hot | console / bridge chatter in loop | off |
+| at-includes-hot | `includes` / `indexOf` in loop | hint |
+| at-json-hot | `JSON.parse` / `stringify` in loop | hint |
 
 Escalate only with a device or ArkTS-VM bench on top of `evidence/at-*.jsonl` (see [evidence-policy.md](evidence-policy.md)).
 

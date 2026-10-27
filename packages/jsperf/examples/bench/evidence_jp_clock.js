@@ -1,6 +1,6 @@
 "use strict";
 /**
- * jp-clock-in-loop: Date.now / performance.now once outside the loop vs each pass.
+ * jp-clock-hot: Date.now / performance.now once outside the loop vs each pass.
  * Warm 3, median of 9. Prints every sample. Writes JSONL only when EVIDENCE_DIR is set.
  */
 const fs = require("fs");
@@ -71,15 +71,15 @@ const node = process.version;
 const v8 = process.versions.v8;
 const ts = new Date().toISOString();
 const rows = [
-  { rule: "jp-clock-in-loop", case: "date_now_once", role: "after", node, v8, median_ms: dateOnceMs, ops: N, ratio: 1, ts },
-  { rule: "jp-clock-in-loop", case: "date_now_each", role: "before", node, v8, median_ms: dateEachMs, ops: N, ratio: dateEachMs / dateOnceMs, ts },
-  { rule: "jp-clock-in-loop", case: "perf_now_once", role: "after", node, v8, median_ms: perfOnceMs, ops: N, ratio: 1, ts },
-  { rule: "jp-clock-in-loop", case: "perf_now_each", role: "before", node, v8, median_ms: perfEachMs, ops: N, ratio: perfEachMs / perfOnceMs, ts },
+  { rule: "jp-clock-hot", case: "date_now_once", role: "after", node, v8, median_ms: dateOnceMs, ops: N, ratio: 1, ts },
+  { rule: "jp-clock-hot", case: "date_now_each", role: "before", node, v8, median_ms: dateEachMs, ops: N, ratio: dateEachMs / dateOnceMs, ts },
+  { rule: "jp-clock-hot", case: "perf_now_once", role: "after", node, v8, median_ms: perfOnceMs, ops: N, ratio: 1, ts },
+  { rule: "jp-clock-hot", case: "perf_now_each", role: "before", node, v8, median_ms: perfEachMs, ops: N, ratio: perfEachMs / perfOnceMs, ts },
 ];
 
 if (OUT_DIR) {
   fs.mkdirSync(OUT_DIR, { recursive: true });
-  const p = path.join(OUT_DIR, "jp-clock-in-loop.jsonl");
+  const p = path.join(OUT_DIR, "jp-clock-hot.jsonl");
   fs.writeFileSync(p, rows.map((r) => JSON.stringify(r)).join("\n") + "\n");
   console.log("wrote " + p);
 }

@@ -28,7 +28,7 @@ zperf-lint [options] <file-or-directory>...
   --hot-fn <names,...>           Add hot function names for zp-per-packet-alloc; a trailing * is a prefix wildcard
   --hot-fn-preset <name>         Append a named hot-fn set (`server`: accept/handleRequest/serve/…)
   --no-hot-propagation           Do not propagate hot status through local calls
-  --strict-log-in-loop           zp-print-in-loop also flags `std.log.*` / `log.*` in loops (default: `debug.print` only)
+  --strict-log-in-loop           zp-print-hot also flags `std.log.*` / `log.*` in loops (default: `debug.print` only)
   --include-tests                Also lint `build.zig`, `**/tests/**`, `**/*test*.zig`, `**/testing/**`, `**/Build/**`, `**/*benchmark*.zig`, `**/benchmarks/**`
   --include-scripts              Also lint files under `scripts/` (skipped by default)
   --include-compiler-rt          Also lint `compiler_rt` / `lib/compiler_rt` (skipped by default)
@@ -105,27 +105,27 @@ The `message_zh` and `fix` fields are Chinese; documentation and source comments
 ## Suppressions
 
 ```zig
-// zperf-lint: ignore zp-alloc-in-loop       // Ignore this line and the next line.
+// zperf-lint: ignore zp-alloc-hot       // Ignore this line and the next line.
 const buf = try gpa.alloc(u8, n); // zperf-lint: ignore alloc-in-loop
 // zperf-lint: ignore             // Ignore all rules on this line and the next.
 // zperf-lint: ignore-file zp-packable-bools,zp-usize-index-field
-// zperf-lint: ignore zp-print-in-loop -- Intentional diagnostic output.
+// zperf-lint: ignore zp-print-hot -- Intentional diagnostic output.
 ```
 
 ## Rules
 
 Severity levels are `warning` (likely problem), `info` (review recommended), `hint` (usually relevant only on a hot path), and `off`. The severity column is the default from `src/rules.zig`.
 
-`off` rules were demoted after G3/r4 triage on zig std/compiler, tigerbeetle, and ghostty (OK-idiom mass). As built, the command line never reports an `off` rule: `--enable` only selects among the active rules, and only the fixture tests turn `off` rules on (`include_off_rules` in `src/lint.zig`). The nine default-on rules are **zp-page-allocator-small, zp-broad-runtime-safety, zp-static-string-map, zp-queue-ordered-remove, zp-shift-on-read, zp-invariant-float-div, zp-arena-reset-free-all, zp-create-destroy-in-loop, zp-fixed-size-alloc-in-loop**. Options that tune an `off` rule (`--large-struct-bytes`, `--strict-log-in-loop`, `--hot-fn`, `--hot-fn-preset`) therefore have no visible effect on the command line.
+`off` rules were demoted after G3/r4 triage on zig std/compiler, tigerbeetle, and ghostty (OK-idiom mass). As built, the command line never reports an `off` rule: `--enable` only selects among the active rules, and only the fixture tests turn `off` rules on (`include_off_rules` in `src/lint.zig`). The nine default-on rules are **zp-page-allocator-small, zp-broad-runtime-safety, zp-static-string-map, zp-queue-ordered-remove, zp-shift-on-read, zp-invariant-float-div, zp-arena-reset-free-all, zp-create-destroy-hot, zp-fixed-size-alloc-hot**. Options that tune an `off` rule (`--large-struct-bytes`, `--strict-log-in-loop`, `--hot-fn`, `--hot-fn-preset`) therefore have no visible effect on the command line.
 
 | ID | Name | Severity | Detection |
 |---|---|---|---|
-| zp-alloc-in-loop | `alloc-in-loop` | off | Heap allocation in a loop body; skips arena-like receivers and soft-arena args (`sema.arena`, `*.arena`, same as zp-append-without-reserve). |
+| zp-alloc-hot | `alloc-in-loop` | off | Heap allocation in a loop body; skips arena-like receivers and soft-arena args (`sema.arena`, `*.arena`, same as zp-append-without-reserve). |
 | zp-append-without-reserve | `append-without-reserve` | off | Append in a loop without prior capacity reservation; skips arena/`alloc` args and test blocks. |
 | zp-page-allocator-small | `page-allocator-small` | warning | Direct use of `page_allocator` / `*.page_allocator` for small or container allocations (not `huge_page_allocator`). |
 | zp-debug-allocator | `debug-allocator` | off | GeneralPurposeAllocator/DebugAllocator use without a visible build-mode selection. |
 | zp-large-struct-by-value | `large-struct-by-value` | off | Passing a large locally declared struct by value. |
-| zp-print-in-loop | `print-in-loop` | off | `std.debug.print` inside a loop; `std.log.*` only with `--strict-log-in-loop`. |
+| zp-print-hot | `print-in-loop` | off | `std.debug.print` inside a loop; `std.log.*` only with `--strict-log-in-loop`. |
 | zp-unbuffered-io | `unbuffered-io` | off | Empty-buffer reader/writer; skips tests, `readVec`/`writeVec`, same-line buffer comments, bulk helpers, one-shot writes. |
 | zp-missing-free | `missing-free` | off | Allocation or initialization without visible deinit/free/destroy or ownership transfer. |
 | zp-broad-runtime-safety | `broad-runtime-safety` | warning | `@setRuntimeSafety(false)` covers a broad scope. |
@@ -137,7 +137,7 @@ Severity levels are `warning` (likely problem), `info` (review recommended), `hi
 | zp-optional-scalar-field | `optional-scalar-field` | off | An optional scalar struct field may add padding. |
 | zp-bool-array | `bool-array` | off | A bool array or slice is used as a bit set. |
 | zp-static-string-map | `static-string-map` | info | A string hash map is populated only with literal keys. |
-| zp-runtime-div-in-loop | `runtime-div-in-loop` | off | Division or modulo by a runtime value inside a loop; skipped under `crypto/` / `compiler_rt/` paths and soft-div fn names (`udiv*`, …). Residual FPs: non-crypto number-theory / codec loops. |
+| zp-runtime-div-hot | `runtime-div-in-loop` | off | Division or modulo by a runtime value inside a loop; skipped under `crypto/` / `compiler_rt/` paths and soft-div fn names (`udiv*`, …). Residual FPs: non-crypto number-theory / codec loops. |
 | zp-queue-ordered-remove | `queue-ordered-remove` | warning | `orderedRemove` is used as a queue operation or repeatedly in a loop. |
 | zp-shift-on-read | `shift-on-read` | warning | Remaining bytes are shifted to the start after consuming a prefix. |
 | zp-per-packet-alloc | `per-packet-alloc` | off | Heap allocation on an inferred or explicitly marked packet/frame hot path. |
@@ -145,8 +145,8 @@ Severity levels are `warning` (likely problem), `info` (review recommended), `hi
 | zp-map-put-without-ensure | `map-put-without-ensure` | off | HashMap `put`/`getOrPut` in a loop without prior `ensure*`. |
 | zp-catch-unreachable-io | `catch-unreachable-io` | off | `catch unreachable` on fallible I/O (not close/eventfd/kevent). |
 | zp-arena-reset-free-all | `arena-reset-free-all` | warning | `ArenaAllocator.reset(.free_all)` or arena deinit+recreate inside a loop; prefer retain_capacity / retain_with_limit. |
-| zp-create-destroy-in-loop | `create-destroy-in-loop` | info | `allocator.create(T)` paired with `destroy` in the same loop; prefer MemoryPool(T). |
-| zp-fixed-size-alloc-in-loop | `fixed-size-alloc-in-loop` | info | `alloc(u8, comptime_int)` (≥16) in a loop; prefer a size-class buffer pool. |
+| zp-create-destroy-hot | `create-destroy-in-loop` | info | `allocator.create(T)` paired with `destroy` in the same loop; prefer MemoryPool(T). |
+| zp-fixed-size-alloc-hot | `fixed-size-alloc-in-loop` | info | `alloc(u8, comptime_int)` (≥16) in a loop; prefer a size-class buffer pool. |
 
 Rules are syntax-based and conservative: no reliable types, ownership, ABI, bounds, or true hotness. See `src/rules.zig` and `--list-rules` for fixes and caveats.
 

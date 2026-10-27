@@ -2,7 +2,7 @@
 
 Nim performance notes and same-language `nimperf-lint`.
 
-Part of [XPerf](../../README.md). **Corpus-ready** (G3 2026-10-22). Defaults: nm-seq-add-in-loop and nm-echo-in-loop **off**; nm-seq-no-capacity **hint**. `nm-string-amp-in-loop` was removed. Requires `nim` (choosenim).
+Part of [XPerf](../../README.md). **Corpus-ready** (G3 2026-10-22). Defaults: nm-seq-add-hot and nm-echo-hot **off**; nm-seq-no-capacity **hint**. `nm-string-amp-in-loop` was removed. Requires `nim` (choosenim).
 
 ## Contents
 

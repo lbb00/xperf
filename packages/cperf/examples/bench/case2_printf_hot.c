@@ -1,7 +1,7 @@
 #ifndef _POSIX_C_SOURCE
 #define _POSIX_C_SOURCE 200809L
 #endif
-/* cp-printf-in-loop: printf in hot loop vs buffered / no-print. cc -O2
+/* cp-printf-hot: printf in hot loop vs buffered / no-print. cc -O2
  * Usage: ./case2 smell|clean|silent [N]
  * smell  = setvbuf(_IONBF) + fprintf each iter
  * clean  = setvbuf large + fprintf each iter (same calls, buffered)

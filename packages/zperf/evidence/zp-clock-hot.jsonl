@@ -1,0 +1,2 @@
+{"rule":"zp-clock-hot","case":"sample_once","role":"after","zig":"0.17.0","median_ms":0.051,"ops":100000,"ratio":1,"ts":"2026-10-23T06:50:00Z"}
+{"rule":"zp-clock-hot","case":"sample_each_iter","role":"before","zig":"0.17.0","median_ms":2.128,"ops":100000,"ratio":41.615,"ts":"2026-10-23T06:50:00Z"}

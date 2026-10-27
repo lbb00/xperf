@@ -21,21 +21,21 @@ Fewer quadratic builders, quieter hot paths.
 
 `$s .= $piece` in a loop can still be costly at scale; prefer collectors + `implode`. Repeated `$a = array_merge($a, …)` copies; prefer `$a[] = $item`.
 
-Companion lint: **ph-string-dot-in-loop**, **ph-array-merge-rebind**.
+Companion lint: **ph-string-dot-hot**, **ph-array-merge-rebind**.
 
 ## 2. Hot I/O
 
 `echo` / `print` in a tight loop flushes. Gate debug output or buffer.
 
-Companion lint: **ph-echo-in-loop**.
+Companion lint: **ph-echo-hot**.
 
 ## Lint map
 
 | ID | Smell | Default |
 |----|-------|---------|
-| ph-string-dot-in-loop | string `.=` in loop | off |
+| ph-string-dot-hot | string `.=` in loop | off |
 | ph-array-merge-rebind | `array_merge` rebinding in loop | **error** |
-| ph-echo-in-loop | `echo` / `print` in loop | hint |
+| ph-echo-hot | `echo` / `print` in loop | hint |
 
 Escalate only with `evidence/ph-*.jsonl` — see [evidence-policy.md](evidence-policy.md).
 

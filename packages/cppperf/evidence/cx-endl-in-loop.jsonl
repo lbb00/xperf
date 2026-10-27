@@ -1,4 +1,0 @@
-{"rule":"cx-endl-in-loop","case":"newline_on_cout","role":"after","node":null,"v8":null,"cc":"clang++ -std=c++17 -O2","median_ms":1.02238,"ops":20000,"ratio":1,"ts":"2026-10-23T05:20:31Z"}
-{"rule":"cx-endl-in-loop","case":"endl_on_cout","role":"before","node":null,"v8":null,"cc":"clang++ -std=c++17 -O2","median_ms":23.1283,"ops":20000,"ratio":22.6221,"ts":"2026-10-23T05:20:31Z"}
-{"rule":"cx-endl-in-loop","case":"newline_on_ostringstream","role":"after","node":null,"v8":null,"cc":"clang++ -std=c++17 -O2","median_ms":3.92287,"ops":50000,"ratio":1,"ts":"2026-10-23T05:20:31Z"}
-{"rule":"cx-endl-in-loop","case":"endl_on_ostringstream","role":"before","node":null,"v8":null,"cc":"clang++ -std=c++17 -O2","median_ms":3.39654,"ops":50000,"ratio":0.86583,"ts":"2026-10-23T05:20:31Z"}

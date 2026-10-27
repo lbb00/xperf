@@ -1,0 +1,2 @@
+{"rule":"ph-echo-hot","case":"implode_once","role":"after","php":"PHP 8.5.12","median_ms":0.575792,"ops":20000,"ratio":1.000000,"ts":"2026-10-23T12:24:57Z"}
+{"rule":"ph-echo-hot","case":"echo_each_iter","role":"before","php":"PHP 8.5.12","median_ms":12.272208,"ops":20000,"ratio":21.313613,"ts":"2026-10-23T12:24:57Z"}

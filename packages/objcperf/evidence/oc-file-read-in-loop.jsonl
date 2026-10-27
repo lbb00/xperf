@@ -1,2 +1,0 @@
-{"rule":"oc-file-read-in-loop","case":"read_once","role":"after","cc":"clang -O2 -framework Foundation","median_ms":0.007,"ops":500,"ratio":1,"ts":"2026-10-23T06:26:22Z"}
-{"rule":"oc-file-read-in-loop","case":"read_each_iter","role":"before","cc":"clang -O2 -framework Foundation","median_ms":3.184,"ops":500,"ratio":449.707,"ts":"2026-10-23T06:26:22Z"}

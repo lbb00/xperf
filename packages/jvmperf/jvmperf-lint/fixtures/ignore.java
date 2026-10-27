@@ -1,4 +1,4 @@
-// jvmperf-lint: ignore-file jp-format-in-loop
+// jvmperf-lint: ignore-file jp-format-hot
 import java.util.*;
 class Ignored {
     org.slf4j.Logger log;

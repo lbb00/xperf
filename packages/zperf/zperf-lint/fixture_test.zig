@@ -6,7 +6,7 @@ const rules = @import("src/rules.zig");
 fn countRule(source: [:0]const u8, id: rules.Id, total: *usize) !usize {
     var arena: std.heap.ArenaAllocator = .init(std.testing.allocator);
     defer arena.deinit();
-    const cfg: lint.Config = .{ .include_off_rules = true };
+    const cfg: lint.Config = .{ .include_off_rules = true, .scope_all = false };
     const res = try lint.lintSource(arena.allocator(), source, &cfg);
     try std.testing.expect(res.parse_error == null);
     total.* = res.findings.len;
@@ -46,7 +46,7 @@ test "--enable 只开指定规则" {
     defer arena.deinit();
     var cfg: lint.Config = .{ .enabled = .empty };
     cfg.enabled.insert(.bool_array);
-    const res = try lint.lintSource(arena.allocator(), @embedFile("fixtures/bad/zp-alloc-in-loop.zig"), &cfg);
+    const res = try lint.lintSource(arena.allocator(), @embedFile("fixtures/bad/zp-alloc-hot.zig"), &cfg);
     try std.testing.expectEqual(@as(usize, 0), res.findings.len);
 }
 
@@ -70,7 +70,7 @@ test "Zig 0.16 兼容解析：`**` 被归一化，列号不变" {
 test "热标注 + 本文件调用传播（原因链）" {
     var arena: std.heap.ArenaAllocator = .init(std.testing.allocator);
     defer arena.deinit();
-    var cfg: lint.Config = .{ .include_off_rules = true }; // zp-per-packet-alloc default off after G3
+    var cfg: lint.Config = .{ .include_off_rules = true, .scope_all = false }; // zp-per-packet-alloc default off after G3
     const res = try lint.lintSource(arena.allocator(), @embedFile("fixtures/hot_prop.zig"), &cfg);
     var hit: ?lint.Finding = null;
     for (res.findings) |f| if (f.rule == .per_packet_alloc) {
@@ -98,7 +98,7 @@ test "zp-per-packet-alloc 不把通用 handle 当热路径，具体 handle 前�
     ;
     var arena: std.heap.ArenaAllocator = .init(std.testing.allocator);
     defer arena.deinit();
-    var cfg: lint.Config = .{ .include_off_rules = true }; // zp-per-packet-alloc default off after G3
+    var cfg: lint.Config = .{ .include_off_rules = true, .scope_all = false }; // zp-per-packet-alloc default off after G3
     const res = try lint.lintSource(arena.allocator(), source, &cfg);
     try std.testing.expect(res.parse_error == null);
     var hits: usize = 0;
@@ -110,7 +110,7 @@ test "zp-per-packet-alloc 不把通用 handle 当热路径，具体 handle 前�
     }
     try std.testing.expectEqual(@as(usize, 2), hits);
 
-    cfg = .{ .include_off_rules = true, .hot_fns = &.{"handle"} };
+    cfg = .{ .include_off_rules = true, .scope_all = false, .hot_fns = &.{"handle"} };
     const explicitly_hot = try lint.lintSource(arena.allocator(), source, &cfg);
     var handle_hit = false;
     for (explicitly_hot.findings) |f| {
@@ -147,7 +147,7 @@ test "zp-append-without-reserve 检测循环条件分支中的 append" {
     ;
     var arena: std.heap.ArenaAllocator = .init(std.testing.allocator);
     defer arena.deinit();
-    const cfg: lint.Config = .{ .include_off_rules = true };
+    const cfg: lint.Config = .{ .include_off_rules = true, .scope_all = false };
     const res = try lint.lintSource(arena.allocator(), source, &cfg);
     try std.testing.expect(res.parse_error == null);
     for (res.findings) |f| if (f.rule == .append_without_reserve) return;
@@ -169,7 +169,7 @@ test "zp-append-without-reserve 检测 while 循环中的 append" {
     ;
     var arena: std.heap.ArenaAllocator = .init(std.testing.allocator);
     defer arena.deinit();
-    const cfg: lint.Config = .{ .include_off_rules = true };
+    const cfg: lint.Config = .{ .include_off_rules = true, .scope_all = false };
     const res = try lint.lintSource(arena.allocator(), source, &cfg);
     try std.testing.expect(res.parse_error == null);
     for (res.findings) |f| if (f.rule == .append_without_reserve) return;
@@ -191,7 +191,7 @@ test "zp-per-packet-alloc 把 callconv(c) 函数视为热路径入口" {
     ;
     var arena: std.heap.ArenaAllocator = .init(std.testing.allocator);
     defer arena.deinit();
-    const cfg: lint.Config = .{ .include_off_rules = true };
+    const cfg: lint.Config = .{ .include_off_rules = true, .scope_all = false };
     const res = try lint.lintSource(arena.allocator(), source, &cfg);
     try std.testing.expect(res.parse_error == null);
     var callback_hit = false;
@@ -206,7 +206,7 @@ test "zp-per-packet-alloc 把 callconv(c) 函数视为热路径入口" {
 }
 
 
-test "zp-print-in-loop 默认不报 log.*，--strict-log-in-loop 才报" {
+test "zp-print-hot 默认不报 log.*，--strict-log-in-loop 才报" {
     const source =
         \\const std = @import("std");
         \\const log = std.log.scoped(.t);
@@ -219,7 +219,7 @@ test "zp-print-in-loop 默认不报 log.*，--strict-log-in-loop 才报" {
     ;
     var arena: std.heap.ArenaAllocator = .init(std.testing.allocator);
     defer arena.deinit();
-    var cfg: lint.Config = .{ .include_off_rules = true }; // zp-print-in-loop default off after G3
+    var cfg: lint.Config = .{ .include_off_rules = true, .scope_all = false }; // zp-print-hot default off after G3
     const def = try lint.lintSource(arena.allocator(), source, &cfg);
     try std.testing.expect(def.parse_error == null);
     var log_hits: usize = 0;
@@ -264,15 +264,15 @@ test "zp-unbuffered-io 跳过 test 块内一次性 writeAll" {
     ;
     var arena: std.heap.ArenaAllocator = .init(std.testing.allocator);
     defer arena.deinit();
-    const cfg: lint.Config = .{ .include_off_rules = true };
+    const cfg: lint.Config = .{ .include_off_rules = true, .scope_all = false };
     const res = try lint.lintSource(arena.allocator(), source, &cfg);
     try std.testing.expect(res.parse_error == null);
     for (res.findings) |f| if (f.rule == .unbuffered_io) return error.UnexpectedUnbufferedIo;
 }
 
-test "zp-runtime-div-in-loop 跳过 capacity 与 std.time 常量除数" {
+test "zp-runtime-div-hot 跳过 capacity 与 std.time 常量除数" {
     var total: usize = 0;
-    const n = try countRule(@embedFile("fixtures/good/zp-runtime-div-in-loop.zig"), .runtime_div_in_loop, &total);
+    const n = try countRule(@embedFile("fixtures/good/zp-runtime-div-hot.zig"), .runtime_div_in_loop, &total);
     try std.testing.expectEqual(@as(usize, 0), n);
     try std.testing.expectEqual(@as(usize, 0), total);
 }
@@ -305,7 +305,7 @@ test "tip Zig errdefer payload normalize" {
     ;
     var arena: std.heap.ArenaAllocator = .init(std.testing.allocator);
     defer arena.deinit();
-    const cfg: lint.Config = .{ .include_off_rules = true };
+    const cfg: lint.Config = .{ .include_off_rules = true, .scope_all = false };
     const res = try lint.lintSource(arena.allocator(), source, &cfg);
     try std.testing.expect(res.parse_error == null);
     try std.testing.expect(res.compat);
@@ -344,7 +344,7 @@ test "zp-unbuffered-io caller-buffer 与同行 buffer 注释豁免" {
 }
 
 
-test "zp-arena-reset-free-all arena reset free_all in loop" {
+test "zp-arena-reset-free-all arena reset free_all — cost adds up even off a hot path" {
     var total: usize = 0;
     const bad = try countRule(@embedFile("fixtures/bad/zp-arena-reset-free-all.zig"), .arena_reset_free_all, &total);
     try std.testing.expect(bad >= 1);
@@ -353,20 +353,20 @@ test "zp-arena-reset-free-all arena reset free_all in loop" {
     try std.testing.expectEqual(@as(usize, 0), total);
 }
 
-test "zp-create-destroy-in-loop create destroy in loop" {
+test "zp-create-destroy-hot create destroy — cost adds up even off a hot path" {
     var total: usize = 0;
-    const bad = try countRule(@embedFile("fixtures/bad/zp-create-destroy-in-loop.zig"), .create_destroy_in_loop, &total);
+    const bad = try countRule(@embedFile("fixtures/bad/zp-create-destroy-hot.zig"), .create_destroy_in_loop, &total);
     try std.testing.expect(bad >= 1);
-    const good = try countRule(@embedFile("fixtures/good/zp-create-destroy-in-loop.zig"), .create_destroy_in_loop, &total);
+    const good = try countRule(@embedFile("fixtures/good/zp-create-destroy-hot.zig"), .create_destroy_in_loop, &total);
     try std.testing.expectEqual(@as(usize, 0), good);
     try std.testing.expectEqual(@as(usize, 0), total);
 }
 
-test "zp-fixed-size-alloc-in-loop fixed size alloc in loop" {
+test "zp-fixed-size-alloc-hot fixed size alloc — cost adds up even off a hot path" {
     var total: usize = 0;
-    const bad = try countRule(@embedFile("fixtures/bad/zp-fixed-size-alloc-in-loop.zig"), .fixed_size_alloc_in_loop, &total);
+    const bad = try countRule(@embedFile("fixtures/bad/zp-fixed-size-alloc-hot.zig"), .fixed_size_alloc_in_loop, &total);
     try std.testing.expect(bad >= 1);
-    const good = try countRule(@embedFile("fixtures/good/zp-fixed-size-alloc-in-loop.zig"), .fixed_size_alloc_in_loop, &total);
+    const good = try countRule(@embedFile("fixtures/good/zp-fixed-size-alloc-hot.zig"), .fixed_size_alloc_in_loop, &total);
     try std.testing.expectEqual(@as(usize, 0), good);
     try std.testing.expectEqual(@as(usize, 0), total);
 }
@@ -376,14 +376,14 @@ test {
 }
 
 
-test "zp-alloc-in-loop 跳过 method.dupe(sema.arena)" {
+test "zp-alloc-hot 跳过 method.dupe(sema.arena)" {
     var total: usize = 0;
-    const n = try countRule(@embedFile("fixtures/good/zp-alloc-in-loop.zig"), .alloc_in_loop, &total);
+    const n = try countRule(@embedFile("fixtures/good/zp-alloc-hot.zig"), .alloc_in_loop, &total);
     try std.testing.expectEqual(@as(usize, 0), n);
     try std.testing.expectEqual(@as(usize, 0), total);
 }
 
-test "zp-runtime-div-in-loop 跳过 crypto 路径" {
+test "zp-runtime-div-hot 跳过 crypto 路径" {
     const source =
         \\pub fn gcd(a0: u64, b0: u64) u64 {
         \\    var a = a0;
@@ -400,7 +400,7 @@ test "zp-runtime-div-in-loop 跳过 crypto 路径" {
     ;
     var arena: std.heap.ArenaAllocator = .init(std.testing.allocator);
     defer arena.deinit();
-    var cfg: lint.Config = .{ .path = "lib/std/crypto/ml_kem.zig", .include_off_rules = true };
+    var cfg: lint.Config = .{ .path = "lib/std/crypto/ml_kem.zig", .include_off_rules = true, .scope_all = false };
     const res = try lint.lintSource(arena.allocator(), source, &cfg);
     try std.testing.expect(res.parse_error == null);
     for (res.findings) |f| if (f.rule == .runtime_div_in_loop) return error.UnexpectedZp019;
@@ -413,7 +413,7 @@ test "zp-runtime-div-in-loop 跳过 crypto 路径" {
     try std.testing.expect(n >= 1);
 }
 
-test "zp-runtime-div-in-loop 跳过 soft-div 函数名" {
+test "zp-runtime-div-hot 跳过 soft-div 函数名" {
     const source =
         \\pub fn udivmodei4(u: u64, v: u64) u64 {
         \\    var q: u64 = 0;
@@ -426,13 +426,13 @@ test "zp-runtime-div-in-loop 跳过 soft-div 函数名" {
     ;
     var arena: std.heap.ArenaAllocator = .init(std.testing.allocator);
     defer arena.deinit();
-    const cfg: lint.Config = .{ .include_off_rules = true };
+    const cfg: lint.Config = .{ .include_off_rules = true, .scope_all = false };
     const res = try lint.lintSource(arena.allocator(), source, &cfg);
     try std.testing.expect(res.parse_error == null);
     for (res.findings) |f| if (f.rule == .runtime_div_in_loop) return error.UnexpectedZp019;
 }
 
-test "zp-alloc-print-in-loop 只报循环内不变的格式化" {
+test "zp-alloc-print-hot 只报循环内不变的格式化" {
     const changing =
         \\const std = @import("std");
         \\fn each(gpa: std.mem.Allocator, n: u32) !void {
@@ -484,7 +484,7 @@ test "zp-alloc-print-in-loop 只报循环内不变的格式化" {
     ;
     var arena_state: std.heap.ArenaAllocator = .init(std.testing.allocator);
     defer arena_state.deinit();
-    const cfg: lint.Config = .{ .include_off_rules = true };
+    const cfg: lint.Config = .{ .include_off_rules = true, .scope_all = false };
     const quiet = try lint.lintSource(arena_state.allocator(), changing, &cfg);
     try std.testing.expect(quiet.parse_error == null);
     for (quiet.findings) |f| try std.testing.expect(f.rule != .alloc_print_in_loop);

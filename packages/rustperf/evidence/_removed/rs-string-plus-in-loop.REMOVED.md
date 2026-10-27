@@ -1,6 +1,6 @@
 # rs-string-plus-in-loop — removed 2026-10-23 (Asia/Shanghai)
 
-Status: **removed**. `s += "x"` versus `String::with_capacity` was about **1.00×** at N=500000. A 32-byte chunk was about **1.05×**. A tiny repeated builder was about **2.04×**, which is fixed overhead on a short string, not the hot fill. `format!` rebind stays `rs-format-rebind-in-loop`. No matcher.
+Status: **removed**. `s += "x"` versus `String::with_capacity` was about **1.00×** at N=500000. A 32-byte chunk was about **1.05×**. A tiny repeated builder was about **2.04×**, which is fixed overhead on a short string, not the hot fill. `format!` rebind stays `rs-format-rebind-hot`. No matcher.
 
 - Slug **never reused**.
 - Historical JSONL and the note stay beside this file. Fixtures are under `_removed/fixtures/`.

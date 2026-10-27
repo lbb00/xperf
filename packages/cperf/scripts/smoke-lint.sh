@@ -62,29 +62,29 @@ check_pair() {
   fi
 }
 
-check_pair cp-sprintf-in-loop \
-  "$ROOT/cperf-lint/fixtures/bad/cp-sprintf-in-loop_sprintf_loop.c" \
-  "$ROOT/cperf-lint/fixtures/good/cp-sprintf-in-loop_sprintf_once.c" \
+check_pair cp-sprintf-hot \
+  "$ROOT/cperf-lint/fixtures/bad/cp-sprintf-hot_sprintf_loop.c" \
+  "$ROOT/cperf-lint/fixtures/good/cp-sprintf-hot_quiet.c" \
   2
-check_pair cp-fopen-in-loop \
-  "$ROOT/cperf-lint/fixtures/bad/cp-fopen-in-loop_fopen_loop.c" \
-  "$ROOT/cperf-lint/fixtures/good/cp-fopen-in-loop_fopen_once.c" \
+check_pair cp-fopen-hot \
+  "$ROOT/cperf-lint/fixtures/bad/cp-fopen-hot_fopen_loop.c" \
+  "$ROOT/cperf-lint/fixtures/good/cp-fopen-hot_path_varies.c" \
   1
-check_pair cp-gettime-in-loop \
-  "$ROOT/cperf-lint/fixtures/bad/cp-gettime-in-loop_gettime_loop.c" \
-  "$ROOT/cperf-lint/fixtures/good/cp-gettime-in-loop_time_in_loop.c" \
+check_pair cp-gettime-hot \
+  "$ROOT/cperf-lint/fixtures/bad/cp-gettime-hot_gettime_loop.c" \
+  "$ROOT/cperf-lint/fixtures/good/cp-gettime-hot_time_in_loop.c" \
   2
 check_pair cp-wide-bool-flags \
   "$ROOT/cperf-lint/fixtures/bad/cp-wide-bool-flags_ints.c" \
   "$ROOT/cperf-lint/fixtures/good/cp-wide-bool-flags_bits.c" \
   1
-check_pair cp-regex-in-loop \
-  "$ROOT/cperf-lint/fixtures/bad/cp-regex-in-loop_regcomp_loop.c" \
-  "$ROOT/cperf-lint/fixtures/good/cp-regex-in-loop_regcomp_once.c" \
+check_pair cp-regex-hot \
+  "$ROOT/cperf-lint/fixtures/bad/cp-regex-hot_regcomp_loop.c" \
+  "$ROOT/cperf-lint/fixtures/good/cp-regex-hot_pattern_varies.c" \
   1
-check_pair cp-alloca-in-loop \
-  "$ROOT/cperf-lint/fixtures/bad/cp-alloca-in-loop_alloca_loop.c" \
-  "$ROOT/cperf-lint/fixtures/good/cp-alloca-in-loop_alloca_once.c" \
+check_pair cp-alloca-hot \
+  "$ROOT/cperf-lint/fixtures/bad/cp-alloca-hot_alloca_loop.c" \
+  "$ROOT/cperf-lint/fixtures/good/cp-alloca-hot_quiet.c" \
   2
 check_pair cp-struct-by-value \
   "$ROOT/cperf-lint/fixtures/bad/cp-struct-by-value_blob.c" \

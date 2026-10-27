@@ -1,0 +1,4 @@
+{"rule":"gp-fmt-hot","case":"strconv_builder","role":"after","go":"go1.27.3","median_ms":5.100292,"ops":100000,"ratio":1.000000,"ts":"2026-10-23T12:18:37Z"}
+{"rule":"gp-fmt-hot","case":"fmt_sprintf_loop","role":"before","go":"go1.27.3","median_ms":6.008417,"ops":100000,"ratio":1.178054,"ts":"2026-10-23T12:18:37Z"}
+{"rule":"gp-fmt-hot","case":"strconv_itoa_only","role":"after","go":"go1.27.3","median_ms":2.137083,"ops":100000,"ratio":1.000000,"ts":"2026-10-23T12:18:37Z"}
+{"rule":"gp-fmt-hot","case":"fmt_sprintf_vs_itoa","role":"before","go":"go1.27.3","median_ms":6.008417,"ops":100000,"ratio":2.811504,"ts":"2026-10-23T12:18:37Z"}

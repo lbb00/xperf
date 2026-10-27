@@ -1,2 +1,0 @@
-{"rule":"cs-file-read-in-loop","case":"read_once","role":"after","dotnet":"10.0.13","median_ms":0.0178,"ops":2000,"ratio":1,"ts":"2026-10-23T14:27:32.1587474Z"}
-{"rule":"cs-file-read-in-loop","case":"read_each_iter","role":"before","dotnet":"10.0.13","median_ms":6.0142,"ops":2000,"ratio":337.87640449438203,"ts":"2026-10-23T14:27:32.1587474Z"}

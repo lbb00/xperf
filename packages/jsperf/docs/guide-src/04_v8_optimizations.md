@@ -81,8 +81,8 @@ Code may climb tiers as it heats up and fall back on deopt. **Do not** overclaim
 
 | Rule | Sees | Does **not** see |
 |------|------|------------------|
-| jp-alloc-in-loop | `.push({`, non-empty binders, clear `new` containers (default scope all) | IC polymorphism; whether alloc causes deopt (usually it does not — it causes GC) |
-| jp-console-in-loop | `console.*` (default scope all) | Whether logging is worth gating even off a hot path |
+| jp-alloc-hot | `.push({`, non-empty binders, clear `new` containers (default scope all) | IC polymorphism; whether alloc causes deopt (usually it does not — it causes GC) |
+| jp-console-hot | `console.*` (default scope all) | Whether logging is worth gating even off a hot path |
 | jp-delete-shape | `delete obj.key`-style members | Dictionary mode already; deopt vs “just slow” |
 | jp-delete-array-hole | `delete arr[i]` (holey) | Runtime elements kind; holey from skipped indices without `delete` |
 | jp-string-plus-in-loop | removed | `push` + `join` was not about 2× on the matched `+=` shapes |
@@ -118,11 +118,11 @@ Experiment: `examples/bench/static_vs_v8_correlate.js` · `scripts/run-static-vs
 | Packed vs holey `delete a[i]` | jp-delete-array-hole-like | **5.47×** | **YES** (time); deopt noisy |
 | `Float64Array` vs holey `number[]` | holey | **1.34×** | **PARTIAL** (muted) |
 | `delete obj.k` vs `= undefined` | jp-delete-shape | **165×** | **YES** (time); deopt counts alike |
-| Control: `new` in loop vs once | jp-alloc-in-loop | **49.3×** | **PARTIAL** — alloc/GC pain, not deopt |
+| Control: `new` in loop vs once | jp-alloc-hot | **49.3×** | **PARTIAL** — alloc/GC pain, not deopt |
 
 **Do not pretend the jp-* rules equal JIT awareness.** Agreement is strongest for shapes / holey / hot `delete`; weakest when using deopt line counts as an oracle or when selling typed arrays as always faster than packed doubles.
 
-**JSONL gates (Node v20.19.2 on this machine, re-run `scripts/regen-evidence.sh`):** jp-delete-array-hole ~**3.2×** → **error**; jp-delete-shape ~**474×** (corpus hits almost all OK-idiom) → **off**; jp-alloc-in-loop ~**19×** (alloc/GC) → **off**; jp-console-in-loop ~**1328×** (discard sink, env-dependent) → **off** (`app`) / **hint** (`engine`). See [`evidence-policy`](evidence-policy.md) and `evidence/jp-*.md`.
+**JSONL gates (Node v20.19.2 on this machine, re-run `scripts/regen-evidence.sh`):** jp-delete-array-hole ~**3.2×** → **error**; jp-delete-shape ~**474×** (corpus hits almost all OK-idiom) → **off**; jp-alloc-hot ~**19×** (alloc/GC) → **off**; jp-console-hot ~**1328×** (discard sink, env-dependent) → **off** (`app`) / **hint** (`engine`). See [`evidence-policy`](evidence-policy.md) and `evidence/jp-*.md`.
 
 ---
 

@@ -1,6 +1,6 @@
 //! zperf-lint evidence microbenches (Zig 0.17). Emits cperf-style JSONL to stdout.
 //! Build: zig build-exe -Ofast evidence_fill.zig
-//! zperf-lint: ignore-file zp-alloc-in-loop zp-append-without-reserve zp-page-allocator-small zp-print-in-loop zp-unbuffered-io zp-aos-single-field zp-catch-unreachable-alloc zp-runtime-div-in-loop zp-queue-ordered-remove zp-per-packet-alloc zp-invariant-float-div zp-map-put-without-ensure zp-arena-reset-free-all zp-create-destroy-in-loop zp-fixed-size-alloc-in-loop -- intentional smell/fix pairs
+//! zperf-lint: ignore-file zp-alloc-hot zp-append-without-reserve zp-page-allocator-small zp-print-hot zp-unbuffered-io zp-aos-single-field zp-catch-unreachable-alloc zp-runtime-div-hot zp-queue-ordered-remove zp-per-packet-alloc zp-invariant-float-div zp-map-put-without-ensure zp-arena-reset-free-all zp-create-destroy-hot zp-fixed-size-alloc-hot -- intentional smell/fix pairs
 
 const std = @import("std");
 const builtin = @import("builtin");
@@ -51,7 +51,7 @@ fn timeWork(io: std.Io, work: *const fn (*anyopaque) void, ctx: *anyopaque) i128
     return medianNs(samples[0..]);
 }
 
-// ---------- zp-alloc-in-loop: alloc in loop vs arena ----------
+// ---------- zp-alloc-hot: alloc in loop vs arena ----------
 const Zp001 = struct {
     const ops: u64 = 100_000;
     const block: usize = 64;
@@ -180,7 +180,7 @@ const Zp005 = struct {
     }
 };
 
-// ---------- zp-print-in-loop: debug.print in loop vs quiet sink ----------
+// ---------- zp-print-hot: debug.print in loop vs quiet sink ----------
 const Zp006 = struct {
     const ops: u64 = 2_000;
     sink: u64 = 0,
@@ -315,7 +315,7 @@ const Zp018 = struct {
     }
 };
 
-// ---------- zp-runtime-div-in-loop: runtime div vs mask ----------
+// ---------- zp-runtime-div-hot: runtime div vs mask ----------
 const Zp019 = struct {
     const n: usize = 2_000_000;
     mod: u64 = 1024, // power of two
@@ -507,7 +507,7 @@ const Zp026 = struct {
     }
 };
 
-// ---------- zp-create-destroy-in-loop: create/destroy vs MemoryPool ----------
+// ---------- zp-create-destroy-hot: create/destroy vs MemoryPool ----------
 const Node = struct { x: i32 };
 const Zp027 = struct {
     const ops: u64 = 200_000;
@@ -537,7 +537,7 @@ const Zp027 = struct {
     }
 };
 
-// ---------- zp-fixed-size-alloc-in-loop: fixed-size alloc in loop vs buffer pool ----------
+// ---------- zp-fixed-size-alloc-hot: fixed-size alloc in loop vs buffer pool ----------
 const Zp028 = struct {
     const ops: u64 = 100_000;
     const block: usize = 256;
@@ -626,14 +626,14 @@ pub fn main(init: std.process.Init) !void {
     // Use a fixed label; regen script stamps real UTC.
     const ts_fixed = "2026-10-21T11:30:00Z";
 
-    // zp-alloc-in-loop
+    // zp-alloc-hot
     {
         var arena_state: std.heap.ArenaAllocator = .init(gpa);
         defer arena_state.deinit();
         var ctx: Zp001 = .{ .gpa = gpa, .arena = &arena_state };
         const b = timeWork(io, Zp001.before, @ptrCast(&ctx));
         const a = timeWork(io, Zp001.after, @ptrCast(&ctx));
-        try pairAndEmit(io, "zp-alloc-in-loop", "gpa_alloc_free_in_loop", "arena_retain_in_loop", b, a, Zp001.ops, ts_fixed);
+        try pairAndEmit(io, "zp-alloc-hot", "gpa_alloc_free_in_loop", "arena_retain_in_loop", b, a, Zp001.ops, ts_fixed);
         std.mem.doNotOptimizeAway(ctx.sink);
     }
 
@@ -666,12 +666,12 @@ pub fn main(init: std.process.Init) !void {
         std.mem.doNotOptimizeAway(ctx.sink);
     }
 
-    // zp-print-in-loop (noisy; small N)
+    // zp-print-hot (noisy; small N)
     {
         var ctx: Zp006 = .{};
         const b = timeWork(io, Zp006.before, @ptrCast(&ctx));
         const a = timeWork(io, Zp006.after, @ptrCast(&ctx));
-        try pairAndEmit(io, "zp-print-in-loop", "debug_print_in_loop", "quiet_counter", b, a, Zp006.ops, ts_fixed);
+        try pairAndEmit(io, "zp-print-hot", "debug_print_in_loop", "quiet_counter", b, a, Zp006.ops, ts_fixed);
         std.mem.doNotOptimizeAway(ctx.sink);
     }
 
@@ -779,12 +779,12 @@ pub fn main(init: std.process.Init) !void {
         std.mem.doNotOptimizeAway(ctx.sink);
     }
 
-    // zp-runtime-div-in-loop
+    // zp-runtime-div-hot
     {
         var ctx: Zp019 = .{};
         const b = timeWork(io, Zp019.before, @ptrCast(&ctx));
         const a = timeWork(io, Zp019.after, @ptrCast(&ctx));
-        try pairAndEmit(io, "zp-runtime-div-in-loop", "runtime_mod", "bitmask", b, a, Zp019.n, ts_fixed);
+        try pairAndEmit(io, "zp-runtime-div-hot", "runtime_mod", "bitmask", b, a, Zp019.n, ts_fixed);
         std.mem.doNotOptimizeAway(ctx.sink);
     }
 
@@ -837,18 +837,18 @@ pub fn main(init: std.process.Init) !void {
         std.mem.doNotOptimizeAway(ctx.sink);
     }
 
-    // zp-create-destroy-in-loop
+    // zp-create-destroy-hot
     {
         var pool: std.heap.MemoryPool(Node) = try .initCapacity(gpa, 64);
         defer pool.deinit(gpa);
         var ctx: Zp027 = .{ .gpa = gpa, .pool = &pool };
         const b = timeWork(io, Zp027.before, @ptrCast(&ctx));
         const a = timeWork(io, Zp027.after, @ptrCast(&ctx));
-        try pairAndEmit(io, "zp-create-destroy-in-loop", "create_destroy_loop", "memory_pool", b, a, Zp027.ops, ts_fixed);
+        try pairAndEmit(io, "zp-create-destroy-hot", "create_destroy_loop", "memory_pool", b, a, Zp027.ops, ts_fixed);
         std.mem.doNotOptimizeAway(ctx.sink);
     }
 
-    // zp-fixed-size-alloc-in-loop
+    // zp-fixed-size-alloc-hot
     {
         const pool_count: usize = 64;
         const pool_bufs = try gpa.alloc([]u8, pool_count);
@@ -860,7 +860,7 @@ pub fn main(init: std.process.Init) !void {
         var ctx: Zp028 = .{ .gpa = gpa, .pool_bufs = pool_bufs, .available = pool_count };
         const b = timeWork(io, Zp028.before, @ptrCast(&ctx));
         const a = timeWork(io, Zp028.after, @ptrCast(&ctx));
-        try pairAndEmit(io, "zp-fixed-size-alloc-in-loop", "fixed_alloc_free_loop", "buffer_pool_hit", b, a, Zp028.ops, ts_fixed);
+        try pairAndEmit(io, "zp-fixed-size-alloc-hot", "fixed_alloc_free_loop", "buffer_pool_hit", b, a, Zp028.ops, ts_fixed);
         std.mem.doNotOptimizeAway(ctx.sink);
     }
 }

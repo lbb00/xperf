@@ -4,7 +4,7 @@
 
 Elixir + Erlang (BEAM) performance notes, small examples, and `beamperf-lint`.
 
-Part of [XPerf](../../README.md). Shared docs: [docs/README.md](../../docs/README.md). **Corpus-ready**. `be-list-concat-reduce`, `be-map-merge-in-loop` and `be-enum-map-filter-chain` **hint**; `be-io-puts-in-loop` **off**. One rule removed (tombstone, never got a slug). No G4. Guide v0.
+Part of [XPerf](../../README.md). Shared docs: [docs/README.md](../../docs/README.md). **Corpus-ready**. `be-list-concat-reduce`, `be-map-merge-hot` and `be-enum-map-filter-chain` **hint**; `be-io-puts-hot` **off**. One rule removed (tombstone, never got a slug). No G4. Guide v0.
 
 ## Contents
 

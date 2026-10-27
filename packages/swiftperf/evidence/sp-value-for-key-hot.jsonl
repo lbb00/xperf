@@ -1,0 +1,2 @@
+{"rule":"sp-value-for-key-hot","case":"direct_field","role":"after","swiftc":"swiftc -O","median_ms":0.661,"ops":200000,"ratio":1,"ts":"2026-10-23T07:20:00Z"}
+{"rule":"sp-value-for-key-hot","case":"value_for_key_each","role":"before","swiftc":"swiftc -O","median_ms":23.258,"ops":200000,"ratio":35.185,"ts":"2026-10-23T07:20:00Z"}

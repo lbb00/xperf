@@ -3,11 +3,11 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 BIN=(php "$ROOT/phpperf-lint/phpperf-lint.php")
 set +e
-"${BIN[@]}" "$ROOT/phpperf-lint/fixtures/bad" --severity ph-string-dot-in-loop=error --severity ph-array-merge-rebind=error --severity ph-echo-in-loop=error
+"${BIN[@]}" "$ROOT/phpperf-lint/fixtures/bad" --severity ph-string-dot-hot=error --severity ph-array-merge-rebind=error --severity ph-echo-hot=error
 b=$?
 "${BIN[@]}" "$ROOT/phpperf-lint/fixtures/good"
 g=$?
-"${BIN[@]}" "$ROOT/phpperf-lint/fixtures/bad/ph-string-dot-in-loop_str_dot.php"
+"${BIN[@]}" "$ROOT/phpperf-lint/fixtures/bad/ph-string-dot-hot_str_dot.php"
 h=$?
 set -e
 [[ "$b" -eq 1 ]] || { echo "bad should exit 1, got $b"; exit 1; }

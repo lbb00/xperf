@@ -13,7 +13,7 @@ cd "$ROOT/dartperf-lint"
 dart pub get
 set +e
 dart run bin/dartperf_lint.dart fixtures/bad \
-  --severity dt-list-add-empty=error --severity dt-string-plus-in-loop=error --severity dt-print-in-loop=error --severity dt-growable-add-empty=error
+  --severity dt-list-add-empty=error --severity dt-string-plus-hot=error --severity dt-print-hot=error --severity dt-growable-add-empty=error
 b=$?
 dart run bin/dartperf_lint.dart fixtures/good
 g=$?

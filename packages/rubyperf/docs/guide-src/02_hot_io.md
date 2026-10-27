@@ -2,5 +2,5 @@
 
 `puts` / `print` in a tight loop flushes. Gate debug output or buffer.
 
-Companion lint: **rb-puts-in-loop**.
+Companion lint: **rb-puts-hot**.
 

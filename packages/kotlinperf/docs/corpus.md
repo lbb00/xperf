@@ -16,19 +16,19 @@ Shallow clones (`--depth 1`).
 
 | Tree | Raw (`--raw-paths`) | After reverse-opt |
 |------|---------------------|-------------------|
-| kotlinx.coroutines | **84** (kt-list-add-in-loop:2 kt-string-plus-in-loop:6 kt-println-in-loop:76) | **6** (1/5/0) |
+| kotlinx.coroutines | **84** (kt-list-add-hot:2 kt-string-plus-hot:6 kt-println-hot:76) | **6** (1/5/0) |
 | okhttp | **29** (11/1/17) | **8** (5/0/3) |
 | kotlinx.serialization | **4** (2/0/2) | **1** (1/0/0) |
 
-Rule order: kt-list-add-in-loop / kt-string-plus-in-loop / kt-println-in-loop.
+Rule order: kt-list-add-hot / kt-string-plus-hot / kt-println-hot.
 
 ### Reverse-opt (`kotlinperf-lint`)
 
 1. **`--raw-paths`:** baseline toggle.
 2. **Path skips:** `test/` `tests/` `androidTest/` `jvmTest/` `commonTest/` `nativeTest/` `benchmarks/` `samples/` `sample/` `examples/` `example/` `docs/` (plus always `.git`/`build`/`.gradle`/`vendor`/`fixtures`).
 3. **Path suffixes:** `*Test.kt` / `*Tests.kt` / `/src/test/`.
-4. **kt-list-add-in-loop:** suppress bare empty `listOf()` under reverse-opt (keep `mutableListOf` / `arrayListOf` / `ArrayList()`).
-5. **kt-println-in-loop:** skip KDoc/block-comment continuation lines (`* … println`); skip Debug/Demo filenames and `DEBUG` tokens.
+4. **kt-list-add-hot:** suppress bare empty `listOf()` under reverse-opt (keep `mutableListOf` / `arrayListOf` / `ArrayList()`).
+5. **kt-println-hot:** skip KDoc/block-comment continuation lines (`* … println`); skip Debug/Demo filenames and `DEBUG` tokens.
 
 ### Residual
 
@@ -50,7 +50,7 @@ Do not commit corpus sources into `packages/kotlinperf`.
 **Corpus-ready? `no`** — r1 noise >40%; r2 all OK-idiom (lazy lists / rare-race). Keep rules **hint**.
 
 ### Fixes landed
-- kt-string-plus-in-loop collection `+=` suppression; kt-println-in-loop bare `println` only; kt-list-add-in-loop lazy/constant listOf
+- kt-string-plus-hot collection `+=` suppression; kt-println-hot bare `println` only; kt-list-add-hot lazy/constant listOf
 - Path skips: `test-utils/`, `testing-support/`, `rules-integration-tests/`, `okcurl/`
 - r2 counts: coroutines **1**, okhttp **2**, serialization **0**
 
@@ -62,4 +62,4 @@ Do not commit corpus sources into `packages/kotlinperf`.
 | okhttp | 2 | **9** | |
 | kotlinx.serialization | 0 | **1** | |
 
-**Verdict: corpus-ready `yes`.** Sample n=12: TP 58.3% / OK-idiom 41.7% / FP+DOC+SKIP 0%. Defaults: kt-list-add-in-loop–kt-println-in-loop **off**. KT004 removed (jitter; it covered empty list + add in size-hinted loop). No G4 escalate / no invented JSONL.
+**Verdict: corpus-ready `yes`.** Sample n=12: TP 58.3% / OK-idiom 41.7% / FP+DOC+SKIP 0%. Defaults: kt-list-add-hot–kt-println-hot **off**. KT004 removed (jitter; it covered empty list + add in size-hinted loop). No G4 escalate / no invented JSONL.

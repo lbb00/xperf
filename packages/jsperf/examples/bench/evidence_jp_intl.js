@@ -1,6 +1,6 @@
 "use strict";
 /**
- * jp-intl-datetimeformat-in-loop: one formatter vs new Intl.DateTimeFormat each pass.
+ * jp-intl-datetimeformat-hot: one formatter vs new Intl.DateTimeFormat each pass.
  * Both sides still format. Warm 3, median of 9.
  */
 const fs = require("fs");
@@ -58,12 +58,12 @@ const node = process.version;
 const v8 = process.versions.v8;
 const ts = new Date().toISOString();
 const rows = [
-  { rule: "jp-intl-datetimeformat-in-loop", case: "format_once", role: "after", node, v8, median_ms: Number(onceMs.toFixed(3)), ops: N, ratio: 1, ts },
-  { rule: "jp-intl-datetimeformat-in-loop", case: "format_ctor_each_iter", role: "before", node, v8, median_ms: Number(eachMs.toFixed(3)), ops: N, ratio: Number((eachMs / onceMs).toFixed(3)), ts },
+  { rule: "jp-intl-datetimeformat-hot", case: "format_once", role: "after", node, v8, median_ms: Number(onceMs.toFixed(3)), ops: N, ratio: 1, ts },
+  { rule: "jp-intl-datetimeformat-hot", case: "format_ctor_each_iter", role: "before", node, v8, median_ms: Number(eachMs.toFixed(3)), ops: N, ratio: Number((eachMs / onceMs).toFixed(3)), ts },
 ];
 if (OUT_DIR) {
   fs.mkdirSync(OUT_DIR, { recursive: true });
-  const p = path.join(OUT_DIR, "jp-intl-datetimeformat-in-loop.jsonl");
+  const p = path.join(OUT_DIR, "jp-intl-datetimeformat-hot.jsonl");
   fs.writeFileSync(p, rows.map((r) => JSON.stringify(r)).join("\n") + "\n");
   console.log("wrote " + p);
 }

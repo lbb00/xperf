@@ -1,4 +1,0 @@
-{"rule":"lu-print-in-loop","case":"quiet_then_print_once","role":"after","lua":"Lua 5.5.1","median_ms":0.038000,"ops":20000,"ratio":1.000000,"stdout":"/dev/null","ts":"2026-10-23T12:27:06Z"}
-{"rule":"lu-print-in-loop","case":"print_in_loop","role":"before","lua":"Lua 5.5.1","median_ms":4.789000,"ops":20000,"ratio":126.026316,"stdout":"/dev/null","ts":"2026-10-23T12:27:06Z"}
-{"rule":"lu-print-in-loop","case":"buffer_then_one_print","role":"after","lua":"Lua 5.5.1","median_ms":2.349000,"ops":20000,"ratio":1.000000,"stdout":"/dev/null","ts":"2026-10-23T12:27:06Z"}
-{"rule":"lu-print-in-loop","case":"print_in_loop_vs_buffer","role":"before","lua":"Lua 5.5.1","median_ms":4.595000,"ops":20000,"ratio":1.956152,"stdout":"/dev/null","ts":"2026-10-23T12:27:06Z"}

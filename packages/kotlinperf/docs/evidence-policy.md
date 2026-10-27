@@ -10,7 +10,7 @@ As of 2026-10-22 (Batch B G4).
 
 | Rule | Severity (default) | Evidence | Smell |
 |------|--------------------|----------|-------|
-| kt-list-add-in-loop | off | **yes** ~2.1× | ArrayList empty vs cap |
-| kt-string-plus-in-loop | off | **yes** ~1170× | string += |
-| kt-println-in-loop | off | **yes** ~99× | println |
+| kt-list-add-hot | off | **yes** ~2.1× | ArrayList empty vs cap |
+| kt-string-plus-hot | off | **yes** ~1170× | string += |
+| kt-println-hot | off | **yes** ~99× | println |
 | KT004 | removed | tombstone | see `evidence/_removed/` |

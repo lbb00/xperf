@@ -1,6 +1,6 @@
 "use strict";
 /**
- * jp-regex-ctor-in-loop: new RegExp("a+") once vs every test of one fixed string.
+ * jp-regex-ctor-hot: new RegExp("a+") once vs every test of one fixed string.
  * Warm 3, median of 9. Writes JSONL only when EVIDENCE_DIR is set.
  */
 const fs = require("fs");
@@ -57,12 +57,12 @@ const node = process.version;
 const v8 = process.versions.v8;
 const ts = new Date().toISOString();
 const rows = [
-  { rule: "jp-regex-ctor-in-loop", case: "regexp_once", role: "after", node, v8, median_ms: Number(onceMs.toFixed(6)), ops: N, ratio: 1, ts },
-  { rule: "jp-regex-ctor-in-loop", case: "regexp_each_iter", role: "before", node, v8, median_ms: Number(eachMs.toFixed(6)), ops: N, ratio: Number((eachMs / onceMs).toFixed(6)), ts },
+  { rule: "jp-regex-ctor-hot", case: "regexp_once", role: "after", node, v8, median_ms: Number(onceMs.toFixed(6)), ops: N, ratio: 1, ts },
+  { rule: "jp-regex-ctor-hot", case: "regexp_each_iter", role: "before", node, v8, median_ms: Number(eachMs.toFixed(6)), ops: N, ratio: Number((eachMs / onceMs).toFixed(6)), ts },
 ];
 if (OUT_DIR) {
   fs.mkdirSync(OUT_DIR, { recursive: true });
-  const p = path.join(OUT_DIR, "jp-regex-ctor-in-loop.jsonl");
+  const p = path.join(OUT_DIR, "jp-regex-ctor-hot.jsonl");
   fs.writeFileSync(p, rows.map((r) => JSON.stringify(r)).join("\n") + "\n");
   console.log("wrote " + p);
 }

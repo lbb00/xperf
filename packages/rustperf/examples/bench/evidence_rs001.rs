@@ -1,4 +1,4 @@
-//! Evidence microbench for rs-alloc-in-loop → packages/rustperf/evidence/rs-alloc-in-loop.jsonl
+//! Evidence microbench for rs-alloc-hot → packages/rustperf/evidence/rs-alloc-hot.jsonl
 //! Smell: alloc/clone in loop (Vec::new / .clone / to_string / to_owned).
 //! Build: rustc -C opt-level=3 evidence_rs001.rs -o out/evidence_rs001
 //! Timer: std::time::Instant (wall); warm=3; median of 9.
@@ -92,7 +92,7 @@ fn main() {
     let ts = utc_ts();
 
     eprintln!(
-        "rs-alloc-in-loop evidence: rustc {rustc} {opt} warm={WARM} rounds={ROUNDS} \
+        "rs-alloc-hot evidence: rustc {rustc} {opt} warm={WARM} rounds={ROUNDS} \
          outer_a={outer_a} inner_a={inner_a} n_clone={n_clone} seed_len={seed_len} \
          n_grow={n_grow} n_to_string={n_to_string} outer_small={outer_small} \
          inner_small={inner_small} small_reps={small_reps}"
@@ -101,7 +101,7 @@ fn main() {
     let mut lines: Vec<String> = Vec::new();
     let mut emit = |case: &str, role: &str, med: f64, ops: usize, ratio: f64| {
         let obj = format!(
-            "{{\"rule\":\"rs-alloc-in-loop\",\"case\":\"{case}\",\"role\":\"{role}\",\"rustc\":\"{rustc}\",\"opt\":\"{opt}\",\"median_ms\":{med:.6},\"ops\":{ops},\"ratio\":{ratio:.6},\"ts\":\"{ts}\"}}"
+            "{{\"rule\":\"rs-alloc-hot\",\"case\":\"{case}\",\"role\":\"{role}\",\"rustc\":\"{rustc}\",\"opt\":\"{opt}\",\"median_ms\":{med:.6},\"ops\":{ops},\"ratio\":{ratio:.6},\"ts\":\"{ts}\"}}"
         );
         eprintln!("  {role} {case} median={med:.3} ms ops={ops} ratio={ratio:.3}");
         lines.push(obj);
@@ -274,7 +274,7 @@ fn main() {
         .map(PathBuf::from)
         .unwrap_or_else(|_| PathBuf::from("../../evidence"));
     fs::create_dir_all(&out_dir).ok();
-    let out_path = out_dir.join("rs-alloc-in-loop.jsonl");
+    let out_path = out_dir.join("rs-alloc-hot.jsonl");
     let body = lines.join("\n") + "\n";
     fs::write(&out_path, &body).expect("write jsonl");
     eprintln!("wrote {}", out_path.display());

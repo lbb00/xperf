@@ -1,5 +1,5 @@
 #!/usr/bin/env lua
--- Evidence microbench for lu-string-concat-in-loop → packages/luaperf/evidence/lu-string-concat-in-loop.jsonl
+-- Evidence microbench for lu-string-concat-hot → packages/luaperf/evidence/lu-string-concat-hot.jsonl
 -- Smell: s = s .. chunk in a numeric for; fix: parts then table.concat.
 -- Timer: os.clock() CPU seconds (single-threaded; ≈ wall for these kernels).
 
@@ -120,7 +120,7 @@ local lines = {}
 
 local function emit(case, role, med, ops, ratio)
   local obj = string.format(
-    '{"rule":"lu-string-concat-in-loop","case":"%s","role":"%s","lua":"%s","median_ms":%.6f,"ops":%d,"ratio":%.6f,"ts":"%s"}',
+    '{"rule":"lu-string-concat-hot","case":"%s","role":"%s","lua":"%s","median_ms":%.6f,"ops":%d,"ratio":%.6f,"ts":"%s"}',
     case, role, ver, med, ops, ratio, ts
   )
   lines[#lines + 1] = obj
@@ -128,7 +128,7 @@ local function emit(case, role, med, ops, ratio)
 end
 
 io.stderr:write(string.format(
-  "lu-string-concat-in-loop evidence: %s warm=%d rounds=%d N_digits=%d N_chunk=%d N_small=%d\n",
+  "lu-string-concat-hot evidence: %s warm=%d rounds=%d N_digits=%d N_chunk=%d N_small=%d\n",
   ver, WARM, ROUNDS, N_DIGITS, N_CHUNK, N_SMALL
 ))
 
@@ -150,7 +150,7 @@ local med_sb, _ = time_many(case_small_concat)
 emit("small_n_table_concat", "after", med_sa, N_SMALL, 1)
 emit("small_n_concat_loop", "before", med_sb, N_SMALL, med_sb / math.max(med_sa, 1e-9))
 
-local out_path = OUT:gsub("/+$", "") .. "/lu-string-concat-in-loop.jsonl"
+local out_path = OUT:gsub("/+$", "") .. "/lu-string-concat-hot.jsonl"
 local f = assert(io.open(out_path, "w"))
 for _, line in ipairs(lines) do
   f:write(line .. "\n")

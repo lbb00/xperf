@@ -1,2 +1,0 @@
-{"rule":"oc-nslog-in-loop","case":"log_once","role":"after","runtime":"gnustep","median_ms":0.003217,"ops":10000,"ratio":1,"ts":"2026-10-22T08:08:34Z"}
-{"rule":"oc-nslog-in-loop","case":"fprintf_in_loop","role":"before","runtime":"gnustep","median_ms":0.614295,"ops":10000,"ratio":190.952751,"ts":"2026-10-22T08:08:34Z"}

@@ -1,5 +1,5 @@
 #!/usr/bin/env lua
--- Evidence microbench for lu-print-in-loop → packages/luaperf/evidence/lu-print-in-loop.jsonl
+-- Evidence microbench for lu-print-hot → packages/luaperf/evidence/lu-print-hot.jsonl
 -- Smell: print(i) inside a numeric for; fix: quiet accumulate / print once / buffer then one write.
 -- Timer: os.clock() CPU seconds.
 -- IMPORTANT: Lua 5.4 print() writes the C stdout FILE*, not io.stdout. We replace
@@ -112,7 +112,7 @@ local lines = {}
 
 local function emit(case, role, med, ops, ratio)
   local obj = string.format(
-    '{"rule":"lu-print-in-loop","case":"%s","role":"%s","lua":"%s","median_ms":%.6f,"ops":%d,"ratio":%.6f,"stdout":"/dev/null","ts":"%s"}',
+    '{"rule":"lu-print-hot","case":"%s","role":"%s","lua":"%s","median_ms":%.6f,"ops":%d,"ratio":%.6f,"stdout":"/dev/null","ts":"%s"}',
     case, role, ver, med, ops, ratio, ts
   )
   lines[#lines + 1] = obj
@@ -120,7 +120,7 @@ local function emit(case, role, med, ops, ratio)
 end
 
 io.stderr:write(string.format(
-  "lu-print-in-loop evidence: %s warm=%d rounds=%d N=%d N_small=%d stdout=/dev/null (via _G.print override)\n",
+  "lu-print-hot evidence: %s warm=%d rounds=%d N=%d N_small=%d stdout=/dev/null (via _G.print override)\n",
   ver, WARM, ROUNDS, N, N_SMALL
 ))
 
@@ -143,7 +143,7 @@ local med_sb, _ = time_many(case_small_print_in_loop)
 emit("small_quiet_once", "after", med_sa, N_SMALL, 1)
 emit("small_print_in_loop", "before", med_sb, N_SMALL, med_sb / math.max(med_sa, 1e-9))
 
-local out_path = OUT:gsub("/+$", "") .. "/lu-print-in-loop.jsonl"
+local out_path = OUT:gsub("/+$", "") .. "/lu-print-hot.jsonl"
 local f = assert(io.open(out_path, "w"))
 for _, line in ipairs(lines) do
   f:write(line .. "\n")

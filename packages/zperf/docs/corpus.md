@@ -37,22 +37,22 @@ Finding counts under the default rule map, per run: r1 → r3 → **r4**.
 | **ghostty** | **441 → 425 → 9** |
 | **http.zig** (secondary) | **25 → 24 → 1** |
 
-**Default-off after G3/r4** (OK-idiom mass on mature Zig): zp-alloc-in-loop, zp-append-without-reserve, zp-debug-allocator, zp-large-struct-by-value, zp-print-in-loop, zp-unbuffered-io, zp-missing-free, zp-packable-bools, zp-usize-index-field, zp-aos-single-field, zp-catch-unreachable-alloc, zp-oversized-enum-tag, zp-optional-scalar-field, zp-bool-array, zp-runtime-div-in-loop, zp-per-packet-alloc, zp-map-put-without-ensure, zp-catch-unreachable-io. The CLI does not report `off` rules (see [`zperf-lint/README.md`](../zperf-lint/README.md#rules)).
+**Default-off after G3/r4** (OK-idiom mass on mature Zig): zp-alloc-hot, zp-append-without-reserve, zp-debug-allocator, zp-large-struct-by-value, zp-print-hot, zp-unbuffered-io, zp-missing-free, zp-packable-bools, zp-usize-index-field, zp-aos-single-field, zp-catch-unreachable-alloc, zp-oversized-enum-tag, zp-optional-scalar-field, zp-bool-array, zp-runtime-div-hot, zp-per-packet-alloc, zp-map-put-without-ensure, zp-catch-unreachable-io. The CLI does not report `off` rules (see [`zperf-lint/README.md`](../zperf-lint/README.md#rules)).
 
-**Default-on:** zp-page-allocator-small, zp-broad-runtime-safety, zp-static-string-map, zp-queue-ordered-remove, zp-shift-on-read, zp-invariant-float-div, zp-arena-reset-free-all, zp-create-destroy-in-loop, zp-fixed-size-alloc-in-loop.
+**Default-on:** zp-page-allocator-small, zp-broad-runtime-safety, zp-static-string-map, zp-queue-ordered-remove, zp-shift-on-read, zp-invariant-float-div, zp-arena-reset-free-all, zp-create-destroy-hot, zp-fixed-size-alloc-hot.
 
 ### Reverse-opt + demotion
 
 - Path skip: `*fuzz*.zig`, `**/fuzz/**` (folded into `--include-tests`)
 - zp-page-allocator-small: exact `page_allocator` / `*.page_allocator` (not `huge_page_allocator`)
 - zp-debug-allocator: only `DebugAllocator(` / `GPA(` instantiations; skip re-exports + test context
-- zp-print-in-loop: skip `if (log)` / `if (logging)` diagnostic gates
+- zp-print-hot: skip `if (log)` / `if (logging)` diagnostic gates
 - **r4:** demote almost-all OK-idiom rules to default **`off`**; keep the TP-bearing rules (the default-on list above) on the default map
 
 ### corpus-ready: **yes**
 
 G3 + r4 demotion complete. Sample on full r4 residuals **n=26**: TP **73.1%**, OK-idiom **26.9%**,
-FP+DOC+SKIP-path **0%**. Honest TP on zp-queue-ordered-remove / zp-shift-on-read / zp-broad-runtime-safety / zp-fixed-size-alloc-in-loop. No mass escalate without G4.
+FP+DOC+SKIP-path **0%**. Honest TP on zp-queue-ordered-remove / zp-shift-on-read / zp-broad-runtime-safety / zp-fixed-size-alloc-hot. No mass escalate without G4.
 
 ## Inventory
 

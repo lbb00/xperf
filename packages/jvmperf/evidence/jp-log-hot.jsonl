@@ -1,0 +1,2 @@
+{"rule": "jp-log-hot", "case": "concatAlways_debugOff_n1000", "role": "before", "jdk": "27 (27+35)", "jvm_args": "-XX:+UseCompactObjectHeaders", "ns_per_op": 2838.115, "ratio": 0.434, "source": "J32_RuleEvidenceBatch", "ts": "2026-10-23T20:58:00+08:00", "jmh": "1.37", "alloc_b_per_op": 23200.045}
+{"rule": "jp-log-hot", "case": "guarded_debugOff_n1000", "role": "after", "jdk": "27 (27+35)", "jvm_args": "-XX:+UseCompactObjectHeaders", "ns_per_op": 6543.092, "ratio": 1, "source": "J32_RuleEvidenceBatch", "ts": "2026-10-23T20:58:00+08:00", "jmh": "1.37", "alloc_b_per_op": 0.096}

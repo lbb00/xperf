@@ -12,14 +12,14 @@ Derived from the closed loop: **guide ↔ measured evidence ↔ corpus dogfood �
 
 ## High leverage next
 
-### 1. Finding → bench gate (**jp-delete-shape / jp-delete-array-hole / cp-alloc-in-loop done**)
+### 1. Finding → bench gate (**jp-delete-shape / jp-delete-array-hole / cp-alloc-hot done**)
 Every **kept** rule needs ≥1 fixture pair with JSONL before/after on a named runtime (cc -O2 / Node version / Zig ReleaseFast).
 Ship as `packages/*/evidence/<rule-id>.jsonl` + guide citation.
 Until then, treat lint as review prompt only (already true; make it mechanical).
 
 ### 2. Severity / modes (**done** in cperf/jsperf)
-- `error`: only rules with measured agreement (e.g. jsperf jp-delete-array-hole, cperf cp-alloc-in-loop).
-- `hint` / off-by-default: cp-printf-in-loop, jp-console-in-loop, jp-alloc-in-loop.
+- `error`: only rules with measured agreement (e.g. jsperf jp-delete-array-hole, cperf cp-alloc-hot).
+- `hint` / off-by-default: cp-printf-hot, jp-console-hot, jp-alloc-hot.
 - Profiles: `--preset app|engine|all` + `--severity RULE=…` + `--strict-hints`.
 
 ### 3. Dynamic companions (not more static rules)
@@ -47,7 +47,7 @@ Forces honest portability claims (V8 ≠ QuickJS ≠ C).
 `make self-lint` / `npm run self-lint` / `zig build` on PR; corpus lint **nightly** on pinned SHAs (not every commit).
 
 ### 8. Negative results as first-class docs
-Publish negatives as first-class docs — jsperf STATIC-VS-V8 + **cperf STATIC-VS-O2** (`#if 0` cp-printf-in-loop) done; keep extending.
+Publish negatives as first-class docs — jsperf STATIC-VS-V8 + **cperf STATIC-VS-O2** (`#if 0` cp-printf-hot) done; keep extending.
 
 ## Explicit non-goals (for now)
 
@@ -58,7 +58,7 @@ Publish negatives as first-class docs — jsperf STATIC-VS-V8 + **cperf STATIC-V
 ## Suggested order
 
 1. ~~Severity split + app preset (c/js)~~ — **done**.
-2. ~~Evidence JSONL for jp-delete-shape / jp-delete-array-hole / cp-alloc-in-loop~~ — **done**; see each kit's `evidence/`.
+2. ~~Evidence JSONL for jp-delete-shape / jp-delete-array-hole / cp-alloc-hot~~ — **done**; see each kit's `evidence/`.
 3. One product/embed corpus instead of more gcc.
 4. ~~cperf static vs `-O2`~~ — **done** (correlation suite kept outside the repo).
 5. ~~Cross-kit smell catalog stub~~ — **done**: [smell-catalog.md](smell-catalog.md); fill remaining evidence cells.

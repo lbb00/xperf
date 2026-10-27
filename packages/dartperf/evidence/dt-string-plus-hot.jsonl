@@ -1,0 +1,2 @@
+{"rule":"dt-string-plus-hot","case":"string_buffer","role":"after","dart":"3.13.7","median_ms":0.458,"ops":30000,"ratio":1.0,"ts":"2026-10-23T13:06:04.369578Z"}
+{"rule":"dt-string-plus-hot","case":"string_plus","role":"before","dart":"3.13.7","median_ms":95.331,"ops":30000,"ratio":208.14628820960698,"ts":"2026-10-23T13:06:04.369578Z"}

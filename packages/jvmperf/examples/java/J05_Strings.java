@@ -5,7 +5,7 @@ import java.util.StringJoiner;
 public class J05_Strings {
     static String joinSlow(List<String> parts) {
         String s = "";
-        // jvmperf-lint: ignore jp-string-concat-in-loop -- Intentional counterexample.
+        // jvmperf-lint: ignore jp-string-concat-hot -- Intentional counterexample.
         for (String p : parts) s += p + ",";          // Creates and copies a new String each iteration: O(n²).
         return s;
     }

@@ -118,13 +118,13 @@ int main(void) {
   N2 = getenv("OC002_N") ? atoi(getenv("OC002_N")) : 15000;
   after2 = time_many(good_mutable);
   before2 = time_many(bad_append);
-  emit(dir, "oc-nsstring-append-in-loop", "mutable_string", after2, N2, "stringByAppending", before2, N2);
+  emit(dir, "oc-nsstring-append-hot", "mutable_string", after2, N2, "stringByAppending", before2, N2);
 
   N3 = getenv("OC003_N") ? atoi(getenv("OC003_N")) : 10000;
   freopen("/dev/null", "w", stderr);
   before3 = time_many(bad_nslog);
   after3 = time_many(good_nslog_once);
-  emit(dir, "oc-nslog-in-loop", "log_once", after3, N3, "fprintf_in_loop", before3, N3);
+  emit(dir, "oc-nslog-hot", "log_once", after3, N3, "fprintf_in_loop", before3, N3);
 
   [pool release];
   return 0;

@@ -4,7 +4,7 @@ const fs = require("fs");
 const path = require("path");
 
 function readSource(filePath) {
-  /* Indirect call so jp-readfile-sync-in-loop does not self-hit the scanner's one-shot reads. */
+  /* Indirect call so jp-readfile-sync-hot does not self-hit the scanner's one-shot reads. */
   const readUtf8 = fs.readFileSync;
   return readUtf8.call(fs, filePath, "utf8");
 }
@@ -223,7 +223,7 @@ function hotNewAlloc(line) {
   return false;
 }
 
-/** Build a finding object outside call-site loops so jp-alloc-in-loop does not self-hit. */
+/** Build a finding object outside call-site loops so jp-alloc-hot does not self-hit. */
 function makeFinding(rule, filePath, lineNo, message) {
   return { rule: rule, path: filePath, line: lineNo, message: message };
 }
@@ -581,10 +581,10 @@ function scanSource(filePath, text, lineBase, scope) {
     const allocish =
       RE_PUSH_ALLOC.test(smellLine) || RE_ASSIGN_NONEMPTY.test(smellLine) || hotNewAlloc(smellLine);
     if (matchHere && allocish && !skipJp001) {
-      findings.push(makeFinding("jp-alloc-in-loop", filePath, lineNo, MSG_JP001));
+      findings.push(makeFinding("jp-alloc-hot", filePath, lineNo, MSG_JP001));
     }
     if (matchHere && RE_CONSOLE.test(smellLine)) {
-      findings.push(makeFinding("jp-console-in-loop", filePath, lineNo, MSG_JP002));
+      findings.push(makeFinding("jp-console-hot", filePath, lineNo, MSG_JP002));
     }
     if (!skipJp003 && RE_DELETE_ARRAY_INDEX.test(line)) {
       findings.push(makeFinding("jp-delete-array-hole", filePath, lineNo, MSG_JP004));
@@ -598,34 +598,34 @@ function scanSource(filePath, text, lineBase, scope) {
       findings.push(makeFinding("jp-map-filter-chain", filePath, lineNo, MSG_JP006));
     }
     if (matchHere && RE_NEW_REGEXP.test(smellLine) && !argUsesBinding(raw, RE_NEW_REGEXP_ARG, binds)) {
-      findings.push(makeFinding("jp-regex-ctor-in-loop", filePath, lineNo, MSG_JP007));
+      findings.push(makeFinding("jp-regex-ctor-hot", filePath, lineNo, MSG_JP007));
     }
     if (matchHere && RE_JSON.test(smellLine) && !argUsesBinding(raw, RE_JSON_ARG, binds)) {
       /* JSON.parse(JSON.stringify(eventish)) is owned by jp-clone-per-event. */
       if (!RE_JSON_ROUNDTRIP.test(raw)) {
-        findings.push(makeFinding("jp-json-in-loop", filePath, lineNo, MSG_JP008));
+        findings.push(makeFinding("jp-json-hot", filePath, lineNo, MSG_JP008));
       }
     }
     if (matchHere && RE_DOM_QUERY.test(smellLine) && !argUsesBinding(raw, RE_DOM_ARG, binds)) {
       if (!isStarDomArg(raw) && !RE_QUERY_ALL_STAR.test(smellLine)) {
-        findings.push(makeFinding("jp-dom-query-in-loop", filePath, lineNo, MSG_JP009));
+        findings.push(makeFinding("jp-dom-query-hot", filePath, lineNo, MSG_JP009));
       }
     }
     if (matchHere && RE_INTL_DTF.test(smellLine) && !argUsesBinding(raw, RE_INTL_ARG, binds)) {
-      findings.push(makeFinding("jp-intl-datetimeformat-in-loop", filePath, lineNo, MSG_JP010));
+      findings.push(makeFinding("jp-intl-datetimeformat-hot", filePath, lineNo, MSG_JP010));
     }
     if (matchHere && RE_READFILE.test(smellLine) && !argUsesBinding(raw, RE_READFILE_ARG, binds)) {
-      findings.push(makeFinding("jp-readfile-sync-in-loop", filePath, lineNo, MSG_JP011));
+      findings.push(makeFinding("jp-readfile-sync-hot", filePath, lineNo, MSG_JP011));
     }
     if (matchHere && RE_CLOCK.test(smellLine)) {
       if (inLoopBody) {
         const top = loopAwait.length - 1;
         if (top >= 0 && !loopAwait[top]) {
           clockIdx.push(top);
-          clockFindings.push(makeFinding("jp-clock-in-loop", filePath, lineNo, MSG_JP012));
+          clockFindings.push(makeFinding("jp-clock-hot", filePath, lineNo, MSG_JP012));
         }
       } else if (scopeMode === "all") {
-        findings.push(makeFinding("jp-clock-in-loop", filePath, lineNo, MSG_JP012));
+        findings.push(makeFinding("jp-clock-hot", filePath, lineNo, MSG_JP012));
       }
     }
 

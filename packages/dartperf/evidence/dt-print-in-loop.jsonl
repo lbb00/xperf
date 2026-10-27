@@ -1,2 +1,0 @@
-{"rule":"dt-print-in-loop","case":"print_once","role":"after","dart":"3.13.7","median_ms":0.004,"ops":10000,"ratio":1.0,"ts":"2026-10-23T13:06:04.474608Z"}
-{"rule":"dt-print-in-loop","case":"print_in_loop","role":"before","dart":"3.13.7","median_ms":8.159,"ops":10000,"ratio":2039.7500000000002,"ts":"2026-10-23T13:06:04.474608Z"}

@@ -6,7 +6,7 @@ namespace CsharpPerfLint;
 static class Program
 {
   static readonly Dictionary<string, string> DefaultSev = new() {
-    ["cs-list-add-no-capacity"] = "off", ["cs-string-plus-in-loop"] = "off", ["cs-console-in-loop"] = "off", ["cs-regex-in-loop"] = "hint", ["cs-linq-materialize-in-loop"] = "hint", ["cs-format-in-loop"] = "hint", ["cs-json-in-loop"] = "hint", ["cs-file-read-in-loop"] = "hint", ["cs-clock-in-loop"] = "hint", ["cs-field-by-name-in-loop"] = "hint"
+    ["cs-list-add-no-capacity"] = "off", ["cs-string-plus-hot"] = "off", ["cs-console-hot"] = "off", ["cs-regex-hot"] = "hint", ["cs-linq-materialize-hot"] = "hint", ["cs-format-hot"] = "hint", ["cs-json-hot"] = "hint", ["cs-file-read-hot"] = "hint", ["cs-clock-hot"] = "hint", ["cs-field-by-name-hot"] = "hint"
   };
 
   // Baseline skips (always): build artifacts only
@@ -31,6 +31,7 @@ static class Program
     var strictHints = false;
     var noFail = false;
     var paths = new List<string>(args.Length);
+    var scope = "all";
     for (int i = 0; i < args.Length; i++) {
       var a = args[i];
       if (a is "-h" or "--help") Usage(0);
@@ -41,6 +42,8 @@ static class Program
       if (a == "--strict-hints") { strictHints = true; continue; }
       if (a == "--no-fail") { noFail = true; continue; }
       if (a == "--raw-paths") { EnableReverseOpt = false; continue; } // baseline comparison
+      if (a == "--scope" && i + 1 < args.Length) { scope = args[++i]; if (scope is not ("all" or "loop")) Usage(2); continue; }
+      if (a.StartsWith("--scope=")) { scope = a["--scope=".Length..]; if (scope is not ("all" or "loop")) Usage(2); continue; }
       if (a.StartsWith("-")) Usage(2);
       paths.Add(a);
     }
@@ -48,7 +51,7 @@ static class Program
 
     var findings = new List<Finding>(256);
     foreach (var p in paths)
-      foreach (var f in ScanPath(p)) findings.Add(f);
+      foreach (var f in ScanPath(p, scope)) findings.Add(f);
 
     int nerr = 0, nhint = 0;
     var rows = new List<object>(findings.Count);
@@ -89,6 +92,7 @@ static class Program
 Usage: csharpperf-lint PATH... [options]
   --format text|json
   --severity RULE=error|hint|off
+  --scope all|loop     (default: all; loop = former in-loop-only)
   --strict-hints
   --no-fail
   --raw-paths          include test/benchmarks (baseline dumps)
@@ -112,10 +116,10 @@ Usage: csharpperf-lint PATH... [options]
     return false;
   }
 
-  static IEnumerable<Finding> ScanPath(string root)
+  static IEnumerable<Finding> ScanPath(string root, string scope = "all")
   {
     if (File.Exists(root)) {
-      if (root.EndsWith(".cs", StringComparison.OrdinalIgnoreCase)) return ScanFile(root);
+      if (root.EndsWith(".cs", StringComparison.OrdinalIgnoreCase)) return ScanFile(root, scope);
       return Array.Empty<Finding>();
     }
     var all = new List<Finding>(128);
@@ -129,12 +133,12 @@ Usage: csharpperf-lint PATH... [options]
       var rel = new string[relCount];
       for (var ri = 0; ri < relCount; ri++) rel[ri] = fileParts[rootParts.Length + ri];
       if (ShouldSkipRel(rel)) continue;
-      all.AddRange(ScanFile(file));
+      all.AddRange(ScanFile(file, scope));
     }
     return all;
   }
 
-  static List<Finding> ScanFile(string path)
+  static List<Finding> ScanFile(string path, string scope = "all")
   {
     var reFor = new Regex(@"\b(for|foreach|while)\b");
     var reAdd = new Regex(@"\.Add\s*\(");
@@ -142,7 +146,7 @@ Usage: csharpperf-lint PATH... [options]
     var reStrPlus = new Regex(@"\w+\s*\+=\s*");
     var reNumPlus = new Regex(@"\+=\s*\d");
     var reConsole = new Regex(@"\bConsole\.(Write|WriteLine)\s*\(");
-    // cs-regex-in-loop: static Regex.IsMatch/Match/... with a pattern string inside a loop (prefer compiled Regex).
+    // cs-regex-hot: static Regex.IsMatch/Match/... with a pattern string inside a loop (prefer compiled Regex).
     var reRegexStatic = new Regex(@"\bRegex\.(IsMatch|Match|Matches|Replace|Split)\s*\(");
     var reListDecl = new Regex(@"\bList\s*<");
     var reDictishAdd = new Regex(@"\b(flags|map|dict|set|seen|lookup)\.Add\s*\(", RegexOptions.IgnoreCase);
@@ -164,6 +168,7 @@ Usage: csharpperf-lint PATH... [options]
     var reFileArg = new Regex(@"\bFile\.(?:ReadAllText|Open|OpenRead|OpenText)\s*\(([^)\r\n]*)");
     var outList = new List<Finding>(64);
     var lines = File.ReadAllLines(path);
+    var scopeMode = scope == "loop" ? "loop" : "all";
     int depth = 0, inLoop = 0;
     var recent = new List<string>(16);
     bool sawCapacity = false;
@@ -202,7 +207,8 @@ Usage: csharpperf-lint PATH... [options]
           // fall through to finding checks; cleared after depth update below
         }
       }
-      if (inLoop > 0 && depth >= inLoop) {
+      var matchHere = scopeMode == "all" || (inLoop > 0 && depth >= inLoop);
+      if (matchHere) {
         if (reAdd.IsMatch(code) && !sawCapacity) {
           bool listish = !EnableReverseOpt || recent.Any(r => reListDecl.IsMatch(r) || r.Contains("new List", StringComparison.Ordinal));
           if (EnableReverseOpt) {
@@ -217,7 +223,7 @@ Usage: csharpperf-lint PATH... [options]
               listish = false;
           }
           if (listish)
-            outList.Add(new Finding("cs-list-add-no-capacity", path, i + 1, "List.Add in loop without Capacity / pre-size"));
+            outList.Add(new Finding("cs-list-add-no-capacity", path, i + 1, "List.Add without Capacity / pre-size — cost adds up even off a hot path"));
         }
         if (reCapacity.IsMatch(code)) sawCapacity = true;
         if (reStrPlus.IsMatch(code) && LooksStringPlus(code, reNumPlus)) {
@@ -227,7 +233,7 @@ Usage: csharpperf-lint PATH... [options]
             || relPath.Contains("/Localisation/WordsToNumber/", StringComparison.OrdinalIgnoreCase)
             || relPath.Contains("/Localisation/DateToOrdinalWords/", StringComparison.OrdinalIgnoreCase));
           if (!skipWords)
-            outList.Add(new Finding("cs-string-plus-in-loop", path, i + 1, "string += in loop; prefer StringBuilder"));
+            outList.Add(new Finding("cs-string-plus-hot", path, i + 1, "string +=; prefer StringBuilder — cost adds up even off a hot path"));
         }
         if (reConsole.IsMatch(code)) {
           if (EnableReverseOpt && fileLooksDumper) { /* skip */ }
@@ -236,43 +242,43 @@ Usage: csharpperf-lint PATH... [options]
             if (!code.Contains("DEBUG", StringComparison.OrdinalIgnoreCase)
                 && !prev.Contains("#if", StringComparison.Ordinal)
                 && !prev.Contains("DEBUG", StringComparison.OrdinalIgnoreCase))
-              outList.Add(new Finding("cs-console-in-loop", path, i + 1, "Console.Write* in loop; gate or buffer"));
+              outList.Add(new Finding("cs-console-hot", path, i + 1, "Console.Write*; gate or buffer — cost adds up even off a hot path"));
           } else {
-            outList.Add(new Finding("cs-console-in-loop", path, i + 1, "Console.Write* in loop; gate or buffer"));
+            outList.Add(new Finding("cs-console-hot", path, i + 1, "Console.Write*; gate or buffer — cost adds up even off a hot path"));
           }
         }
         if (reAwait.IsMatch(code)) loopAwait = true;
         if (reRegexNew.IsMatch(code) && !ArgUses(FirstArg(reRegexNewArg, code), loopNames)) {
-          outList.Add(new Finding("cs-regex-in-loop", path, i + 1,
-            "Regex constructed in a loop; compile outside only when this pattern stays the same"));
+          outList.Add(new Finding("cs-regex-hot", path, i + 1,
+            "Regex constructed; compile outside only when this pattern stays the same — cost adds up even off a hot path"));
         }
         if (reRegexStatic.IsMatch(code) && !ArgUses(NthArg(reRegexStaticArg, code, 1), loopNames)) {
-          outList.Add(new Finding("cs-regex-in-loop", path, i + 1,
-            "Regex.IsMatch/Match in a loop; compile outside only when this pattern stays the same"));
+          outList.Add(new Finding("cs-regex-hot", path, i + 1,
+            "Regex.IsMatch/Match; compile outside only when this pattern stays the same — cost adds up even off a hot path"));
         }
         if (reFileRead.IsMatch(code) && !ArgUses(FirstArg(reFileArg, code), loopNames)) {
-          outList.Add(new Finding("cs-file-read-in-loop", path, i + 1,
-            "file read in a loop; read once when the path stays the same"));
+          outList.Add(new Finding("cs-file-read-hot", path, i + 1,
+            "file read; read once when the path stays the same — cost adds up even off a hot path"));
         }
         if (reClock.IsMatch(code) && !loopAwait) {
-          clockHold.Add(new Finding("cs-clock-in-loop", path, i + 1,
-            "clock sample in a tight loop with no await; hoist only when this iteration does not need a fresh time"));
+          clockHold.Add(new Finding("cs-clock-hot", path, i + 1,
+            "clock sample with no await; hoist only when this iteration does not need a fresh time — cost adds up even off a hot path"));
         }
         if (reFieldName.IsMatch(code)) {
-          outList.Add(new Finding("cs-field-by-name-in-loop", path, i + 1,
-            "field lookup by name in a loop; use the field directly when the name is fixed"));
+          outList.Add(new Finding("cs-field-by-name-hot", path, i + 1,
+            "field lookup by name; use the field directly when the name is fixed — cost adds up even off a hot path"));
         }
         if (reLinqMaterialize.IsMatch(code)) {
-          outList.Add(new Finding("cs-linq-materialize-in-loop", path, i + 1,
-            "ToList/ToArray/ToDictionary in loop; materialize once"));
+          outList.Add(new Finding("cs-linq-materialize-hot", path, i + 1,
+            "ToList/ToArray/ToDictionary; materialize once — cost adds up even off a hot path"));
         }
         if (reStringFormat.IsMatch(code)) {
-          outList.Add(new Finding("cs-format-in-loop", path, i + 1,
-            "string.Format in loop; format outside or use a builder"));
+          outList.Add(new Finding("cs-format-hot", path, i + 1,
+            "string.Format; format outside or use a builder — cost adds up even off a hot path"));
         }
         if (reJson.IsMatch(code) && !ArgUses(FirstArg(reJsonArg, code), loopNames)) {
-          outList.Add(new Finding("cs-json-in-loop", path, i + 1,
-            "JSON encode or decode in a loop; hoist only when this value stays the same"));
+          outList.Add(new Finding("cs-json-hot", path, i + 1,
+            "JSON encode or decode; hoist only when this value stays the same — cost adds up even off a hot path"));
         }
       }
       depth = depth + opens - closes;

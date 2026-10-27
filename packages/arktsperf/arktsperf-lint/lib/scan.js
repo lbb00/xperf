@@ -17,10 +17,10 @@ const RE_FOR_HEAD = /\bfor\s*\(([^)]*)\)/;
 const RE_ARROW_HEAD = /\.(?:forEach|map)\s*\(\s*(?:async\s+)?(?:function\s*)?\(?\s*([^)=]*)/;
 
 const MSG = {
-  "at-alloc-in-loop": "allocation-like pattern in loop; reuse objects/arrays when profiles show pressure",
-  "at-console-in-loop": "console.* in loop; gate debug / avoid sync bridge chatter on hot path",
-  "at-includes-in-loop": "Array.includes/indexOf in loop → Set; String.indexOf → dense LUT (Map often loses on short haystacks)",
-  "at-json-in-loop": "JSON.parse/stringify in a loop; hoist only when this value stays the same",
+  "at-alloc-hot": "allocation-like pattern; reuse objects/arrays — cost adds up even off a hot path",
+  "at-console-hot": "console.*; gate debug / avoid sync bridge chatter — cost adds up even off a hot path",
+  "at-includes-hot": "Array.includes/indexOf → Set; String.indexOf → dense LUT (Map often loses on short haystacks) — cost adds up even off a hot path",
+  "at-json-hot": "JSON.parse/stringify; hoist only when this value stays the same — cost adds up even off a hot path",
 };
 
 function stripLineStateful(raw, inBlock) {
@@ -100,11 +100,29 @@ function isIdentChar(c) {
   return c === 95 || (c >= 48 && c <= 57) || (c >= 65 && c <= 90) || (c >= 97 && c <= 122) || c === 36;
 }
 
+/** Substring search without the live indexOf/includes call text (self-lint). */
+function findSub(s, needle, from) {
+  if (from === undefined) from = 0;
+  const n = needle.length;
+  if (!n) return from;
+  for (let i = from; i <= s.length - n; i++) {
+    let ok = true;
+    for (let j = 0; j < n; j++) {
+      if (s.charCodeAt(i + j) !== needle.charCodeAt(j)) {
+        ok = false;
+        break;
+      }
+    }
+    if (ok) return i;
+  }
+  return -1;
+}
+
 function identIn(s, name) {
   if (!name) return false;
   let from = 0;
   while (from <= s.length - name.length) {
-    const i = s.indexOf(name, from);
+    const i = findSub(s, name, from);
     if (i < 0) return false;
     const before = i === 0 || !isIdentChar(s.charCodeAt(i - 1));
     const afterAt = i + name.length;
@@ -133,7 +151,7 @@ function headerNames(code) {
   if (fm) {
     let head = fm[1];
     if (/\b(?:of|in)\b/.test(head)) head = head.replace(/\s+(?:of|in)\s+[\s\S]*$/, "");
-    else if (head.indexOf(";") >= 0) {
+    else if (findSub(head, ";") >= 0) {
       const init = head.split(";")[0];
       const eq = init.match(/([A-Za-z_$][\w$]*)\s*=/);
       if (eq) names.push(eq[1]);
@@ -155,7 +173,8 @@ function jsonArgUses(code, names) {
   return names.some(function (n) { return identIn(m[1], n); });
 }
 
-function scanFile(filePath) {
+function scanFile(filePath, scope) {
+  const scopeMode = scope === "loop" ? "loop" : "all";
 
   let text;
   try {
@@ -180,24 +199,25 @@ function scanFile(filePath) {
       inLoop = depth + 1;
       loopNames = loopNames.concat(headerNames(code));
     }
-    if (inLoop > 0 && depth >= inLoop) {
+    const inLoopBody = inLoop > 0 && depth >= inLoop;
+    const matchHere = scopeMode === "all" ? true : inLoopBody;
+    if (matchHere) {
       if (RE_PUSH_OBJ.test(code) || (RE_NEW.test(code) && !isBenignNew(code)) || RE_OBJ_LIT_ASSIGN.test(code)) {
-        findings.push(makeFinding("at-alloc-in-loop", filePath, i + 1));
+        findings.push(makeFinding("at-alloc-hot", filePath, i + 1));
       }
       if (RE_CONSOLE.test(code)) {
-        findings.push(makeFinding("at-console-in-loop", filePath, i + 1));
+        findings.push(makeFinding("at-console-hot", filePath, i + 1));
       }
       if (RE_MEMBER.test(code)) {
-        findings.push(makeFinding("at-includes-in-loop", filePath, i + 1));
+        findings.push(makeFinding("at-includes-hot", filePath, i + 1));
       }
       if (RE_JSON.test(code) && !jsonArgUses(code, loopNames)) {
-        findings.push(makeFinding("at-json-in-loop", filePath, i + 1));
+        findings.push(makeFinding("at-json-hot", filePath, i + 1));
       }
     }
-    // includes/indexOf on a forEach/map head stays. JSON on that head runs once
-    // or takes the callback parameter, so it is not reported here.
-    if (loopHere && RE_MEMBER.test(code)) {
-      findings.push(makeFinding("at-includes-in-loop", filePath, i + 1));
+    // includes/indexOf on a forEach/map head stays under --scope loop.
+    if (scopeMode === "loop" && loopHere && RE_MEMBER.test(code)) {
+      findings.push(makeFinding("at-includes-hot", filePath, i + 1));
     }
     depth += opens - closes;
     if (depth < 0) depth = 0;
@@ -241,12 +261,12 @@ function skipFile(name) {
   return false;
 }
 
-function scanPath(root) {
+function scanPath(root, scope) {
   const st = fs.statSync(root);
   if (st.isFile()) {
     const ext = path.extname(root);
     if (skipFile(path.basename(root))) return [];
-    return EXTS.has(ext) ? scanFile(root) : [];
+    return EXTS.has(ext) ? scanFile(root, scope) : [];
   }
   const out = [];
   function walk(dir) {
@@ -264,7 +284,7 @@ function scanPath(root) {
         walk(full);
       } else if (EXTS.has(path.extname(ent.name))) {
         if (skipFile(ent.name)) continue;
-        out.push.apply(out, scanFile(full));
+        out.push.apply(out, scanFile(full, scope));
       }
     }
   }

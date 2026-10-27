@@ -1,5 +1,5 @@
-# Evidence microbench be-map-merge-in-loop / be-enum-map-filter-chain → packages/beamperf/evidence/*.jsonl
-# be-map-merge-in-loop: Map.merge / Keyword.merge in reduce vs Map.put / one-shot merge
+# Evidence microbench be-map-merge-hot / be-enum-map-filter-chain → packages/beamperf/evidence/*.jsonl
+# be-map-merge-hot: Map.merge / Keyword.merge in reduce vs Map.put / one-shot merge
 # be-enum-map-filter-chain: Enum.map |> Enum.filter chain vs one-pass reduce
 # Timer: :erlang.monotonic_time(:nanosecond); warm=3; median of 9
 
@@ -83,7 +83,7 @@ n_maps = String.to_integer(System.get_env("BE004_N") || "5000")
 n_kw = String.to_integer(System.get_env("BE004_KW_N") || "2000")
 n_enum = String.to_integer(System.get_env("BE005_N") || "200000")
 
-# --- be-map-merge-in-loop Map.merge in reduce vs Map.put ---
+# --- be-map-merge-hot Map.merge in reduce vs Map.put ---
 maps =
   for i <- 1..n_maps do
     %{i => i, :tag => rem(i, 7)}
@@ -141,7 +141,7 @@ after_kw =
     Enum.reduce(kw_maps, [], fn [{k, v}], acc -> Keyword.put(acc, k, v) end) |> length()
   end)
 
-Evidence.emit("be-map-merge-in-loop", [
+Evidence.emit("be-map-merge-hot", [
   %{case: "map_put_kv", role: "after", median_ms: after_put, ops: n_maps, ratio: 1.0},
   %{
     case: "map_merge_reduce",

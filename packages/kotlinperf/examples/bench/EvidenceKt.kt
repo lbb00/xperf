@@ -85,7 +85,7 @@ fun main() {
         for (x in src1) out.add(x)
         out.size
     }
-    emit(dir, "kt-list-add-in-loop", listOf(
+    emit(dir, "kt-list-add-hot", listOf(
         Triple("arraylist_capacity", "after", after1 to n1),
         Triple("list_add_empty", "before", before1 to n1),
     ))
@@ -101,7 +101,7 @@ fun main() {
             for (i in 0 until n2) append(i)
         }.length
     }
-    emit(dir, "kt-string-plus-in-loop", listOf(
+    emit(dir, "kt-string-plus-hot", listOf(
         Triple("buildString", "after", after2 to n2),
         Triple("string_plus", "before", before2 to n2),
     ))
@@ -123,7 +123,7 @@ fun main() {
     }
     System.setOut(old)
     nullOut.close()
-    emit(dir, "kt-println-in-loop", listOf(
+    emit(dir, "kt-println-hot", listOf(
         Triple("println_once", "after", after3 to n3),
         Triple("println_in_loop", "before", before3 to n3),
     ))

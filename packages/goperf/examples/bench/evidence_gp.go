@@ -1,4 +1,4 @@
-// Evidence microbench for gp-make-in-loop–gp-defer-in-loop → packages/goperf/evidence/GP*.jsonl
+// Evidence microbench for gp-make-hot–gp-defer-hot → packages/goperf/evidence/GP*.jsonl
 // go run evidence_gp.go
 package main
 
@@ -88,9 +88,9 @@ func main() {
 		fmt.Fprintf(os.Stderr, "  %s %s %s median=%.3f ms ops=%d ratio=%.3f\n", rule, role, caseName, med, ops, ratio)
 	}
 
-	// --- gp-make-in-loop: make([]byte, 64) each iter vs reuse ---
+	// --- gp-make-hot: make([]byte, 64) each iter vs reuse ---
 	n1 := envInt("GP001_N", 200000)
-	fmt.Fprintf(os.Stderr, "gp-make-in-loop make-in-loop n=%d\n", n1)
+	fmt.Fprintf(os.Stderr, "gp-make-hot make-in-loop n=%d\n", n1)
 	med1a := timeMany(func() int {
 		buf := make([]byte, 64)
 		s := 0
@@ -111,8 +111,8 @@ func main() {
 		}
 		return s + len(out)
 	})
-	emit("gp-make-in-loop", "reuse_buf", "after", med1a, n1, 1)
-	emit("gp-make-in-loop", "make_each_iter", "before", med1b, n1, med1b/max(med1a, 1e-9))
+	emit("gp-make-hot", "reuse_buf", "after", med1a, n1, 1)
+	emit("gp-make-hot", "make_each_iter", "before", med1b, n1, med1b/max(med1a, 1e-9))
 
 	// Pair B: fixture-shaped fill — make each + append vs presize one slice
 	n1b := envInt("GP001_N_FILL", 50000)
@@ -142,16 +142,16 @@ func main() {
 		return len(out)
 	})
 	_ = med1fa
-	emit("gp-make-in-loop", "single_slice_fill", "after", med1fa2, n1b, 1)
-	emit("gp-make-in-loop", "make_append_slices", "before", med1fb, n1b, med1fb/max(med1fa2, 1e-9))
+	emit("gp-make-hot", "single_slice_fill", "after", med1fa2, n1b, 1)
+	emit("gp-make-hot", "make_append_slices", "before", med1fb, n1b, med1fb/max(med1fa2, 1e-9))
 
-	// --- gp-string-plus-in-loop: string += vs Builder ---
+	// --- gp-string-plus-hot: string += vs Builder ---
 	n2 := envInt("GP002_N", 50000)
 	parts := make([]string, n2)
 	for i := range parts {
 		parts[i] = "x"
 	}
-	fmt.Fprintf(os.Stderr, "gp-string-plus-in-loop string-plus n=%d\n", n2)
+	fmt.Fprintf(os.Stderr, "gp-string-plus-hot string-plus n=%d\n", n2)
 	med2a := timeMany(func() int {
 		var b strings.Builder
 		b.Grow(n2)
@@ -167,8 +167,8 @@ func main() {
 		}
 		return len(s)
 	})
-	emit("gp-string-plus-in-loop", "strings_builder", "after", med2a, n2, 1)
-	emit("gp-string-plus-in-loop", "string_plus", "before", med2b, n2, med2b/max(med2a, 1e-9))
+	emit("gp-string-plus-hot", "strings_builder", "after", med2a, n2, 1)
+	emit("gp-string-plus-hot", "string_plus", "before", med2b, n2, med2b/max(med2a, 1e-9))
 
 	n2s := envInt("GP002_N_SMALL", 100)
 	partsS := parts[:n2s]
@@ -186,12 +186,12 @@ func main() {
 		}
 		return len(s)
 	})
-	emit("gp-string-plus-in-loop", "small_builder", "after", med2sa, n2s, 1)
-	emit("gp-string-plus-in-loop", "small_string_plus", "before", med2sb, n2s, med2sb/max(med2sa, 1e-9))
+	emit("gp-string-plus-hot", "small_builder", "after", med2sa, n2s, 1)
+	emit("gp-string-plus-hot", "small_string_plus", "before", med2sb, n2s, med2sb/max(med2sa, 1e-9))
 
-	// --- gp-fmt-in-loop: fmt.Sprintf in loop vs strconv ---
+	// --- gp-fmt-hot: fmt.Sprintf in loop vs strconv ---
 	n3 := envInt("GP003_N", 100000)
-	fmt.Fprintf(os.Stderr, "gp-fmt-in-loop fmt-loop n=%d\n", n3)
+	fmt.Fprintf(os.Stderr, "gp-fmt-hot fmt-loop n=%d\n", n3)
 	med3a := timeMany(func() int {
 		out := make([]string, 0, n3)
 		for i := 0; i < n3; i++ {
@@ -218,10 +218,10 @@ func main() {
 		}
 		return len(out)
 	})
-	emit("gp-fmt-in-loop", "strconv_builder", "after", med3a2, n3, 1)
-	emit("gp-fmt-in-loop", "fmt_sprintf_loop", "before", med3b, n3, med3b/max(med3a2, 1e-9))
-	emit("gp-fmt-in-loop", "strconv_itoa_only", "after", med3a, n3, 1)
-	emit("gp-fmt-in-loop", "fmt_sprintf_vs_itoa", "before", med3b, n3, med3b/max(med3a, 1e-9))
+	emit("gp-fmt-hot", "strconv_builder", "after", med3a2, n3, 1)
+	emit("gp-fmt-hot", "fmt_sprintf_loop", "before", med3b, n3, med3b/max(med3a2, 1e-9))
+	emit("gp-fmt-hot", "strconv_itoa_only", "after", med3a, n3, 1)
+	emit("gp-fmt-hot", "fmt_sprintf_vs_itoa", "before", med3b, n3, med3b/max(med3a, 1e-9))
 
 	// --- gp-append-nil-slice: append grow vs presize ---
 	n4 := envInt("GP004_N", 500000)
@@ -266,10 +266,10 @@ func main() {
 	emit("gp-append-nil-slice", "small_presize", "after", med4sa, n4s, 1)
 	emit("gp-append-nil-slice", "small_append_grow", "before", med4sb, n4s, med4sb/max(med4sa, 1e-9))
 
-	// --- gp-defer-in-loop: defer in loop vs close each ---
+	// --- gp-defer-hot: defer in loop vs close each ---
 	// Synthetic closer; avoid real FS.
 	n5 := envInt("GP005_N", 20000)
-	fmt.Fprintf(os.Stderr, "gp-defer-in-loop defer-loop n=%d\n", n5)
+	fmt.Fprintf(os.Stderr, "gp-defer-hot defer-loop n=%d\n", n5)
 	type closer struct{ n *int }
 	closeFn := func(c *closer) { *c.n++ }
 
@@ -291,8 +291,8 @@ func main() {
 		}()
 		return s
 	})
-	emit("gp-defer-in-loop", "close_each", "after", med5a, n5, 1)
-	emit("gp-defer-in-loop", "defer_in_loop", "before", med5b, n5, med5b/max(med5a, 1e-9))
+	emit("gp-defer-hot", "close_each", "after", med5a, n5, 1)
+	emit("gp-defer-hot", "defer_in_loop", "before", med5b, n5, med5b/max(med5a, 1e-9))
 
 	n5s := envInt("GP005_N_SMALL", 100)
 	med5sa := timeMany(func() int {
@@ -313,8 +313,8 @@ func main() {
 		}()
 		return s
 	})
-	emit("gp-defer-in-loop", "small_close_each", "after", med5sa, n5s, 1)
-	emit("gp-defer-in-loop", "small_defer_in_loop", "before", med5sb, n5s, med5sb/max(med5sa, 1e-9))
+	emit("gp-defer-hot", "small_close_each", "after", med5sa, n5s, 1)
+	emit("gp-defer-hot", "small_defer_in_loop", "before", med5sb, n5s, med5sb/max(med5sa, 1e-9))
 
 	// write per-rule jsonl
 	byRule := map[string]*strings.Builder{}

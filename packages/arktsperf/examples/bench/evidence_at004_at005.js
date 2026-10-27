@@ -1,9 +1,9 @@
 "use strict";
 /**
- * Evidence microbench for at-includes-in-loop / at-json-in-loop → packages/arktsperf/evidence/*.jsonl
+ * Evidence microbench for at-includes-hot / at-json-hot → packages/arktsperf/evidence/*.jsonl
  * Node proxy for ArkTS smells (no ArkTS VM on this machine). Document as Node/V8 proxy only.
- * "at-includes-in-loop": Array.includes / String.indexOf in loop vs Set / Map lookup.
- * "at-json-in-loop": JSON.parse/stringify per item vs once / reuse.
+ * "at-includes-hot": Array.includes / String.indexOf in loop vs Set / Map lookup.
+ * "at-json-hot": JSON.parse/stringify per item vs once / reuse.
  */
 const fs = require("fs");
 const path = require("path");
@@ -37,7 +37,7 @@ function timeMany(fn) {
   return median(samples);
 }
 
-/* --- "at-includes-in-loop": includes in loop vs Set --- */
+/* --- "at-includes-hot": includes in loop vs Set --- */
 const known = [];
 for (let i = 0; i < 256; i++) known.push("k" + (i % 64));
 const items = [];
@@ -59,7 +59,7 @@ function case_set_has() {
   return n;
 }
 
-/* --- "at-includes-in-loop": indexOf alphabet vs Map --- */
+/* --- "at-includes-hot": indexOf alphabet vs Map --- */
 const alphabet =
   "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 const chars = [];
@@ -82,7 +82,7 @@ function case_map_lookup() {
   return s;
 }
 
-/* --- "at-json-in-loop": JSON.parse in loop vs once --- */
+/* --- "at-json-hot": JSON.parse in loop vs once --- */
 const payloads = [];
 for (let i = 0; i < N_JSON; i++) {
   payloads.push(JSON.stringify({ i: i & 1023, s: "x" + (i % 16) }));
@@ -166,7 +166,7 @@ console.log("Node", node, "V8", process.versions.v8);
   const afterInc = set_ms;
   const lines = [
     {
-      rule: "at-includes-in-loop",
+      rule: "at-includes-hot",
       case: "set_has",
       role: "after",
       median_ms: set_ms,
@@ -174,7 +174,7 @@ console.log("Node", node, "V8", process.versions.v8);
       ratio: 1,
     },
     {
-      rule: "at-includes-in-loop",
+      rule: "at-includes-hot",
       case: "includes_loop",
       role: "before",
       median_ms: includes_ms,
@@ -182,7 +182,7 @@ console.log("Node", node, "V8", process.versions.v8);
       ratio: includes_ms / set_ms,
     },
     {
-      rule: "at-includes-in-loop",
+      rule: "at-includes-hot",
       case: "map_lookup",
       role: "after",
       median_ms: map_ms,
@@ -190,7 +190,7 @@ console.log("Node", node, "V8", process.versions.v8);
       ratio: 1,
     },
     {
-      rule: "at-includes-in-loop",
+      rule: "at-includes-hot",
       case: "indexOf_loop",
       role: "before",
       median_ms: idx_ms,
@@ -207,7 +207,7 @@ console.log("Node", node, "V8", process.versions.v8);
       ts: new Date().toISOString(),
     })
   );
-  const out = path.join(OUT_DIR, "at-includes-in-loop.jsonl");
+  const out = path.join(OUT_DIR, "at-includes-hot.jsonl");
   fs.writeFileSync(out, lines.join("\n") + "\n");
   console.log("wrote", out);
   console.log(" includes", includes_ms, "set", set_ms, "ratio", includes_ms / set_ms);
@@ -250,7 +250,7 @@ console.log("Node", node, "V8", process.versions.v8);
     },
   ].map((p) =>
     JSON.stringify({
-      rule: "at-json-in-loop",
+      rule: "at-json-hot",
       ...p,
       runtime: "node-proxy",
       note: "Not ArkTS VM; V8/Node stand-in for same smell",
@@ -259,7 +259,7 @@ console.log("Node", node, "V8", process.versions.v8);
       ts: new Date().toISOString(),
     })
   );
-  const out = path.join(OUT_DIR, "at-json-in-loop.jsonl");
+  const out = path.join(OUT_DIR, "at-json-hot.jsonl");
   fs.writeFileSync(out, lines.join("\n") + "\n");
   console.log("wrote", out);
   console.log(" parse_loop", parse_loop, "once", parse_once, "ratio", parse_loop / parse_once);

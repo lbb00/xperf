@@ -1,2 +1,0 @@
-{"rule":"sp-regex-in-loop","case":"regex_once","role":"after","swiftc":"swiftc -O","median_ms":0.307918,"ops":2000,"ratio":1,"ts":"2026-10-23T05:09:02Z"}
-{"rule":"sp-regex-in-loop","case":"regex_each_iter","role":"before","swiftc":"swiftc -O","median_ms":5.050063,"ops":2000,"ratio":16.400697,"ts":"2026-10-23T05:09:02Z"}

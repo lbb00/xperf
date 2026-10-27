@@ -66,7 +66,7 @@ proc main() =
     for i in 0..<nSeq:
       xs[i] = i
     xs.len)
-  emit(dir, "nm-seq-add-in-loop", @[
+  emit(dir, "nm-seq-add-hot", @[
     ("index_assign", "after", afterIndex, nSeq),
     ("seq_add", "before", beforeAdd, nSeq),
   ])
@@ -103,7 +103,7 @@ proc main() =
     s)
   stdout.close()
   stdout = oldOut
-  emit(dir, "nm-echo-in-loop", @[
+  emit(dir, "nm-echo-hot", @[
     ("echo_once", "after", afterEcho, nEcho),
     ("echo_in_loop", "before", beforeEcho, nEcho),
   ])

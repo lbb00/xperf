@@ -22,7 +22,7 @@ const BufferPool = struct {
         const buffers = try gpa.alloc([]u8, count);
         errdefer gpa.free(buffers);
         for (buffers) |*slot| {
-            // zperf-lint: ignore zp-alloc-in-loop -- one-time pool warm-up, not a hot-path pattern
+            // zperf-lint: ignore zp-alloc-hot -- one-time pool warm-up, not a hot-path pattern
             slot.* = try gpa.alloc(u8, len);
         }
         return .{ .buffers = buffers, .available = count, .buf_len = len };
@@ -74,7 +74,7 @@ fn runGpa(ptr: *anyopaque) void {
     const ctx: *GpaCtx = @ptrCast(@alignCast(ptr));
     var i: u64 = 0;
     while (i < ops) : (i += 1) {
-        // zperf-lint: ignore zp-alloc-in-loop zp-catch-unreachable-alloc -- deliberate pool-miss GPA baseline for the shootout
+        // zperf-lint: ignore zp-alloc-hot zp-catch-unreachable-alloc -- deliberate pool-miss GPA baseline for the shootout
         const buf = ctx.gpa.alloc(u8, buf_len) catch unreachable;
         buf[0] = @truncate(i);
         buf[buf_len - 1] = @truncate(i >> 8);

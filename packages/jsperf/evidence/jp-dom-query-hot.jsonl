@@ -1,0 +1,2 @@
+{"rule":"jp-dom-query-hot","case":"query_once","role":"after","node":"v26.12.1","v8":"14.6.202.34-node.40","median_ms":0.924,"ops":20000,"ratio":1,"ts":"2026-10-23T14:20:41.314Z"}
+{"rule":"jp-dom-query-hot","case":"query_each_iter","role":"before","node":"v26.12.1","v8":"14.6.202.34-node.40","median_ms":14.935,"ops":20000,"ratio":16.169,"ts":"2026-10-23T14:20:41.314Z"}

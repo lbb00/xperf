@@ -128,7 +128,7 @@ public class StaticVsHotspotAgg {
       "PARTIAL", "NO_resize_not_deopt", "J25_Presize.jsonl");
 
     Path j27 = res.resolve("J27_FormatHot.jsonl");
-    emit(lines, arr, first, "3_format_hot", "jp-format-in-loop", "stringFormat", "stringBuilderAppend",
+    emit(lines, arr, first, "3_format_hot", "jp-format-hot", "stringFormat", "stringBuilderAppend",
       findNs(j27, "stringFormat[reps=1]"), findNs(j27, "stringBuilderAppend[reps=1]"),
       findAlloc(j27, "stringFormat[reps=1]"), findAlloc(j27, "stringBuilderAppend[reps=1]"),
       "YES", "NO_alloc_parser", "J27_FormatHot.jsonl");
@@ -138,7 +138,7 @@ public class StaticVsHotspotAgg {
       "YES_Bop", "EA_flag_probe_not_PrintCompilation", "EaProbe / ea-probe-confirm.txt");
 
     Path j24 = res.resolve("J24_PoolVsAlloc.jsonl");
-    emit(lines, arr, first, "5_pool_vs_tlab", "jp-expensive-alloc-in-loop-adjacent", "pooled", "tlabAlloc",
+    emit(lines, arr, first, "5_pool_vs_tlab", "jp-expensive-alloc-hot-adjacent", "pooled", "tlabAlloc",
       findNs(j24, "pooled[batch=1]"), findNs(j24, "tlabAlloc[batch=1]"),
       findAlloc(j24, "pooled[batch=1]"), findAlloc(j24, "tlabAlloc[batch=1]"),
       "PARTIAL_negative_pool", "NO", "J24_PoolVsAlloc.jsonl");

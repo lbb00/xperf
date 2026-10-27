@@ -1,0 +1,2 @@
+{"rule":"oc-dateformatter-hot","case":"formatter_once","role":"after","cc":"clang -O2 -framework Foundation","median_ms":1.655,"ops":2000,"ratio":1,"ts":"2026-10-23T05:08:54Z"}
+{"rule":"oc-dateformatter-hot","case":"formatter_each_iter","role":"before","cc":"clang -O2 -framework Foundation","median_ms":50.273,"ops":2000,"ratio":30.37644,"ts":"2026-10-23T05:08:54Z"}

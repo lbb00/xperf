@@ -58,12 +58,14 @@ This repository is public: every tracked file, commit message and author field i
 
 ## Rule IDs (semantic slugs)
 
-Canonical finding ids are **semantic slugs only**: `{family}-{smell}` in kebab-case, e.g. `at-includes-in-loop`, `gp-append-nil-slice`, `zp-alloc-in-loop`.
+Canonical finding ids are **semantic slugs only**: `{family}-{smell}` in kebab-case, e.g. `at-includes-hot`, `gp-append-nil-slice`, `zp-alloc-hot`.
 
 | Rule | Detail |
 |------|--------|
 | Charset | `[a-z][a-z0-9-]*`, max ~40 chars, no leading/trailing hyphen, no `--` |
 | Stability | Slugs are **forever**. Removed smells get a tombstone under `evidence/_removed/` (and/or `docs/rule-ids.md`); **never reuse** a slug |
+| Scope default | Kits that support `--scope` / kit-equivalent default to **`all`** (report outside loops/hot paths too). Opt in to **`--scope loop`** for the former loop-only match. Finding text must not imply “only fix in a loop.” |
+| Renames (`*-in-loop` → `*-hot`) | Renamed slugs are tombstoned forever under `evidence/_removed/*.REMOVED.md` and listed in each kit `docs/rule-ids.md` Renamed table; **never reuse** the old slug |
 | Numerics | **Gone.** Old codes (`AT004`, `GP001`, `ZP001`, …) are **not** accepted in `--severity`, suppressions, fixtures, or emitted `rule` fields. No alias layer. |
 | New rules | Slug only — do **not** allocate `XX000` numbers |
 | Maps | [docs/rule-id-map.md](docs/rule-id-map.md) and `scripts/rule-id-map.json` are a **historical** one-time migration reference (inactive). Per-kit `docs/rule-ids.md` lists active slugs. |
@@ -135,7 +137,7 @@ Record: `path:line`, rule id, label, one-line reason. Keep the full triage note 
 
 ## New kit checklist
 
-1. Scaffold under `packages/<name>/` (same layout as siblings): lint in **same language**, **kit-local** rule ids (`nm-seq-add-in-loop`, `gp-make-in-loop`, … — not a shared global namespace), README, evidence stubs (md only; **no** fake JSONL), paired fixtures, `scripts/smoke-lint.sh` + `self-lint.sh`.
+1. Scaffold under `packages/<name>/` (same layout as siblings): lint in **same language**, **kit-local** rule ids (`nm-seq-add-hot`, `gp-make-hot`, … — not a shared global namespace), README, evidence stubs (md only; **no** fake JSONL), paired fixtures, `scripts/smoke-lint.sh` + `self-lint.sh`.
 2. **Wire umbrella (all of these):**
    - root [README.md](README.md) package table row
    - `scripts/sync-check.sh` — both the `case` arm **and** the scaffold `for p in …` list

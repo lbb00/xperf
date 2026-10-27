@@ -2,7 +2,7 @@
 
 Swift performance notes, small examples, and `swiftperf-lint` (Swift Package).
 
-Part of [XPerf](../../README.md). Shared docs: [docs/README.md](../../docs/README.md). The lint is **corpus-ready** for the 2026-10-22 rules (AGENT.md G3). Defaults: sp-array-no-reserve **hint**; sp-print-in-loop **off**. Force-unwrap, string `+=`, and `map`/`joined` were removed after local `swiftc -O` runs. Three later hints (`sp-dateformatter-in-loop`, `sp-json-decode-in-loop`, `sp-regex-in-loop`) are outside that verdict. Guide v0 scaffold; text-lint parity when Swift SDK is absent.
+Part of [XPerf](../../README.md). Shared docs: [docs/README.md](../../docs/README.md). The lint is **corpus-ready** for the 2026-10-22 rules (AGENT.md G3). Defaults: sp-array-no-reserve **hint**; sp-print-hot **off**. Force-unwrap, string `+=`, and `map`/`joined` were removed after local `swiftc -O` runs. Three later hints (`sp-dateformatter-hot`, `sp-json-decode-hot`, `sp-regex-hot`) are outside that verdict. Guide v0 scaffold; text-lint parity when Swift SDK is absent.
 
 > **Toolchain:** `swift` may be missing from the machine you run on. Sources + `Package.swift` ship anyway; build with Swift 5.9+ when available. Fixtures and docs are complete without compiling.
 

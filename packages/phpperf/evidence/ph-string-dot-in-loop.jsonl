@@ -1,4 +1,0 @@
-{"rule":"ph-string-dot-in-loop","case":"implode","role":"after","php":"PHP 8.5.12","median_ms":0.319334,"ops":50000,"ratio":1.000000,"ts":"2026-10-23T12:24:57Z"}
-{"rule":"ph-string-dot-in-loop","case":"str_dot","role":"before","php":"PHP 8.5.12","median_ms":0.811167,"ops":50000,"ratio":2.540184,"ts":"2026-10-23T12:24:57Z"}
-{"rule":"ph-string-dot-in-loop","case":"small_implode","role":"after","php":"PHP 8.5.12","median_ms":0.000375,"ops":100,"ratio":1.000000,"ts":"2026-10-23T12:24:57Z"}
-{"rule":"ph-string-dot-in-loop","case":"small_str_dot","role":"before","php":"PHP 8.5.12","median_ms":0.000917,"ops":100,"ratio":2.445333,"ts":"2026-10-23T12:24:57Z"}

@@ -33,7 +33,8 @@ Never usage(int code) {
     'Usage: dartperf_lint.dart PATH... [options]\n'
     '  --format text|json\n'
     '  --severity RULE=error|hint|off\n'
-    '  --strict-hints\n'
+    '  --scope all|loop   (default: all)\n'
+      '  --strict-hints\n'
     '  --no-fail',
   );
   exit(code);
@@ -53,13 +54,14 @@ void main(List<String> args) {
   if (args.isEmpty) usage(2);
   final rs = <String, Sev>{
     'dt-list-add-empty': Sev.off,
-    'dt-string-plus-in-loop': Sev.off,
-    'dt-print-in-loop': Sev.off,
+    'dt-string-plus-hot': Sev.off,
+    'dt-print-hot': Sev.off,
     'dt-growable-add-empty': Sev.hint,
   };
   var format = 'text';
   var strictHints = false;
   var noFail = false;
+  var scope = "all";
   final paths = <String>[];
   for (var i = 0; i < args.length; i++) {
     final a = args[i];
@@ -91,6 +93,18 @@ void main(List<String> args) {
       noFail = true;
       continue;
     }
+    if (a == '--scope') {
+      i++;
+      if (i >= args.length) usage(2);
+      scope = args[i];
+      if (scope != 'all' && scope != 'loop') usage(2);
+      continue;
+    }
+    if (a.startsWith('--scope=')) {
+      scope = a.substring(8);
+      if (scope != 'all' && scope != 'loop') usage(2);
+      continue;
+    }
     if (a.startsWith('-')) usage(2);
     paths.add(a);
   }
@@ -98,7 +112,7 @@ void main(List<String> args) {
 
   final findings = <Finding>[];
   for (final p in paths) {
-    findings.addAll(scanPath(p));
+    findings.addAll(scanPath(p, scope: scope));
   }
 
   var nerr = 0, nhint = 0;

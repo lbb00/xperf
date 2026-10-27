@@ -5,6 +5,6 @@ pub fn dump(xs: []const u32) void {
     for (xs) |x| {
         // zperf-lint: ignore print-in-loop
         std.debug.print("{d}\n", .{x});
-        std.debug.print("{d}\n", .{x}); // zperf-lint: ignore zp-print-in-loop
+        std.debug.print("{d}\n", .{x}); // zperf-lint: ignore zp-print-hot
     }
 }

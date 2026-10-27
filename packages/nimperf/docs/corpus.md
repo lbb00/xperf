@@ -9,7 +9,7 @@ packages/nimperf/nimperf-lint/nimperf-lint \
 ```
 
 Checker is **Nim** (`nimperf-lint`), same-language. Requires `nim` on PATH (choosenim).
-**nm-seq-add-in-loop–nm-echo-in-loop default `off`**; **nm-seq-no-capacity hint**.
+**nm-seq-add-hot–nm-echo-hot default `off`**; **nm-seq-no-capacity hint**.
 
 ## Pins
 
@@ -30,6 +30,6 @@ Checker is **Nim** (`nimperf-lint`), same-language. Requires `nim` on PATH (choo
 ### Redesign
 
 - nm-seq-no-capacity: empty seq + `.add` in size-hinted loop; prefer `newSeqOfCap`
-- Skip `compiler/`; demote nm-seq-add-in-loop–nm-echo-in-loop after OK-idiom domination
+- Skip `compiler/`; demote nm-seq-add-hot–nm-echo-hot after OK-idiom domination
 
 Do not commit corpus sources into `packages/nimperf`.

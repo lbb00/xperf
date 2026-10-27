@@ -1,0 +1,2 @@
+{"rule":"rs-format-rebind-hot","case":"digits_write","role":"after","rustc":"1.99.1","opt":"opt-level=3","median_ms":0.169750,"ops":20000,"ratio":1.0,"ts":"2026-10-23T12:31:21Z","aliased_from":"rs-string-plus-in-loop"}
+{"rule":"rs-format-rebind-hot","case":"digits_format_accum","role":"before","rustc":"1.99.1","opt":"opt-level=3","median_ms":17.018000,"ops":20000,"ratio":100.253314,"ts":"2026-10-23T12:31:21Z","aliased_from":"rs-string-plus-in-loop"}

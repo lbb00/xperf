@@ -8,4 +8,4 @@
 
 `value(forKey:)` every iteration was about 35× versus reading the property. A name that changes every iteration cannot become a direct property. This is the same family as Go `FieldByName`.
 
-Companion lint: **sp-dateformatter-in-loop**, **sp-json-decode-in-loop**, **sp-regex-in-loop**, **sp-file-read-in-loop**, **sp-clock-in-loop**, **sp-value-for-key-in-loop**.
+Companion lint: **sp-dateformatter-hot**, **sp-json-decode-hot**, **sp-regex-hot**, **sp-file-read-hot**, **sp-clock-hot**, **sp-value-for-key-hot**.

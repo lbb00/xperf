@@ -51,9 +51,9 @@ public class FixtureTest {
     @Test
     void contextSensitiveRulesAreInformational() throws Exception {
         Map<String, Rule> by = Rule.BY_CODE;
-        assertEquals("off", by.get("jp-log-in-loop").severity());
+        assertEquals("off", by.get("jp-log-hot").severity());
         assertEquals("off", by.get("jp-exception-control-flow").severity());
-        for (String code : List.of("jp-exception-control-flow", "jp-log-in-loop")) {
+        for (String code : List.of("jp-exception-control-flow", "jp-log-hot")) {
             var findings = lintFile(FIX.resolve("bad").resolve(code + ".java"), ALL).findings;
             assertFalse(findings.isEmpty());
             assertTrue(findings.stream().allMatch(f -> "off".equals(f.toMap().get("severity"))));
@@ -74,9 +74,9 @@ public class FixtureTest {
     void defaultEnabledSkipsOffRules() {
         assertEquals("off", Rule.BY_CODE.get("jp-unpresized-collection").severity());
         assertEquals("off", Rule.BY_CODE.get("jp-boxed-primitive-collection").severity());
-        assertEquals("off", Rule.BY_CODE.get("jp-format-in-loop").severity());
-        assertEquals("error", Rule.BY_CODE.get("jp-data-copy-in-loop").severity());
-        assertEquals("error", Rule.BY_CODE.get("jp-string-concat-in-loop").severity());
+        assertEquals("off", Rule.BY_CODE.get("jp-format-hot").severity());
+        assertEquals("error", Rule.BY_CODE.get("jp-data-copy-hot").severity());
+        assertEquals("error", Rule.BY_CODE.get("jp-string-concat-hot").severity());
         assertEquals("error", Rule.BY_CODE.get("jp-hot-payload-copy").severity());
         CliRun r = runCli("--no-fail", "-f", "json", FIX.resolve("bad").resolve("jp-unpresized-collection.java").toString());
         JsonObject d = new Gson().fromJson(r.out, JsonObject.class);
@@ -159,7 +159,7 @@ public class FixtureTest {
 
     @Test
     void disableByName() {
-        assertEquals(0, runCli("--disable", "log-in-loop", FIX.resolve("bad/jp-log-in-loop.java").toString()).code);
+        assertEquals(0, runCli("--disable", "log-in-loop", FIX.resolve("bad/jp-log-hot.java").toString()).code);
     }
 
     @Test
@@ -314,7 +314,7 @@ public class FixtureTest {
             CliRun off = runCli("--no-fail", "-f", "json", f.toString());
             JsonObject d0 = new Gson().fromJson(off.out, JsonObject.class);
             assertEquals(0, d0.get("count").getAsInt(), off.out);
-            CliRun on = runCli("--no-fail", "-f", "json", "--enable", "jp-log-in-loop", "--strict-stdio-in-loop", f.toString());
+            CliRun on = runCli("--no-fail", "-f", "json", "--enable", "jp-log-hot", "--strict-stdio-in-loop", f.toString());
             JsonObject d1 = new Gson().fromJson(on.out, JsonObject.class);
             assertTrue(d1.get("count").getAsInt() >= 1, on.out);
         } finally {
@@ -333,8 +333,8 @@ public class FixtureTest {
 
     @Test
     void jp004ThrowFormatSkipped() throws Exception {
-        Result res = lintFile(FIX.resolve("good/jp-format-in-loop.java"), ALL);
-        assertTrue(res.findings.stream().noneMatch(f -> "jp-format-in-loop".equals(f.rule())), res.findings.toString());
+        Result res = lintFile(FIX.resolve("good/jp-format-hot.java"), ALL);
+        assertTrue(res.findings.stream().noneMatch(f -> "jp-format-hot".equals(f.rule())), res.findings.toString());
     }
 
 

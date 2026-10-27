@@ -10,12 +10,12 @@ from .scan import scan_path
 
 SEV = {"off": 0, "hint": 1, "error": 2}
 DEFAULT = {
-    "pp-str-plus-in-loop": "off",
+    "pp-str-plus-hot": "off",
     "pp-list-plus-rebind": "hint",
-    "pp-print-in-loop": "off",
-    "pp-json-in-loop": "hint",
-    "pp-deepcopy-in-loop": "hint",
-    "pp-open-in-loop": "hint",
+    "pp-print-hot": "off",
+    "pp-json-hot": "hint",
+    "pp-deepcopy-hot": "hint",
+    "pp-open-hot": "hint",
 }  # PP004 removed 2026-10-22
 
 def main(argv=None):
@@ -25,6 +25,8 @@ def main(argv=None):
     p.add_argument("--severity", action="append", default=[], metavar="RULE=LEVEL")
     p.add_argument("--strict-hints", action="store_true")
     p.add_argument("--no-fail", action="store_true")
+    p.add_argument("--scope", choices=("all", "loop"), default="all",
+                   help="all=report everywhere (default); loop=former in-loop-only match")
     args = p.parse_args(argv)
 
     sev = dict(DEFAULT)
@@ -40,7 +42,7 @@ def main(argv=None):
 
     findings = []
     for path in args.paths:
-        findings.extend(scan_path(path))
+        findings.extend(scan_path(path, scope=args.scope))
 
     nerr = nhint = 0
     rows = []

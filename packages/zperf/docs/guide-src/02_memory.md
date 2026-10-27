@@ -242,7 +242,7 @@ const BufferPool = struct {
         const buffers = try gpa.alloc([]u8, count);
         errdefer gpa.free(buffers);
         for (buffers) |*slot| {
-            // zperf-lint: ignore zp-alloc-in-loop -- one-time pool warm-up, not a hot-path pattern
+            // zperf-lint: ignore zp-alloc-hot -- one-time pool warm-up, not a hot-path pattern
             slot.* = try gpa.alloc(u8, buf_len);
         }
         return .{ .buffers = buffers, .available = count, .buf_len = buf_len };

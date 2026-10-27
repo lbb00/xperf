@@ -1,6 +1,6 @@
 "use strict";
 /**
- * jp-json-in-loop: JSON.parse of one fixed text, once vs every pass.
+ * jp-json-hot: JSON.parse of one fixed text, once vs every pass.
  * Warm 3, median of 9. Writes JSONL only when EVIDENCE_DIR is set.
  */
 const fs = require("fs");
@@ -54,12 +54,12 @@ const node = process.version;
 const v8 = process.versions.v8;
 const ts = new Date().toISOString();
 const rows = [
-  { rule: "jp-json-in-loop", case: "parse_once", role: "after", node, v8, median_ms: Number(onceMs.toFixed(6)), ops: N, ratio: 1, ts },
-  { rule: "jp-json-in-loop", case: "parse_each_iter", role: "before", node, v8, median_ms: Number(eachMs.toFixed(6)), ops: N, ratio: Number((eachMs / onceMs).toFixed(6)), ts },
+  { rule: "jp-json-hot", case: "parse_once", role: "after", node, v8, median_ms: Number(onceMs.toFixed(6)), ops: N, ratio: 1, ts },
+  { rule: "jp-json-hot", case: "parse_each_iter", role: "before", node, v8, median_ms: Number(eachMs.toFixed(6)), ops: N, ratio: Number((eachMs / onceMs).toFixed(6)), ts },
 ];
 if (OUT_DIR) {
   fs.mkdirSync(OUT_DIR, { recursive: true });
-  const p = path.join(OUT_DIR, "jp-json-in-loop.jsonl");
+  const p = path.join(OUT_DIR, "jp-json-hot.jsonl");
   fs.writeFileSync(p, rows.map((r) => JSON.stringify(r)).join("\n") + "\n");
   console.log("wrote " + p);
 }

@@ -13,11 +13,11 @@
 
 See `examples/m01_arena.c`.
 
-Lint: **cp-alloc-in-loop** — `malloc` / `calloc` / `realloc` inside a `for` / `while` / `do` body (brace-depth heuristic).
+Lint: **cp-alloc-hot** — `malloc` / `calloc` / `realloc` inside a `for` / `while` / `do` body (brace-depth heuristic).
 
-**Measured evidence (error-tier):** [`evidence/cp-alloc-in-loop.md`](../evidence/cp-alloc-in-loop.md) · [`cp-alloc-in-loop.jsonl`](../evidence/cp-alloc-in-loop.jsonl) — `cc -std=c11 -O2` (Debian gcc 14.2.0), malloc+free per iter vs arena bump ~**10.8×** (N=2e5, median of 9). Policy: [evidence-policy.md](evidence-policy.md). Harness: `examples/bench/cp001_malloc_vs_arena.c`.
+**Measured evidence (error-tier):** [`evidence/cp-alloc-hot.md`](../evidence/cp-alloc-hot.md) · [`cp-alloc-hot.jsonl`](../evidence/cp-alloc-hot.jsonl) — `cc -std=c11 -O2` (Debian gcc 14.2.0), malloc+free per iter vs arena bump ~**10.8×** (N=2e5, median of 9). Policy: [evidence-policy.md](evidence-policy.md). Harness: `examples/bench/cp001_malloc_vs_arena.c`.
 
-**Evidence (dogfood, not bench):** On mature VMs, true hot-path `malloc`-in-loop is rare after skips. After r2 wrapper / brace fixes: quickjs cp-alloc-in-loop **0**; lua cp-alloc-in-loop **0**. Remaining cp-alloc-in-loop pressure is mostly compact trees and glue: sqlite `src/` r3 **14** cp-alloc-in-loop (e.g. `tclsqlite.c` realloc in a line loop); gcc sparse r3 **28** cp-alloc-in-loop. Thin `return realloc(...)` wrappers were false positives in r1 (cleared in r2). Treat cp-alloc-in-loop hits as review prompts — init loops that allocate once per known N are often fine.
+**Evidence (dogfood, not bench):** On mature VMs, true hot-path `malloc`-in-loop is rare after skips. After r2 wrapper / brace fixes: quickjs cp-alloc-hot **0**; lua cp-alloc-hot **0**. Remaining cp-alloc-hot pressure is mostly compact trees and glue: sqlite `src/` r3 **14** cp-alloc-hot (e.g. `tclsqlite.c` realloc in a line loop); gcc sparse r3 **28** cp-alloc-hot. Thin `return realloc(...)` wrappers were false positives in r1 (cleared in r2). Treat cp-alloc-hot hits as review prompts — init loops that allocate once per known N are often fine.
 
 ### 1.2 Growth without capacity (cp-realloc-grow-one)
 
@@ -47,17 +47,17 @@ RSS spikes from unbounded freelists / caches need a working-set cap — not meas
 
 `for (i = 0; i < strlen(s); i++)` recomputes length every iteration (often O(n²)). Hoist `size_t n = strlen(s)` (or use a known length). Lint: **cp-strlen-in-cond** — default **hint**. About 125× when the compiler must recompute the length; about 1× when `-O2` hoists it.
 
-### 1.6 `strcat` in a loop (cp-strcat-in-loop)
+### 1.6 `strcat` in a loop (cp-strcat-hot)
 
-Repeated `strcat`/`strncat` walks the destination from the start each time. Prefer an end pointer + `memcpy`, or `stpcpy` where available. Lint: **cp-strcat-in-loop** — default **off** after G3. A local run of fixed chunks was about 221× an end pointer. Enable with `--severity cp-strcat-in-loop=hint`.
+Repeated `strcat`/`strncat` walks the destination from the start each time. Prefer an end pointer + `memcpy`, or `stpcpy` where available. Lint: **cp-strcat-hot** — default **off** after G3. A local run of fixed chunks was about 221× an end pointer. Enable with `--severity cp-strcat-hot=hint`.
 
-### 1.7 `alloca` in a loop (cp-alloca-in-loop)
+### 1.7 `alloca` in a loop (cp-alloca-hot)
 
 `alloca` and `__builtin_alloca` live until the function returns. A call in a loop adds another block on every pass. Reuse one buffer when those bytes do not all have to stay live. If they do, the stack still grows; a heap buffer with a known bound is the usual alternative.
 
 A VLA declared in the loop body is a different pattern. Its storage ends with the block. This hint does not match a VLA.
 
-**hint**. The 2026-10-22 corpus verdict does not cover this slug. One local run kept every block address live: 20000 iterations of 64 bytes covered 1280000 bytes of stack, against 64 bytes for one buffer. Touching two bytes of each block was about 1×, so this is not a speedup claim. See [evidence](../evidence/cp-alloca-in-loop.md).
+**hint**. The 2026-10-22 corpus verdict does not cover this slug. One local run kept every block address live: 20000 iterations of 64 bytes covered 1280000 bytes of stack, against 64 bytes for one buffer. Touching two bytes of each block was about 1×, so this is not a speedup claim. See [evidence](../evidence/cp-alloca-hot.md).
 
 ### 1.8 Large struct by value (cp-struct-by-value)
 

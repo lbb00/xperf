@@ -11,7 +11,7 @@ Dispositions:
 
 ## cperf
 
-- `alloca` inside a loop keeps each chunk until the function returns. [Stack Overflow](https://stackoverflow.com/questions/5407546/memory-allocated-with-alloca-gets-freed-at-end-of-function-or-at-end-of-scope). **already-ruled** (`cp-alloca-in-loop`). Local stack cover was 1280000 bytes versus 64. The touch time was about 1×.
+- `alloca` inside a loop keeps each chunk until the function returns. [Stack Overflow](https://stackoverflow.com/questions/5407546/memory-allocated-with-alloca-gets-freed-at-end-of-function-or-at-end-of-scope). **already-ruled** (`cp-alloca-hot`). Local stack cover was 1280000 bytes versus 64. The touch time was about 1×.
 - `fgetc` / `fputc` one byte at a time. The question reports about 10× against a 4096-byte `fread`. [Stack Overflow](https://stackoverflow.com/questions/13225014/why-fgetc-too-slow). **rejected**. A local block read was faster, and a line matcher cannot tell a byte parser from a bulk read.
 - `malloc` in a loop, `realloc` by one, `strcat`, `sprintf`, `fopen`, `gettimeofday`, and a wide run of boolean fields are **already-ruled**.
 
@@ -25,13 +25,13 @@ Dispositions:
 
 ## csharpperf
 
-- Building a string with `+` inside a loop allocates. [Microsoft Learn](https://learn.microsoft.com/en-us/dotnet/csharp/fundamentals/strings/common-tasks/concatenate). **already-ruled** (`cs-string-plus-in-loop`).
+- Building a string with `+` inside a loop allocates. [Microsoft Learn](https://learn.microsoft.com/en-us/dotnet/csharp/fundamentals/strings/common-tasks/concatenate). **already-ruled** (`cs-string-plus-hot`).
 - C# 10 interpolation no longer lowers to the old boxing `string.Format` path. [Microsoft .NET blog](https://devblogs.microsoft.com/dotnet/string-interpolation-in-c-10-and-net-6/). **rejected** as a "interpolation is slow" rule until a local .NET 8 run says otherwise.
 - `File` reads, `Stopwatch.GetTimestamp`, `GetField`, JSON, regex, and `ToList` are **already-ruled**.
 
 ## goperf
 
-- `s += part` in a loop copies the whole string. A pre-grown `strings.Builder` does one allocation. [String concatenation vs strings.Builder](https://vvivid.dev/posts/go_string_concat_vs_string_builder/). **already-ruled** (`gp-string-plus-in-loop`).
+- `s += part` in a loop copies the whole string. A pre-grown `strings.Builder` does one allocation. [String concatenation vs strings.Builder](https://vvivid.dev/posts/go_string_concat_vs_string_builder/). **already-ruled** (`gp-string-plus-hot`).
 - `bytes.Buffer` vs `strings.Builder` on a short fragment list was about 1.5× on that machine. [brandur.org](https://brandur.org/fragments/bytes-buffer-vs-strings-builder). **rejected**.
 - `fmt` in a loop, `json` of one payload, `os.Open`, `time.Now`, `regexp` compile, and `FieldByName` are **already-ruled**.
 
@@ -44,20 +44,20 @@ Dispositions:
 
 ## pyperf
 
-- CPython can make `+=` on `str` faster than `''.join` for some shapes. [String concatenation in Python](https://blog.ganssle.io/articles/2019/11/string-concat.html). **already-ruled** for `str` (`pp-str-plus-in-loop`). Do not add a second join rule from the old quadratic story alone.
+- CPython can make `+=` on `str` faster than `''.join` for some shapes. [String concatenation in Python](https://blog.ganssle.io/articles/2019/11/string-concat.html). **already-ruled** for `str` (`pp-str-plus-hot`). Do not add a second join rule from the old quadratic story alone.
 - `[None] * n` versus `append` was about 1.3× in the posted timing. [Stack Overflow](https://stackoverflow.com/questions/63599687/is-it-better-to-pre-allocate-array-in-python-or-use-arr-append). **rejected**.
 - `bytes` built with `+=` versus `b''.join` was reported far apart. [Fast bytes concatenation](https://www.guyrutenberg.com/2020/04/04/fast-bytes-concatenation-in-python/). **measure-first**.
 - `open` and `json.loads` of one payload are **already-ruled**. `perf_counter_ns` and `getattr` were measured locally and not added.
 
 ## rubyperf
 
-- Repeated `+` allocates. A buffer wants `<<`. [fast-ruby concatenation](https://github.com/fastruby/fast-ruby/blob/main/code/string/concatenation.rb). **already-ruled** (`rb-string-plus-in-loop`).
+- Repeated `+` allocates. A buffer wants `<<`. [fast-ruby concatenation](https://github.com/fastruby/fast-ruby/blob/main/code/string/concatenation.rb). **already-ruled** (`rb-string-plus-hot`).
 - `# frozen_string_literal: true` was about 1.2–1.3× on a tiny literal loop in that post. [FastRuby.io](https://www.fastruby.io/blog/ruby-3-4-new-defaults.html). **rejected** until a local run on a real file shows more.
 - `File.read`, `Regexp.new`, and `JSON.parse` of one payload are **already-ruled**. `Process.clock_gettime` and `send` were measured locally and not added.
 
 ## rustperf
 
-- `collect` allocates. Return the iterator, or `extend` an existing `Vec`. [The Rust Performance Book](https://nnethercote.github.io/perf-book/iterators.html). **already-ruled** in part (`rs-collect-vec-in-loop`).
+- `collect` allocates. Return the iterator, or `extend` an existing `Vec`. [The Rust Performance Book](https://nnethercote.github.io/perf-book/iterators.html). **already-ruled** in part (`rs-collect-vec-hot`).
 - `iter().cloned().collect()` on a slice should be `to_vec()`. [Clippy `iter_cloned_collect`](https://github.com/rust-lang/rust-clippy/blob/master/clippy_lints/src/methods/iter_cloned_collect.rs). **measure-first**. The published claim is "faster", not a ratio.
 - `.clone()` of a heap value inside a loop deep-copies. [Clones and allocations](https://rs4ts.dev/21-performance/03-optimization/). **measure-first**. Clippy's `redundant_clone` has historically skipped loop bodies ([rust-clippy#17495](https://github.com/rust-lang/rust-clippy/pull/17495)).
 - `File::open`, `Instant::now`, and `Regex::new` are **already-ruled**. There is no JSON parser in the standard library.
@@ -74,34 +74,34 @@ Dispositions:
 
 ## zperf
 
-- Building a new `ArrayList` on every iteration allocates. Reusing one list and calling `clearRetainingCapacity` matched a stack buffer in that thread. [ziglang/zig#16982](https://github.com/ziglang/zig/issues/16982). Heap allocation in a loop is **already-ruled** (`zp-alloc-in-loop`, `zp-create-destroy-in-loop`). Do not add a second slug for the same shape.
-- `std.fmt.allocPrint` allocates a fresh slice. [lib/std/fmt.zig](https://github.com/ziglang/zig/blob/master/lib/std/fmt.zig). **already-ruled** (`zp-alloc-print-in-loop`) when the format string and arguments do not change. Local ReleaseFast medians: about 50× on the general-purpose allocator, about 12× on an arena, about 14× for a constant string. `bufPrint` and byte copies stayed at or under about 7× and were not added.
+- Building a new `ArrayList` on every iteration allocates. Reusing one list and calling `clearRetainingCapacity` matched a stack buffer in that thread. [ziglang/zig#16982](https://github.com/ziglang/zig/issues/16982). Heap allocation in a loop is **already-ruled** (`zp-alloc-hot`, `zp-create-destroy-hot`). Do not add a second slug for the same shape.
+- `std.fmt.allocPrint` allocates a fresh slice. [lib/std/fmt.zig](https://github.com/ziglang/zig/blob/master/lib/std/fmt.zig). **already-ruled** (`zp-alloc-print-hot`) when the format string and arguments do not change. Local ReleaseFast medians: about 50× on the general-purpose allocator, about 12× on an arena, about 14× for a constant string. `bufPrint` and byte copies stayed at or under about 7× and were not added.
 - File open, `Io.Clock`, and `json.parseFromSlice` of one payload are **already-ruled**. The 0.17 standard library has no regular-expression compiler.
 
 ## jvmperf
 
-- `StringBuilder` instead of `+` in a loop is the classic shape. [byroot's comparison](https://byroot.github.io/ruby/performance/2025/10/28/string-literals.html) restates it. **already-ruled** (`jp-string-concat-in-loop`).
+- `StringBuilder` instead of `+` in a loop is the classic shape. [byroot's comparison](https://byroot.github.io/ruby/performance/2025/10/28/string-literals.html) restates it. **already-ruled** (`jp-string-concat-hot`).
 - `SparseArray` avoids boxing integer keys and is meant for a few hundred entries. [Android SparseArray](https://developer.android.com/reference/kotlin/android/util/SparseArray). **already-ruled** (`jp-android-sparse-array`).
 - Boxed streams, regex, format, and the other JVM slugs stay as they are. This machine has no JDK that can run a new bench, so new JVM shapes are **no-compiler**.
 
 ## kotlinperf
 
-- A lambda passed to a non-inline function allocates a closure. `inline` removes that object. [Kotlin inline functions](https://kotlinlang.org/docs/inline-functions.html). **no-compiler** (no `kotlinc` here). JVM already has `jp-lambda-to-non-inline-in-loop`.
+- A lambda passed to a non-inline function allocates a closure. `inline` removes that object. [Kotlin inline functions](https://kotlinlang.org/docs/inline-functions.html). **no-compiler** (no `kotlinc` here). JVM already has `jp-lambda-to-non-inline-hot`.
 - `SparseArray` on Android is the same note as jvmperf. **already-ruled** on the JVM side, not re-measured for Kotlin.
 - String `+`, `println`, and `List` growth are **already-ruled** in this kit.
 
 ## phpperf
 
-- PHP strings are mutable. `echo` of several arguments avoids a concatenate. [Stack Overflow](https://stackoverflow.com/questions/124067/php-string-concatenation-performance). `.` in a loop is **already-ruled** (`ph-string-dot-in-loop`).
+- PHP strings are mutable. `echo` of several arguments avoids a concatenate. [Stack Overflow](https://stackoverflow.com/questions/124067/php-string-concatenation-performance). `.` in a loop is **already-ruled** (`ph-string-dot-hot`).
 - `implode` of a large array can use more peak memory than appending, in that SitePoint note. [SitePoint](https://www.sitepoint.com/high-performance-string-concatenation-in-php/). **no-compiler**.
 
 ## dartperf
 
-- A cross-language string-build repo includes Dart and names `StringBuffer` as the builder. [langs_string_build_test](https://github.com/shagrouni/langs_string_build_test). That repo is not a controlled bench for this tree. String `+` in a loop is **already-ruled** (`dt-string-plus-in-loop`). Further Dart shapes are **no-compiler**.
+- A cross-language string-build repo includes Dart and names `StringBuffer` as the builder. [langs_string_build_test](https://github.com/shagrouni/langs_string_build_test). That repo is not a controlled bench for this tree. String `+` in a loop is **already-ruled** (`dt-string-plus-hot`). Further Dart shapes are **no-compiler**.
 
 ## luaperf
 
-- Collecting lines and calling `table.concat` cut a 350 KB read from 40 seconds to 0.5 seconds in Programming in Lua. [PIL 11.6](https://www.lua.org/pil/11.6.html). **already-ruled** (`lu-string-concat-in-loop`). This machine has no `lua`, so the book figure is not re-run. **no-compiler** for anything beyond that slug.
+- Collecting lines and calling `table.concat` cut a 350 KB read from 40 seconds to 0.5 seconds in Programming in Lua. [PIL 11.6](https://www.lua.org/pil/11.6.html). **already-ruled** (`lu-string-concat-hot`). This machine has no `lua`, so the book figure is not re-run. **no-compiler** for anything beyond that slug.
 
 ## beamperf
 

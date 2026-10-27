@@ -35,7 +35,7 @@ Order of attack (same as the shared XPerf playbook):
 4. **Layout / compiler** — SoA, `restrict`, LTO: measure; wrong `restrict` is UB.
 5. **Verify** — counters and sanitizers (§3).
 
-Machine claims should record compiler, `-O` level, and CPU briefly. `cp-alloc-in-loop`, `cp-realloc-grow-one` and `cp-printf-in-loop` ship JSONL microbenches under `evidence/` (see [evidence-policy.md](evidence-policy.md)); other examples under `examples/` remain pattern demos (`cc -std=c17 -O2`).
+Machine claims should record compiler, `-O` level, and CPU briefly. `cp-alloc-hot`, `cp-realloc-grow-one` and `cp-printf-hot` ship JSONL microbenches under `evidence/` (see [evidence-policy.md](evidence-policy.md)); other examples under `examples/` remain pattern demos (`cc -std=c17 -O2`).
 
 Sources: [XPerf playbook](../../../docs/playbook.md) · [corpus.md](corpus.md)
 
@@ -54,11 +54,11 @@ Sources: [XPerf playbook](../../../docs/playbook.md) · [corpus.md](corpus.md)
 
 See `examples/m01_arena.c`.
 
-Lint: **cp-alloc-in-loop** — `malloc` / `calloc` / `realloc` inside a `for` / `while` / `do` body (brace-depth heuristic).
+Lint: **cp-alloc-hot** — `malloc` / `calloc` / `realloc` inside a `for` / `while` / `do` body (brace-depth heuristic).
 
-**Measured evidence (error-tier):** [`evidence/cp-alloc-in-loop.md`](../evidence/cp-alloc-in-loop.md) · [`cp-alloc-in-loop.jsonl`](../evidence/cp-alloc-in-loop.jsonl) — `cc -std=c11 -O2` (Debian gcc 14.2.0), malloc+free per iter vs arena bump ~**10.8×** (N=2e5, median of 9). Policy: [evidence-policy.md](evidence-policy.md). Harness: `examples/bench/cp001_malloc_vs_arena.c`.
+**Measured evidence (error-tier):** [`evidence/cp-alloc-hot.md`](../evidence/cp-alloc-hot.md) · [`cp-alloc-hot.jsonl`](../evidence/cp-alloc-hot.jsonl) — `cc -std=c11 -O2` (Debian gcc 14.2.0), malloc+free per iter vs arena bump ~**10.8×** (N=2e5, median of 9). Policy: [evidence-policy.md](evidence-policy.md). Harness: `examples/bench/cp001_malloc_vs_arena.c`.
 
-**Evidence (dogfood, not bench):** On mature VMs, true hot-path `malloc`-in-loop is rare after skips. After r2 wrapper / brace fixes: quickjs cp-alloc-in-loop **0**; lua cp-alloc-in-loop **0**. Remaining cp-alloc-in-loop pressure is mostly compact trees and glue: sqlite `src/` r3 **14** cp-alloc-in-loop (e.g. `tclsqlite.c` realloc in a line loop); gcc sparse r3 **28** cp-alloc-in-loop. Thin `return realloc(...)` wrappers were false positives in r1 (cleared in r2). Treat cp-alloc-in-loop hits as review prompts — init loops that allocate once per known N are often fine.
+**Evidence (dogfood, not bench):** On mature VMs, true hot-path `malloc`-in-loop is rare after skips. After r2 wrapper / brace fixes: quickjs cp-alloc-hot **0**; lua cp-alloc-hot **0**. Remaining cp-alloc-hot pressure is mostly compact trees and glue: sqlite `src/` r3 **14** cp-alloc-hot (e.g. `tclsqlite.c` realloc in a line loop); gcc sparse r3 **28** cp-alloc-hot. Thin `return realloc(...)` wrappers were false positives in r1 (cleared in r2). Treat cp-alloc-hot hits as review prompts — init loops that allocate once per known N are often fine.
 
 ### 1.2 Growth without capacity (cp-realloc-grow-one)
 
@@ -88,17 +88,17 @@ RSS spikes from unbounded freelists / caches need a working-set cap — not meas
 
 `for (i = 0; i < strlen(s); i++)` recomputes length every iteration (often O(n²)). Hoist `size_t n = strlen(s)` (or use a known length). Lint: **cp-strlen-in-cond** — default **hint**. About 125× when the compiler must recompute the length; about 1× when `-O2` hoists it.
 
-### 1.6 `strcat` in a loop (cp-strcat-in-loop)
+### 1.6 `strcat` in a loop (cp-strcat-hot)
 
-Repeated `strcat`/`strncat` walks the destination from the start each time. Prefer an end pointer + `memcpy`, or `stpcpy` where available. Lint: **cp-strcat-in-loop** — default **off** after G3. A local run of fixed chunks was about 221× an end pointer. Enable with `--severity cp-strcat-in-loop=hint`.
+Repeated `strcat`/`strncat` walks the destination from the start each time. Prefer an end pointer + `memcpy`, or `stpcpy` where available. Lint: **cp-strcat-hot** — default **off** after G3. A local run of fixed chunks was about 221× an end pointer. Enable with `--severity cp-strcat-hot=hint`.
 
-### 1.7 `alloca` in a loop (cp-alloca-in-loop)
+### 1.7 `alloca` in a loop (cp-alloca-hot)
 
 `alloca` and `__builtin_alloca` live until the function returns. A call in a loop adds another block on every pass. Reuse one buffer when those bytes do not all have to stay live. If they do, the stack still grows; a heap buffer with a known bound is the usual alternative.
 
 A VLA declared in the loop body is a different pattern. Its storage ends with the block. This hint does not match a VLA.
 
-**hint**. The 2026-10-22 corpus verdict does not cover this slug. One local run kept every block address live: 20000 iterations of 64 bytes covered 1280000 bytes of stack, against 64 bytes for one buffer. Touching two bytes of each block was about 1×, so this is not a speedup claim. See [evidence](../evidence/cp-alloca-in-loop.md).
+**hint**. The 2026-10-22 corpus verdict does not cover this slug. One local run kept every block address live: 20000 iterations of 64 bytes covered 1280000 bytes of stack, against 64 bytes for one buffer. Touching two bytes of each block was about 1×, so this is not a speedup claim. See [evidence](../evidence/cp-alloca-hot.md).
 
 ### 1.8 Large struct by value (cp-struct-by-value)
 
@@ -108,7 +108,7 @@ A by-value parameter copies the record at the call. The hint fires for `struct N
 
 ## 2. Hot I/O
 
-### 2.1 `printf` / `fprintf` in a loop (cp-printf-in-loop)
+### 2.1 `printf` / `fprintf` in a loop (cp-printf-hot)
 
 Formatting and stdio locking in a tight loop dwarf the work you meant to measure. Prefer:
 
@@ -116,13 +116,13 @@ Formatting and stdio locking in a tight loop dwarf the work you meant to measure
 - Gate debug printers behind `#ifdef DUMP` / `#ifdef DEBUG` (or a runtime `if (dump_file)`).
 - Use binary / length-prefixed logs when volume is high.
 
-Lint: **cp-printf-in-loop** — `printf` / `fprintf` / `puts` (and friends) inside a loop-body window.
+Lint: **cp-printf-hot** — `printf` / `fprintf` / `puts` (and friends) inside a loop-body window.
 
-**Measured evidence (partial agreement; default off):** [`evidence/cp-printf-in-loop.md`](../evidence/cp-printf-in-loop.md) · [`cp-printf-in-loop.jsonl`](../evidence/cp-printf-in-loop.jsonl) — hot unbuffered vs buffered fprintf ~**4.8×** (N=8e4); silent ceiling ~**561×**. STATIC-VS-O2 case3 `#if 0` / dead dump ≈ **1.0×** with static fire → keep below **error** (default **off**). See [evidence-policy.md](evidence-policy.md).
+**Measured evidence (partial agreement; default off):** [`evidence/cp-printf-hot.md`](../evidence/cp-printf-hot.md) · [`cp-printf-hot.jsonl`](../evidence/cp-printf-hot.jsonl) — hot unbuffered vs buffered fprintf ~**4.8×** (N=8e4); silent ceiling ~**561×**. STATIC-VS-O2 case3 `#if 0` / dead dump ≈ **1.0×** with static fire → keep below **error** (default **off**). See [evidence-policy.md](evidence-policy.md).
 
 ### 2.2 When dump / debug is intentional
 
-Engine and compiler trees are full of **correct** looped printers: RTL dumps, strlen dumps, atom leakage traces, bytecode dumps. Heuristically cp-printf-in-loop is right (“this is I/O in a loop”); operationally it is noise for CI on those trees.
+Engine and compiler trees are full of **correct** looped printers: RTL dumps, strlen dumps, atom leakage traces, bytecode dumps. Heuristically cp-printf-hot is right (“this is I/O in a loop”); operationally it is noise for CI on those trees.
 
 **cperf-lint suppressions (r2–r3):**
 
@@ -139,12 +139,12 @@ Fixtures: `fixtures/good/dump_printf_loop.c`, `ifdef_dump_printf.c`, `dump_file_
 
 Counts after path skips + suppressions. **Not** “printf cost in ms”.
 
-| Corpus | r1 → r2 → r3 (cp-printf-in-loop-heavy totals) | Notes |
+| Corpus | r1 → r2 → r3 (cp-printf-hot-heavy totals) | Notes |
 |--------|-------------------------------------|-------|
-| quickjs | 258 → 76 → **62** (all cp-printf-in-loop at r3) | Residual: `quickjs.c` atom/debug printf (~29), `dtoa.c` table emitter (~15), `qjsc.c` progress, `libregexp.c` / `libunicode.c` stats |
+| quickjs | 258 → 76 → **62** (all cp-printf-hot at r3) | Residual: `quickjs.c` atom/debug printf (~29), `dtoa.c` table emitter (~15), `qjsc.c` progress, `libregexp.c` / `libunicode.c` stats |
 | lua | 3 → 2 → **1** | Quiet after skips |
-| gcc sparse | — → 4392 → **357** (cp-printf-in-loop:328) | Under-500 target met; top residual: `collect2.cc` ctor-list writers (~49), `tree-ssa-strlen.cc` dump (~31), `mkdeps.cc` (~27), `reload.cc` (~20), `makeucnid.cc` table emitter (~11) |
-| sqlite `src/` | — → — → **93** (cp-printf-in-loop:78) | `treeview.c` debug tree (~25), `vdbe.c` / `vdbeaux.c` plan/bytecode dump, `bitvec.c` test dump |
+| gcc sparse | — → 4392 → **357** (cp-printf-hot:328) | Under-500 target met; top residual: `collect2.cc` ctor-list writers (~49), `tree-ssa-strlen.cc` dump (~31), `mkdeps.cc` (~27), `reload.cc` (~20), `makeucnid.cc` table emitter (~11) |
+| sqlite `src/` | — → — → **93** (cp-printf-hot:78) | `treeview.c` debug tree (~25), `vdbe.c` / `vdbeaux.c` plan/bytecode dump, `bitvec.c` test dump |
 
 **Reading residual paths:** `collect2` / `mkdeps` / `makeucnid` / `dtoa` table gens are **codegen writers** — looped `fprintf` is the product. Optional future quiet mode: path allowlist or “codegen writer” suppress. Do not “optimize away” intentional emitters because the lint fired.
 
@@ -179,17 +179,17 @@ In-tree JSONL under `evidence/` (see [evidence-policy.md](evidence-policy.md)):
 
 | Rule | Severity | Wall-clock (local run) |
 |------|----------|------------------------|
-| cp-alloc-in-loop | **error** | ~10.8× malloc-in-loop vs arena |
+| cp-alloc-hot | **error** | ~10.8× malloc-in-loop vs arena |
 | cp-realloc-grow-one | **error** | ~12.6× realloc(+1) vs doubling |
-| cp-printf-in-loop | **off** (default) | ~4.8× hot unbuf/buf; `#if 0` ~1.0× → partial |
+| cp-printf-hot | **off** (default) | ~4.8× hot unbuf/buf; `#if 0` ~1.0× → partial |
 | cp-strlen-in-cond | **hint** | about 125× if the string can change; about 1× if hoisted |
-| cp-strcat-in-loop | **off** (default) | about 221×; stays off |
-| cp-sprintf-in-loop | **hint** | JSONL present; stays hint; not corpus-triaged |
-| cp-fopen-in-loop | **hint** | JSONL present; stays hint; not corpus-triaged |
-| cp-gettime-in-loop | **hint** | JSONL present; stays hint; not corpus-triaged |
+| cp-strcat-hot | **off** (default) | about 221×; stays off |
+| cp-sprintf-hot | **hint** | JSONL present; stays hint; not corpus-triaged |
+| cp-fopen-hot | **hint** | JSONL present; stays hint; not corpus-triaged |
+| cp-gettime-hot | **hint** | JSONL present; stays hint; not corpus-triaged |
 | cp-wide-bool-flags | **hint** | JSONL present; stays hint; not corpus-triaged |
-| cp-regex-in-loop | **hint** | JSONL about 9.7×; not corpus-triaged |
-| cp-alloca-in-loop | **hint** | stack 1280000 vs 64 bytes; wall clock about 1×; not corpus-triaged |
+| cp-regex-hot | **hint** | JSONL about 9.7×; not corpus-triaged |
+| cp-alloca-hot | **hint** | stack 1280000 vs 64 bytes; wall clock about 1×; not corpus-triaged |
 | cp-struct-by-value | **hint** | JSONL about 12.3× cross-TU; same TU about 1×; not corpus-triaged |
 
 Corpus residual counts (§2.3) remain lint dogfood only. Pattern demos (`examples/m01_arena.c`) still illustrate APIs without replacing the JSONL gate.
@@ -197,10 +197,10 @@ Corpus residual counts (§2.3) remain lint dogfood only. Pattern demos (`example
 
 A hot loop should not format a new string, open a file, sample the clock, or compile a regular expression on every pass. Format into a buffer you already have, open the stream once, read the clock outside the steady state, and compile a pattern once. These lints are **hint**. The 2026-10-22 corpus verdict does not cover them.
 
-- **cp-sprintf-in-loop** — `sprintf` or `snprintf` in a loop body. JSONL is present. The rule stays hint and is not corpus-triaged.
-- **cp-fopen-in-loop** — `fopen` in a loop body. JSONL is present. The rule stays hint and is not corpus-triaged.
-- **cp-gettime-in-loop** — `gettimeofday` or `clock_gettime` in a loop body. A bare `time` call is not matched; that name is too broad. JSONL is present. The rule stays hint and is not corpus-triaged.
-- **cp-regex-in-loop** — `regcomp` in a loop body. `regexec` is not matched. A microbench was about 9.7× versus compiling once. The rule stays **hint** and is not corpus-triaged.
+- **cp-sprintf-hot** — `sprintf` or `snprintf` in a loop body. JSONL is present. The rule stays hint and is not corpus-triaged.
+- **cp-fopen-hot** — `fopen` in a loop body. JSONL is present. The rule stays hint and is not corpus-triaged.
+- **cp-gettime-hot** — `gettimeofday` or `clock_gettime` in a loop body. A bare `time` call is not matched; that name is too broad. JSONL is present. The rule stays hint and is not corpus-triaged.
+- **cp-regex-hot** — `regcomp` in a loop body. `regexec` is not matched. A microbench was about 9.7× versus compiling once. The rule stays **hint** and is not corpus-triaged.
 
 A fixture hit is not a measured speedup. See [evidence-policy.md](evidence-policy.md).
 ## 5. Flag layout
@@ -218,17 +218,17 @@ A fixture hit is not a measured saving. See [evidence-policy.md](evidence-policy
 
 | ID | Topic | Severity / note |
 |----|--------|-----------------|
-| cp-alloc-in-loop | malloc/calloc/realloc in loop | **error** — evidence; rare on VMs; sqlite/gcc teens–tens |
+| cp-alloc-hot | malloc/calloc/realloc in loop | **error** — evidence; rare on VMs; sqlite/gcc teens–tens |
 | cp-realloc-grow-one | realloc grow without capacity | **error** — evidence; almost never on mature trees |
-| cp-printf-in-loop | printf/fprintf/puts in loop | **off** by default — hot YES / dead NEGATIVE; dump suppressions required |
+| cp-printf-hot | printf/fprintf/puts in loop | **off** by default — hot YES / dead NEGATIVE; dump suppressions required |
 | cp-strlen-in-cond | strlen in loop condition | **hint** — about 125× if recomputed, about 1× if hoisted |
-| cp-strcat-in-loop | strcat/strncat in loop | **off** by default — about 221×; cold CLI/path OK-idiom |
-| cp-sprintf-in-loop | formatted buffer write in loop | **hint** — JSONL present; not corpus-triaged |
-| cp-fopen-in-loop | file open in loop | **hint** — JSONL present; not corpus-triaged |
-| cp-gettime-in-loop | clock sample in loop (not bare `time`) | **hint** — JSONL present; not corpus-triaged |
+| cp-strcat-hot | strcat/strncat in loop | **off** by default — about 221×; cold CLI/path OK-idiom |
+| cp-sprintf-hot | formatted buffer write in loop | **hint** — JSONL present; not corpus-triaged |
+| cp-fopen-hot | file open in loop | **hint** — JSONL present; not corpus-triaged |
+| cp-gettime-hot | clock sample in loop (not bare `time`) | **hint** — JSONL present; not corpus-triaged |
 | cp-wide-bool-flags | four or more full-width boolean flags in one struct | **hint** — JSONL present; not corpus-triaged |
-| cp-regex-in-loop | `regcomp` in a loop (`regexec` is not matched) | **hint** — JSONL about 9.7×; not corpus-triaged |
-| cp-alloca-in-loop | `alloca` / `__builtin_alloca` in a loop (a VLA is not matched) | **hint** — stack cover measured; wall clock about 1×; not corpus-triaged |
+| cp-regex-hot | `regcomp` in a loop (`regexec` is not matched) | **hint** — JSONL about 9.7×; not corpus-triaged |
+| cp-alloca-hot | `alloca` / `__builtin_alloca` in a loop (a VLA is not matched) | **hint** — stack cover measured; wall clock about 1×; not corpus-triaged |
 | cp-struct-by-value | by-value parameter of a struct whose visible lower bound is at least 512 bytes and four fields | **hint** — JSONL about 12.3× cross-TU; not corpus-triaged |
 
 ## References

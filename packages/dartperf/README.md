@@ -4,7 +4,7 @@
 
 Dart performance notes, small examples, and `dartperf-lint`.
 
-Part of [XPerf](../../README.md). Shared docs: [docs/README.md](../../docs/README.md). **Corpus-ready**. dt-list-add-empty–dt-print-in-loop **off**; **dt-growable-add-empty** hint. Guide v0.
+Part of [XPerf](../../README.md). Shared docs: [docs/README.md](../../docs/README.md). **Corpus-ready**. dt-list-add-empty–dt-print-hot **off**; **dt-growable-add-empty** hint. Guide v0.
 
 ## Contents
 

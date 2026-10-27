@@ -21,13 +21,13 @@ Less allocation chatter, fewer surprise `fmt` / string-growth stalls.
 
 Prefer reusing buffers (`sync.Pool`, pre-sized slices) over `make`/`new` inside tight loops when profiles show alloc pressure. Escape analysis may keep small values on the stack — **do not** rewrite without a bench.
 
-Companion lint: **gp-make-in-loop** (off after G3), **gp-append-nil-slice** (empty slice + append in size-hinted loop).
+Companion lint: **gp-make-hot** (off after G3), **gp-append-nil-slice** (empty slice + append in size-hinted loop).
 
 ## 2. Strings and formatting
 
 Repeated `s += piece` in a loop is quadratic. Prefer `strings.Builder` or `bytes.Buffer`. Hot-path `fmt.Sprintf` / `fmt.Printf` also allocate; gate debug prints or use cheaper appenders when measured.
 
-Companion lint: **gp-string-plus-in-loop**/**gp-fmt-in-loop** (off after G3), **gp-defer-in-loop** (`defer` in loop).
+Companion lint: **gp-string-plus-hot**/**gp-fmt-hot** (off after G3), **gp-defer-hot** (`defer` in loop).
 
 ## 3. Compile, encode, and reflect
 
@@ -35,19 +35,19 @@ Companion lint: **gp-string-plus-in-loop**/**gp-fmt-in-loop** (off after G3), **
 
 `os.Open` of one path was about 2300× versus opening once. `time.Now` was about 104× versus one sample. That clock rule is not the removed `time.Parse` rule. A changing path cannot be hoisted, and a loop that needs a fresh timestamp has nothing to hoist.
 
-Companion lint: **gp-regexp-compile-in-loop**, **gp-json-marshal-in-loop**, **gp-reflect-in-loop**, **gp-os-open-in-loop**, **gp-time-now-in-loop**.
+Companion lint: **gp-regexp-compile-hot**, **gp-json-marshal-hot**, **gp-reflect-hot**, **gp-os-open-hot**, **gp-time-now-hot**.
 ## Lint map
 
 | ID | Smell | Default |
 |----|-------|---------|
-| gp-make-in-loop | `make`/`new` in loop | off (G3) |
-| gp-string-plus-in-loop | string `+=` in loop | off (G3) |
-| gp-fmt-in-loop | `fmt.Sprintf`/`Printf` in loop | off (G3) |
+| gp-make-hot | `make`/`new` in loop | off (G3) |
+| gp-string-plus-hot | string `+=` in loop | off (G3) |
+| gp-fmt-hot | `fmt.Sprintf`/`Printf` in loop | off (G3) |
 | gp-append-nil-slice | empty slice + append in size-hinted loop | hint |
-| gp-defer-in-loop | `defer` in loop | hint |
-| gp-regexp-compile-in-loop | `regexp.Compile` in loop | hint (measured; not corpus-triaged) |
-| gp-json-marshal-in-loop | `json.Marshal` / `Unmarshal` in loop | hint (measured; not corpus-triaged) |
-| gp-reflect-in-loop | `FieldByName` / `MethodByName` / `reflect.New` in loop | hint (JSONL; `TypeOf` is not matched) |
+| gp-defer-hot | `defer` in loop | hint |
+| gp-regexp-compile-hot | `regexp.Compile` in loop | hint (measured; not corpus-triaged) |
+| gp-json-marshal-hot | `json.Marshal` / `Unmarshal` in loop | hint (measured; not corpus-triaged) |
+| gp-reflect-hot | `FieldByName` / `MethodByName` / `reflect.New` in loop | hint (JSONL; `TypeOf` is not matched) |
 
 Escalate only with `evidence/<rule>.jsonl` — see [evidence-policy.md](evidence-policy.md).
 

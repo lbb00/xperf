@@ -8,13 +8,13 @@ struct Finding {
 }
 
 let msg: [String: String] = [
-    "sp-print-in-loop": "print( in loop; gate or buffer",
-    "sp-array-no-reserve": "empty Array then append in loop without reserveCapacity",
-    "sp-dateformatter-in-loop": "date formatter constructed in a loop; reuse one instance",
-    "sp-json-decode-in-loop": "JSON value decoded in a loop; reuse one decoder",
-    "sp-regex-in-loop": "regular expression constructed in a loop; compile outside only when this pattern stays the same",
-    "sp-file-read-in-loop": "file read in a loop; read once when the path stays the same",
-    "sp-clock-in-loop": "clock sample in a tight loop with no await; hoist only when this iteration does not need a fresh time", "sp-value-for-key-in-loop": "lookup by name in a loop; use the field directly when the name is fixed",
+    "sp-print-hot": "print(; gate or buffer — cost adds up even off a hot path",
+    "sp-array-no-reserve": "empty Array then append without reserveCapacity — cost adds up even off a hot path",
+    "sp-dateformatter-hot": "date formatter constructed; reuse one instance — cost adds up even off a hot path",
+    "sp-json-decode-hot": "JSON value decoded; reuse one decoder — cost adds up even off a hot path",
+    "sp-regex-hot": "regular expression constructed; compile outside only when this pattern stays the same — cost adds up even off a hot path",
+    "sp-file-read-hot": "file read; read once when the path stays the same — cost adds up even off a hot path",
+    "sp-clock-hot": "clock sample in a tight loop with no await; hoist only when this iteration does not need a fresh time", "sp-value-for-key-hot": "lookup by name; use the field directly when the name is fixed — cost adds up even off a hot path",
 ]
 
 func isSwift(_ path: String) -> Bool {
@@ -121,7 +121,8 @@ func regionUses(_ code: String, _ marker: String, _ names: [String]) -> Bool {
     return names.contains { identIn(rest, $0) }
 }
 
-func scanFile(_ path: String) throws -> [Finding] {
+func scanFile(_ path: String, scope: String = "all") throws -> [Finding] {
+    let scopeMode = scope == "loop" ? "loop" : "all"
     let text = try String(contentsOfFile: path, encoding: .utf8)
     var findings: [Finding] = []
     findings.reserveCapacity(64)
@@ -171,30 +172,31 @@ func scanFile(_ path: String) throws -> [Finding] {
                 loopAwait = true
             }
         }
-        if inLoop > 0 && depth >= inLoop {
+        let matchHere = scopeMode == "all" || (inLoop > 0 && depth >= inLoop)
+        if matchHere {
             if printRe.firstMatch(in: code, range: full) != nil {
-                findings.append(Finding(rule: "sp-print-in-loop", path: path, line: lineNo, message: msg["sp-print-in-loop"] ?? "sp-print-in-loop"))
+                findings.append(Finding(rule: "sp-print-hot", path: path, line: lineNo, message: msg["sp-print-hot"] ?? "sp-print-hot"))
             }
             if hasToken(code, dateFmtParts, requireParen: true) {
-                findings.append(Finding(rule: "sp-dateformatter-in-loop", path: path, line: lineNo, message: msg["sp-dateformatter-in-loop"] ?? "sp-dateformatter-in-loop"))
+                findings.append(Finding(rule: "sp-dateformatter-hot", path: path, line: lineNo, message: msg["sp-dateformatter-hot"] ?? "sp-dateformatter-hot"))
             }
             if hasToken(code, jsonDecParts, requireParen: true) || hasToken(code, jsonObjParts, requireParen: false) {
-                findings.append(Finding(rule: "sp-json-decode-in-loop", path: path, line: lineNo, message: msg["sp-json-decode-in-loop"] ?? "sp-json-decode-in-loop"))
+                findings.append(Finding(rule: "sp-json-decode-hot", path: path, line: lineNo, message: msg["sp-json-decode-hot"] ?? "sp-json-decode-hot"))
             }
             if code.range(of: #"\bawait\b"#, options: .regularExpression) != nil {
                 loopAwait = true
             }
             if hasToken(code, nsRegexParts, requireParen: true) && !regionUses(code, "pattern:", loopNames) {
-                findings.append(Finding(rule: "sp-regex-in-loop", path: path, line: lineNo, message: msg["sp-regex-in-loop"] ?? "sp-regex-in-loop"))
+                findings.append(Finding(rule: "sp-regex-hot", path: path, line: lineNo, message: msg["sp-regex-hot"] ?? "sp-regex-hot"))
             }
             if hasToken(code, fileReadParts, requireParen: false) && !regionUses(code, "OfFile", loopNames) {
-                findings.append(Finding(rule: "sp-file-read-in-loop", path: path, line: lineNo, message: msg["sp-file-read-in-loop"] ?? "sp-file-read-in-loop"))
+                findings.append(Finding(rule: "sp-file-read-hot", path: path, line: lineNo, message: msg["sp-file-read-hot"] ?? "sp-file-read-hot"))
             }
             if hasToken(code, clockParts, requireParen: true) && !loopAwait {
-                clockHold.append(Finding(rule: "sp-clock-in-loop", path: path, line: lineNo, message: msg["sp-clock-in-loop"] ?? "sp-clock-in-loop"))
+                clockHold.append(Finding(rule: "sp-clock-hot", path: path, line: lineNo, message: msg["sp-clock-hot"] ?? "sp-clock-hot"))
             }
             if hasToken(code, kvcParts, requireParen: false) {
-                findings.append(Finding(rule: "sp-value-for-key-in-loop", path: path, line: lineNo, message: msg["sp-value-for-key-in-loop"] ?? "sp-value-for-key-in-loop"))
+                findings.append(Finding(rule: "sp-value-for-key-hot", path: path, line: lineNo, message: msg["sp-value-for-key-hot"] ?? "sp-value-for-key-hot"))
             }
             if let m = appendRe.firstMatch(in: code, range: full), m.numberOfRanges >= 2 {
                 let name = ns.substring(with: m.range(at: 1))
@@ -222,13 +224,13 @@ func scanFile(_ path: String) throws -> [Finding] {
     return findings
 }
 
-func scanPath(_ root: String) throws -> [Finding] {
+func scanPath(_ root: String, scope: String = "all") throws -> [Finding] {
     var isDir: ObjCBool = false
     guard FileManager.default.fileExists(atPath: root, isDirectory: &isDir) else {
         throw NSError(domain: "swiftperf-lint", code: 2)
     }
     if !isDir.boolValue {
-        return isSwift(root) ? try scanFile(root) : []
+        return isSwift(root) ? try scanFile(root, scope: scope) : []
     }
     var all: [Finding] = []
     all.reserveCapacity(64)
@@ -245,7 +247,7 @@ func scanPath(_ root: String) throws -> [Finding] {
             continue
         }
         if isSwift(full) {
-            all.append(contentsOf: try scanFile(full))
+            all.append(contentsOf: try scanFile(full, scope: scope))
         }
     }
     return all
@@ -258,9 +260,10 @@ if args.isEmpty {
 }
 var paths: [String] = []
 paths.reserveCapacity(8)
-var severities: [String: String] = ["sp-print-in-loop": "off", "sp-array-no-reserve": "hint", "sp-dateformatter-in-loop": "hint", "sp-json-decode-in-loop": "hint", "sp-regex-in-loop": "hint", "sp-file-read-in-loop": "hint", "sp-clock-in-loop": "hint", "sp-value-for-key-in-loop": "hint"]
+var severities: [String: String] = ["sp-print-hot": "off", "sp-array-no-reserve": "hint", "sp-dateformatter-hot": "hint", "sp-json-decode-hot": "hint", "sp-regex-hot": "hint", "sp-file-read-hot": "hint", "sp-clock-hot": "hint", "sp-value-for-key-hot": "hint"]
 var strictHints = false
 var noFail = false
+var scope = "all"
 var i = 0
 while i < args.count {
     let a = args[i]
@@ -274,6 +277,19 @@ while i < args.count {
         strictHints = true
     } else if a == "--no-fail" {
         noFail = true
+    } else if a == "--scope", i + 1 < args.count {
+        i += 1
+        scope = args[i]
+        if scope != "all" && scope != "loop" {
+            fputs("bad --scope\n", stderr)
+            exit(2)
+        }
+    } else if a.hasPrefix("--scope=") {
+        scope = String(a.dropFirst("--scope=".count))
+        if scope != "all" && scope != "loop" {
+            fputs("bad --scope\n", stderr)
+            exit(2)
+        }
     } else if a.hasPrefix("-") {
         fputs("unknown flag \(a)\n", stderr)
         exit(2)
@@ -287,7 +303,7 @@ var findings: [Finding] = []
 findings.reserveCapacity(64)
 do {
     for p in paths {
-        findings.append(contentsOf: try scanPath(p))
+        findings.append(contentsOf: try scanPath(p, scope: scope))
     }
 } catch {
     fputs("\(error)\n", stderr)

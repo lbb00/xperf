@@ -1,4 +1,4 @@
-# Evidence microbench be-list-concat-reduce–be-io-puts-in-loop → packages/beamperf/evidence/*.jsonl
+# Evidence microbench be-list-concat-reduce–be-io-puts-hot → packages/beamperf/evidence/*.jsonl
 # Timer: :erlang.monotonic_time(:nanosecond); warm=3; median of 9
 
 Mix.install([]) # no-op when not Mix; script uses plain Elixir
@@ -103,7 +103,7 @@ Evidence.emit("BE002", [
   %{case: "string_diamond_append", role: "before", median_ms: before2, ops: n_str, ratio: before2 / after2}
 ], %{})
 
-# be-io-puts-in-loop — discard IO by redirecting group leader to a null device
+# be-io-puts-hot — discard IO by redirecting group leader to a null device
 defmodule NullIO do
   def start do
     spawn(fn -> loop() end)
@@ -140,7 +140,7 @@ after3 =
     s
   end)
 send(null, :stop)
-Evidence.emit("be-io-puts-in-loop", [
+Evidence.emit("be-io-puts-hot", [
   %{case: "io_once_after", role: "after", median_ms: after3, ops: n_io, ratio: 1.0},
   %{case: "io_puts_in_loop", role: "before", median_ms: before3, ops: n_io, ratio: before3 / after3}
 ], %{})

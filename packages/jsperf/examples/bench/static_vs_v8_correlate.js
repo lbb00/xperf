@@ -120,7 +120,7 @@ function case4_tombstone() {
   return s;
 }
 
-/* Case 5 control: new in loop (jp-alloc-in-loop smell) vs new once outside */
+/* Case 5 control: new in loop (jp-alloc-hot smell) vs new once outside */
 function case5_new_in_loop() {
   let s = 0;
   for (let i = 0; i < N; i++) {
@@ -192,7 +192,7 @@ const cases = [
     b_label: "new_in_loop",
     static_a: false,
     static_b: true,
-    static_note: "jp-alloc-in-loop flags new-in-loop; once-outside not flagged",
+    static_note: "jp-alloc-hot flags new-in-loop; once-outside not flagged",
     a: case5_new_once,
     b: case5_new_in_loop,
   },

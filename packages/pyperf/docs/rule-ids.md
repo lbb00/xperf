@@ -4,12 +4,24 @@ Canonical ids are **slugs only**. Numerics from the old map are historical and *
 
 | Slug |
 |------|
-| `pp-str-plus-in-loop` |
+| `pp-str-plus-hot` |
 | `pp-list-plus-rebind` |
-| `pp-print-in-loop` |
-| `pp-json-in-loop` |
-| `pp-deepcopy-in-loop` |
-| `pp-open-in-loop` |
+| `pp-print-hot` |
+| `pp-json-hot` |
+| `pp-deepcopy-hot` |
+| `pp-open-hot` |
+
+## Renamed 2026-10-27 (tombstone old; never reuse)
+
+Default **`--scope all`** (or kit-equivalent). Old `*-in-loop` ids misled tools/models; they are tombstoned under `evidence/_removed/`.
+
+| Old slug | New slug |
+|----------|----------|
+| `pp-deepcopy-in-loop` | `pp-deepcopy-hot` |
+| `pp-json-in-loop` | `pp-json-hot` |
+| `pp-open-in-loop` | `pp-open-hot` |
+| `pp-print-in-loop` | `pp-print-hot` |
+| `pp-str-plus-in-loop` | `pp-str-plus-hot` |
 
 ## Removed (tombstone; never reuse)
 

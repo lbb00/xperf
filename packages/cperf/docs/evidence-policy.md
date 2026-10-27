@@ -17,17 +17,17 @@ As of 2026-10-22.
 
 | Rule | Severity | Evidence | Verdict |
 |------|----------|----------|---------|
-| cp-alloc-in-loop | **error** | [cp-alloc-in-loop.md](../evidence/cp-alloc-in-loop.md) · [cp-alloc-in-loop.jsonl](../evidence/cp-alloc-in-loop.jsonl) | Agree ~**10.8×** malloc-in-loop vs arena |
+| cp-alloc-hot | **error** | [cp-alloc-hot.md](../evidence/cp-alloc-hot.md) · [cp-alloc-hot.jsonl](../evidence/cp-alloc-hot.jsonl) | Agree ~**10.8×** malloc-in-loop vs arena |
 | cp-realloc-grow-one | **error** | [cp-realloc-grow-one.md](../evidence/cp-realloc-grow-one.md) · [cp-realloc-grow-one.jsonl](../evidence/cp-realloc-grow-one.jsonl) | Agree ~**12.6×** (companion case4 ~3×); direction clear |
-| cp-printf-in-loop | **off** (default) | [cp-printf-in-loop.md](../evidence/cp-printf-in-loop.md) · [cp-printf-in-loop.jsonl](../evidence/cp-printf-in-loop.jsonl) | Hot unbuf/buf ~**4.8×** YES; G3 corpora almost-all OK-idiom/`#if 0` → **off**; use `--preset all` or `--severity cp-printf-in-loop=hint` |
+| cp-printf-hot | **off** (default) | [cp-printf-hot.md](../evidence/cp-printf-hot.md) · [cp-printf-hot.jsonl](../evidence/cp-printf-hot.jsonl) | Hot unbuf/buf ~**4.8×** YES; G3 corpora almost-all OK-idiom/`#if 0` → **off**; use `--preset all` or `--severity cp-printf-hot=hint` |
 | cp-strlen-in-cond | **hint** | [cp-strlen-in-cond.md](../evidence/cp-strlen-in-cond.md) | about 125× when the string might change; about 0.93× when `-O2` hoists; stay hint |
-| cp-strcat-in-loop | **off** (default) | [cp-strcat-in-loop.md](../evidence/cp-strcat-in-loop.md) | about 221× versus an end pointer; stays off (G3) |
-| cp-sprintf-in-loop | **hint** | [cp-sprintf-in-loop.md](../evidence/cp-sprintf-in-loop.md) · [cp-sprintf-in-loop.jsonl](../evidence/cp-sprintf-in-loop.jsonl) | pending; not corpus-triaged |
-| cp-fopen-in-loop | **hint** | [cp-fopen-in-loop.md](../evidence/cp-fopen-in-loop.md) · [cp-fopen-in-loop.jsonl](../evidence/cp-fopen-in-loop.jsonl) | pending; not corpus-triaged |
-| cp-gettime-in-loop | **hint** | [cp-gettime-in-loop.md](../evidence/cp-gettime-in-loop.md) · [cp-gettime-in-loop.jsonl](../evidence/cp-gettime-in-loop.jsonl) | pending; not corpus-triaged; bare `time` is not matched |
+| cp-strcat-hot | **off** (default) | [cp-strcat-hot.md](../evidence/cp-strcat-hot.md) | about 221× versus an end pointer; stays off (G3) |
+| cp-sprintf-hot | **hint** | [cp-sprintf-hot.md](../evidence/cp-sprintf-hot.md) · [cp-sprintf-hot.jsonl](../evidence/cp-sprintf-hot.jsonl) | pending; not corpus-triaged |
+| cp-fopen-hot | **hint** | [cp-fopen-hot.md](../evidence/cp-fopen-hot.md) · [cp-fopen-hot.jsonl](../evidence/cp-fopen-hot.jsonl) | pending; not corpus-triaged |
+| cp-gettime-hot | **hint** | [cp-gettime-hot.md](../evidence/cp-gettime-hot.md) · [cp-gettime-hot.jsonl](../evidence/cp-gettime-hot.jsonl) | pending; not corpus-triaged; bare `time` is not matched |
 | cp-wide-bool-flags | **hint** | [cp-wide-bool-flags.md](../evidence/cp-wide-bool-flags.md) · [cp-wide-bool-flags.jsonl](../evidence/cp-wide-bool-flags.jsonl) | JSONL present; stays hint; not corpus-triaged; four full-width flags, no bit-field |
-| cp-regex-in-loop | **hint** | [cp-regex-in-loop.md](../evidence/cp-regex-in-loop.md) · [cp-regex-in-loop.jsonl](../evidence/cp-regex-in-loop.jsonl) | about 9.7×; stay hint; not corpus-triaged; `regexec` is not matched |
-| cp-alloca-in-loop | **hint** | [cp-alloca-in-loop.md](../evidence/cp-alloca-in-loop.md) · [cp-alloca-in-loop.jsonl](../evidence/cp-alloca-in-loop.jsonl) | stack cover 1280000 vs 64 bytes; wall clock about 1×; stay hint; not corpus-triaged; a VLA is not matched |
+| cp-regex-hot | **hint** | [cp-regex-hot.md](../evidence/cp-regex-hot.md) · [cp-regex-hot.jsonl](../evidence/cp-regex-hot.jsonl) | about 9.7×; stay hint; not corpus-triaged; `regexec` is not matched |
+| cp-alloca-hot | **hint** | [cp-alloca-hot.md](../evidence/cp-alloca-hot.md) · [cp-alloca-hot.jsonl](../evidence/cp-alloca-hot.jsonl) | stack cover 1280000 vs 64 bytes; wall clock about 1×; stay hint; not corpus-triaged; a VLA is not matched |
 | cp-struct-by-value | **hint** | [cp-struct-by-value.md](../evidence/cp-struct-by-value.md) · [cp-struct-by-value.jsonl](../evidence/cp-struct-by-value.jsonl) | about 12.3× cross-TU at 512 bytes; same TU about 1×; stay hint; not corpus-triaged |
 
 ## Regenerating
@@ -44,6 +44,6 @@ Update the matching `<slug>.md` medians if the ratio moves materially.
 
 ## CLI presets
 
-Default `--preset app` (and `engine`): **cp-alloc-in-loop=error**, **cp-realloc-grow-one=error**, **cp-strlen-in-cond=hint**, **cp-sprintf-in-loop=hint**, **cp-fopen-in-loop=hint**, **cp-gettime-in-loop=hint**, **cp-wide-bool-flags=hint**, **cp-regex-in-loop=hint**, **cp-alloca-in-loop=hint**, **cp-struct-by-value=hint**, **cp-printf-in-loop=off** and **cp-strcat-in-loop=off**. The off rules are the G3 2026-10-22 demotions. Hints are not corpus-triaged. `cp-regex-in-loop`, `cp-alloca-in-loop`, and `cp-struct-by-value` have JSONL and stay hint. An unknown slug stays **hint**.
+Default `--preset app` (and `engine`): **cp-alloc-hot=error**, **cp-realloc-grow-one=error**, **cp-strlen-in-cond=hint**, **cp-sprintf-hot=hint**, **cp-fopen-hot=hint**, **cp-gettime-hot=hint**, **cp-wide-bool-flags=hint**, **cp-regex-hot=hint**, **cp-alloca-hot=hint**, **cp-struct-by-value=hint**, **cp-printf-hot=off** and **cp-strcat-hot=off**. The off rules are the G3 2026-10-22 demotions. Hints are not corpus-triaged. `cp-regex-hot`, `cp-alloca-hot`, and `cp-struct-by-value` have JSONL and stay hint. An unknown slug stays **hint**.
 
 `--preset all` elevates every rule to error for dogfood. Overrides: `--severity RULE=error|hint|off`.

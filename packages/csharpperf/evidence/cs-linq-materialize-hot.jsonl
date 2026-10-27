@@ -1,0 +1,2 @@
+{"rule":"cs-linq-materialize-hot","case":"tolist_once","role":"after","dotnet":"10.0.13","median_ms":0.0158,"ops":20000,"ratio":1,"ts":"2026-10-23T14:29:43.8087209Z"}
+{"rule":"cs-linq-materialize-hot","case":"tolist_each_iter","role":"before","dotnet":"10.0.13","median_ms":0.6147,"ops":20000,"ratio":38.905063291139236,"ts":"2026-10-23T14:29:43.8087209Z"}

@@ -167,7 +167,7 @@ public class J32_RuleEvidenceBatch {
         return sum;
     }
 
-    // ---- jp-log-in-loop log concat always vs guarded ----
+    // ---- jp-log-hot log concat always vs guarded ----
     @State(Scope.Thread)
     public static class FakeLog {
         volatile boolean debug;
@@ -285,7 +285,7 @@ public class J32_RuleEvidenceBatch {
         return s.client;
     }
 
-    // ---- jp-string-intern-in-loop string.intern in loop ----
+    // ---- jp-string-intern-hot string.intern in loop ----
     @State(Scope.Thread)
     public static class Intern {
         String[] xs;

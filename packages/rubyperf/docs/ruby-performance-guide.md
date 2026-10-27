@@ -23,13 +23,13 @@ Fewer quadratic builders, quieter hot paths.
 
 `Hash#merge` in a loop was removed. On Ruby 4.0.8 the suggested literal build was slower than `merge` (~0.78×, and again ~0.65×) and allocated about twice as many objects. See `evidence/_removed/rb-hash-merge-in-loop.REMOVED.md`.
 
-Companion lint: **rb-string-plus-in-loop**, **rb-array-plus-rebind**.
+Companion lint: **rb-string-plus-hot**, **rb-array-plus-rebind**.
 
 ## 2. Hot I/O
 
 `puts` / `print` in a tight loop flushes. Gate debug output or buffer.
 
-Companion lint: **rb-puts-in-loop**.
+Companion lint: **rb-puts-hot**.
 
 ## 3. Compile and parse
 
@@ -37,16 +37,16 @@ Companion lint: **rb-puts-in-loop**.
 
 `File.read` of one path was about 346× versus reading once. `File.open` is the same lint. A path that changes every iteration cannot be hoisted. `Process.clock_gettime` was about 2.3× and `send` about 1.9×; those were checked and not given a rule.
 
-Companion lint: **rb-regexp-new-in-loop**, **rb-json-in-loop**, **rb-file-read-in-loop**.
+Companion lint: **rb-regexp-new-hot**, **rb-json-hot**, **rb-file-read-hot**.
 ## Lint map
 
 | ID | Smell | Default |
 |----|-------|---------|
-| rb-string-plus-in-loop | string `+=` in loop | off |
+| rb-string-plus-hot | string `+=` in loop | off |
 | rb-array-plus-rebind | Array `+` / concat rebinding in loop | off |
-| rb-puts-in-loop | `puts` / `print` in loop | off |
-| rb-regexp-new-in-loop | `Regexp.new` in loop | hint (measured; not corpus-triaged) |
-| rb-json-in-loop | `JSON.parse` / `generate` in loop | hint (measured; not corpus-triaged) |
+| rb-puts-hot | `puts` / `print` in loop | off |
+| rb-regexp-new-hot | `Regexp.new` in loop | hint (measured; not corpus-triaged) |
+| rb-json-hot | `JSON.parse` / `generate` in loop | hint (measured; not corpus-triaged) |
 
 Enable an `off` rule with `--severity <rule>=hint`. Escalate to `error` only with measured `evidence/rb-*.jsonl` — see [evidence-policy.md](evidence-policy.md). `rb-date-parse-in-loop` and `rb-hash-merge-in-loop` were removed.
 

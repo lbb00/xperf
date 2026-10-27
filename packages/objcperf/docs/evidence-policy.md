@@ -10,13 +10,13 @@ As of 2026-10-23. Measured rows are the 2026-10-22 G4 fill. The three new slugs 
 
 | Rule | Severity (default) | Evidence | Smell |
 |------|--------------------|----------|-------|
-| oc-nsstring-append-in-loop | off | **yes** GNUstep ~569× | NSString append |
-| oc-nslog-in-loop | off | **yes** fprintf proxy ~191× | log in loop |
-| oc-dateformatter-in-loop | hint | measured (`oc-dateformatter-in-loop.md` + `oc-dateformatter-in-loop.jsonl`); stay hint | date formatter alloc/init or new in a loop; not corpus-triaged |
-| oc-json-in-loop | hint | measured (`oc-json-in-loop.md` + `oc-json-in-loop.jsonl`); stay hint | JSON parse or encode in a loop; not corpus-triaged |
-| oc-regex-in-loop | hint | measured (`oc-regex-in-loop.md` + `oc-regex-in-loop.jsonl`); stay hint | regular expression compiled in a loop; not corpus-triaged |
-| oc-file-read-in-loop | hint | measured (`oc-file-read-in-loop.md` + `oc-file-read-in-loop.jsonl`); stay hint | `stringWithContentsOfFile` in a loop; same path only; not corpus-triaged |
-| oc-clock-in-loop | hint | measured (`oc-clock-in-loop.md` + `oc-clock-in-loop.jsonl`); stay hint | `[NSDate date]` in a loop; not corpus-triaged |
-| oc-value-for-key-in-loop | hint | measured (`oc-value-for-key-in-loop.md` + `oc-value-for-key-in-loop.jsonl`); stay hint | `valueForKey:` in a loop; not corpus-triaged |
+| oc-nsstring-append-hot | off | **yes** GNUstep ~569× | NSString append |
+| oc-nslog-hot | off | **yes** fprintf proxy ~191× | log in loop |
+| oc-dateformatter-hot | hint | measured (`oc-dateformatter-hot.md` + `oc-dateformatter-hot.jsonl`); stay hint | date formatter alloc/init or new in a loop; not corpus-triaged |
+| oc-json-hot | hint | measured (`oc-json-hot.md` + `oc-json-hot.jsonl`); stay hint | JSON parse or encode in a loop; not corpus-triaged |
+| oc-regex-hot | hint | measured (`oc-regex-hot.md` + `oc-regex-hot.jsonl`); stay hint | regular expression compiled in a loop; not corpus-triaged |
+| oc-file-read-hot | hint | measured (`oc-file-read-hot.md` + `oc-file-read-hot.jsonl`); stay hint | `stringWithContentsOfFile` in a loop; same path only; not corpus-triaged |
+| oc-clock-hot | hint | measured (`oc-clock-hot.md` + `oc-clock-hot.jsonl`); stay hint | `[NSDate date]` in a loop; not corpus-triaged |
+| oc-value-for-key-hot | hint | measured (`oc-value-for-key-hot.md` + `oc-value-for-key-hot.jsonl`); stay hint | `valueForKey:` in a loop; not corpus-triaged |
 | OC001 | removed | tombstone | see `evidence/_removed/` |
 | OC004 | removed | tombstone | see `evidence/_removed/` |

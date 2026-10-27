@@ -1,0 +1,2 @@
+{"rule":"rb-regexp-new-hot","case":"regexp_once","role":"after","ruby":"Ruby 4.0.8","median_ms":0.565000,"ops":5000,"ratio":1.000000,"ts":"2026-10-23T12:17:42Z"}
+{"rule":"rb-regexp-new-hot","case":"regexp_each_iter","role":"before","ruby":"Ruby 4.0.8","median_ms":2.041000,"ops":5000,"ratio":3.612391,"ts":"2026-10-23T12:17:42Z"}

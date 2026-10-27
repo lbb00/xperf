@@ -96,7 +96,7 @@ static class EvidenceCsRest
             for (int i = 0; i < n; i++) s += (int)(Stopwatch.GetTimestamp() & 1);
             return s;
         });
-        Emit("cs-clock-in-loop", new[]
+        Emit("cs-clock-hot", new[]
         {
             ("sample_once", "after", after, n),
             ("sample_each_iter", "before", before, n),
@@ -121,7 +121,7 @@ static class EvidenceCsRest
             for (int i = 0; i < n; i++) s += File.ReadAllText(path).Length;
             return s;
         });
-        Emit("cs-file-read-in-loop", new[]
+        Emit("cs-file-read-hot", new[]
         {
             ("read_once", "after", after, n),
             ("read_each_iter", "before", before, n),
@@ -145,7 +145,7 @@ static class EvidenceCsRest
             for (int i = 0; i < n; i++) s += JsonSerializer.Deserialize<Row>(payload).n;
             return s;
         });
-        Emit("cs-json-in-loop", new[]
+        Emit("cs-json-hot", new[]
         {
             ("deserialize_once", "after", after, n),
             ("deserialize_same_payload", "before", before, n),
@@ -168,7 +168,7 @@ static class EvidenceCsRest
             for (int i = 0; i < n; i++) s += (int)typeof(Box).GetField("A").GetValue(obj);
             return s;
         });
-        Emit("cs-field-by-name-in-loop", new[]
+        Emit("cs-field-by-name-hot", new[]
         {
             ("direct_field", "after", after, n),
             ("getfield_each", "before", before, n),
@@ -190,7 +190,7 @@ static class EvidenceCsRest
             for (int i = 0; i < n; i++) s += string.Format("{0}", i).Length;
             return s;
         });
-        Emit("cs-format-in-loop", new[]
+        Emit("cs-format-hot", new[]
         {
             ("tostring", "after", after, n),
             ("format_each_iter", "before", before, n),
@@ -214,7 +214,7 @@ static class EvidenceCsRest
             for (int i = 0; i < n; i++) s += src.ToList().Count;
             return s;
         });
-        Emit("cs-linq-materialize-in-loop", new[]
+        Emit("cs-linq-materialize-hot", new[]
         {
             ("tolist_once", "after", after, n),
             ("tolist_each_iter", "before", before, n),

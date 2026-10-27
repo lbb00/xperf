@@ -22,10 +22,10 @@ function sevName(s) {
 }
 
 function defaultSev() {
-  return { "at-alloc-in-loop": SEV_OFF, "at-console-in-loop": SEV_OFF, "at-includes-in-loop": SEV_HINT, "at-json-in-loop": SEV_HINT }; // redesign: at-includes-in-loop/at-json-in-loop
+  return { "at-alloc-hot": SEV_OFF, "at-console-hot": SEV_OFF, "at-includes-hot": SEV_HINT, "at-json-hot": SEV_HINT }; // redesign: at-includes-hot/at-json-hot
 }
 
-/** Build outside call-site loops so at-alloc-in-loop does not self-hit .push({ */
+/** Build outside call-site loops so at-alloc-hot does not self-hit .push({ */
 function rowFromFinding(f, sev) {
   const row = Object.create(null);
   row.rule = f.rule;
@@ -41,6 +41,7 @@ function usage(code) {
     "Usage: arktsperf-lint PATH... [options]\n" +
       "  --format text|json\n" +
       "  --severity RULE=error|hint|off\n" +
+      "  --scope all|loop   (default: all)\n" +
       "  --strict-hints\n" +
       "  --no-fail"
   );
@@ -55,6 +56,7 @@ function main(argv) {
   let format = "text";
   let strictHints = false;
   let noFail = false;
+  let scope = "all";
   const paths = [];
   for (let i = 0; i < args.length; i++) {
     const a = args[i];
@@ -85,6 +87,16 @@ function main(argv) {
       noFail = true;
       continue;
     }
+    if (a === "--scope") {
+      scope = args[++i];
+      if (scope !== "all" && scope !== "loop") usage(2);
+      continue;
+    }
+    if (a.startsWith("--scope=")) {
+      scope = a.slice(8);
+      if (scope !== "all" && scope !== "loop") usage(2);
+      continue;
+    }
     if (a.startsWith("-")) usage(2);
     paths.push(a);
   }
@@ -92,7 +104,7 @@ function main(argv) {
 
   let findings = [];
   for (let p = 0; p < paths.length; p++) {
-    findings = findings.concat(scanPath(paths[p]));
+    findings = findings.concat(scanPath(paths[p], scope));
   }
 
   let nerr = 0;

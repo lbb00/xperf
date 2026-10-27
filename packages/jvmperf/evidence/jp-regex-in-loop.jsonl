@@ -1,2 +1,0 @@
-{"rule":"jp-regex-in-loop","case":"compileEachCall_lines1024","role":"before","jdk":"27 (27+35)","jvm_args":"-XX:+UseCompactObjectHeaders","ns_per_op":128040.677,"alloc_b_per_op":827392.817,"ratio":0.764,"jmh":"1.37","source":"J26_RegexCompile.jsonl","ts":"2026-10-23T20:49:24.463921+08:00"}
-{"rule":"jp-regex-in-loop","case":"staticFinalPattern_lines1024","role":"after","jdk":"27 (27+35)","jvm_args":"-XX:+UseCompactObjectHeaders","ns_per_op":167595.045,"alloc_b_per_op":344065.068,"ratio":1,"jmh":"1.37","source":"J26_RegexCompile.jsonl","ts":"2026-10-23T20:49:24.463921+08:00"}

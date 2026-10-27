@@ -1,3 +1,0 @@
-{"rule":"jp-console-in-loop","case":"quiet_loop","role":"after","node":"v26.12.1","v8":"14.6.202.34-node.40","median_ms":0.048334,"ops":20000,"ratio":1,"ts":"2026-10-23T12:23:57.148Z"}
-{"rule":"jp-console-in-loop","case":"console_once_after","role":"after","node":"v26.12.1","v8":"14.6.202.34-node.40","median_ms":0.390625,"ops":20000,"ratio":8.081785078826499,"ts":"2026-10-23T12:23:57.148Z"}
-{"rule":"jp-console-in-loop","case":"console_log_in_loop","role":"before","node":"v26.12.1","v8":"14.6.202.34-node.40","median_ms":30.207417,"ops":20000,"ratio":624.9724210700542,"ts":"2026-10-23T12:23:57.148Z"}

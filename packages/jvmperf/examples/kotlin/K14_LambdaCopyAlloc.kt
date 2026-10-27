@@ -26,7 +26,7 @@ fun repeatSumBoxed(n: Int, f: (Int) -> Int): Int {
 
 fun simulateCopy(n: Int): State {
     var s = State(0, 0, 0)
-    // jvmperf-lint: ignore jp-data-copy-in-loop -- Intentional counterexample for measurement.
+    // jvmperf-lint: ignore jp-data-copy-hot -- Intentional counterexample for measurement.
     repeat(n) { s = s.copy(x = s.x + 1, steps = s.steps + 1) }
     return s
 }

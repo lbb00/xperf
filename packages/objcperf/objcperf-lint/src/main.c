@@ -15,7 +15,7 @@ static const char *sev_name(Sev s) {
   switch (s) { case Error: return "error"; case Hint: return "hint"; default: return "off"; }
 }
 static void usage(int code) {
-  fprintf(stderr, "Usage: objcperf-lint PATH... [options]\n  --format text|json\n  --severity RULE=error|hint|off\n  --strict-hints\n  --no-fail\n  --raw-paths          include Tests/Examples (baseline dumps)\n");
+  fprintf(stderr, "Usage: objcperf-lint PATH... [options]\n  --format text|json\n  --severity RULE=error|hint|off\n  --scope all|loop     (default: all; loop = former in-loop-only)\n  --strict-hints\n  --no-fail\n  --raw-paths          include Tests/Examples (baseline dumps)\n");
   exit(code);
 }
 static int apply_sev(Sev *rs, const char *spec) {
@@ -26,26 +26,26 @@ static int apply_sev(Sev *rs, const char *spec) {
   *eq = 0;
   Sev s = parse_sev(eq + 1);
   if ((int)s < 0) return 0;
-  if (strcmp(buf, "oc-nsstring-append-in-loop") == 0) rs[0] = s;
-  else if (strcmp(buf, "oc-nslog-in-loop") == 0) rs[1] = s;
-  else if (strcmp(buf, "oc-dateformatter-in-loop") == 0) rs[2] = s;
-  else if (strcmp(buf, "oc-json-in-loop") == 0) rs[3] = s;
-  else if (strcmp(buf, "oc-regex-in-loop") == 0) rs[4] = s;
-  else if (strcmp(buf, "oc-file-read-in-loop") == 0) rs[5] = s;
-  else if (strcmp(buf, "oc-clock-in-loop") == 0) rs[6] = s;
-  else if (strcmp(buf, "oc-value-for-key-in-loop") == 0) rs[7] = s;
+  if (strcmp(buf, "oc-nsstring-append-hot") == 0) rs[0] = s;
+  else if (strcmp(buf, "oc-nslog-hot") == 0) rs[1] = s;
+  else if (strcmp(buf, "oc-dateformatter-hot") == 0) rs[2] = s;
+  else if (strcmp(buf, "oc-json-hot") == 0) rs[3] = s;
+  else if (strcmp(buf, "oc-regex-hot") == 0) rs[4] = s;
+  else if (strcmp(buf, "oc-file-read-hot") == 0) rs[5] = s;
+  else if (strcmp(buf, "oc-clock-hot") == 0) rs[6] = s;
+  else if (strcmp(buf, "oc-value-for-key-hot") == 0) rs[7] = s;
   else return 0;
   return 1;
 }
 static Sev lookup(Sev *rs, const char *rule) {
-  if (strcmp(rule, "oc-nsstring-append-in-loop") == 0) return rs[0];
-  if (strcmp(rule, "oc-nslog-in-loop") == 0) return rs[1];
-  if (strcmp(rule, "oc-dateformatter-in-loop") == 0) return rs[2];
-  if (strcmp(rule, "oc-json-in-loop") == 0) return rs[3];
-  if (strcmp(rule, "oc-regex-in-loop") == 0) return rs[4];
-  if (strcmp(rule, "oc-file-read-in-loop") == 0) return rs[5];
-  if (strcmp(rule, "oc-clock-in-loop") == 0) return rs[6];
-  if (strcmp(rule, "oc-value-for-key-in-loop") == 0) return rs[7];
+  if (strcmp(rule, "oc-nsstring-append-hot") == 0) return rs[0];
+  if (strcmp(rule, "oc-nslog-hot") == 0) return rs[1];
+  if (strcmp(rule, "oc-dateformatter-hot") == 0) return rs[2];
+  if (strcmp(rule, "oc-json-hot") == 0) return rs[3];
+  if (strcmp(rule, "oc-regex-hot") == 0) return rs[4];
+  if (strcmp(rule, "oc-file-read-hot") == 0) return rs[5];
+  if (strcmp(rule, "oc-clock-hot") == 0) return rs[6];
+  if (strcmp(rule, "oc-value-for-key-hot") == 0) return rs[7];
   return Hint; /* unknown stays hint, never error */
 }
 

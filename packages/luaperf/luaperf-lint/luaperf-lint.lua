@@ -1,11 +1,11 @@
 #!/usr/bin/env lua
 -- luaperf-lint — heuristic Lua performance checker
 local MSG = {
-  ["lu-table-insert-in-loop"] = "table.insert / grow in loop; prefer pre-sized index writes",
-  ["lu-string-concat-in-loop"] = "string .. in loop; prefer table.concat",
-  ["lu-print-in-loop"] = "print in loop; gate or buffer",
+  ["lu-table-insert-hot"] = "table.insert / grow; prefer pre-sized index writes — cost adds up even off a hot path",
+  ["lu-string-concat-hot"] = "string ..; prefer table.concat — cost adds up even off a hot path",
+  ["lu-print-hot"] = "print; gate or buffer — cost adds up even off a hot path",
 }
-local sev = { ["lu-table-insert-in-loop"] = "off", ["lu-string-concat-in-loop"] = "error", ["lu-print-in-loop"] = "hint" }
+local sev = { ["lu-table-insert-hot"] = "off", ["lu-string-concat-hot"] = "error", ["lu-print-hot"] = "hint" }
 
 local function usage(code)
   io.stderr:write("Usage: luaperf-lint.lua PATH... [options]\n"
@@ -55,7 +55,8 @@ local function strip_comment(line)
   return table.concat(out)
 end
 
-local function scan_file(path)
+local function scan_file(path, scope)
+  local scope_mode = (scope == "loop") and "loop" or "all"
   local f = io.open(path, "r")
   if not f then return {} end
   local findings = {}
@@ -82,11 +83,12 @@ local function scan_file(path)
     if loop_here then
       in_loop = depth + 1
     end
-    if in_loop > 0 and depth >= in_loop then
+    local match_here = scope_mode == "all" or (in_loop > 0 and depth >= in_loop)
+    if match_here then
       if code:find("table%.insert%s*%(") then
-        findings[#findings+1] = { rule="lu-table-insert-in-loop", path=path, line=line_no, message=MSG["lu-table-insert-in-loop"] }
+        findings[#findings+1] = { rule="lu-table-insert-hot", path=path, line=line_no, message=MSG["lu-table-insert-hot"] }
       end
-      -- "lu-string-concat-in-loop": string accumulation only (s = s .. x); ident boundary so
+      -- "lu-string-concat-hot": string accumulation only (s = s .. x); ident boundary so
       -- ineligible_key = key .. x does not match as key = key ..
       do
         local pos = 1
@@ -94,17 +96,17 @@ local function scan_file(path)
           local s, e = code:find("([%w_%.]+)%s*=%s*%1%s*%.%.", pos)
           if not s then break end
           if s == 1 or not code:sub(s - 1, s - 1):match("[%w_]") then
-            findings[#findings+1] = { rule="lu-string-concat-in-loop", path=path, line=line_no, message=MSG["lu-string-concat-in-loop"] }
+            findings[#findings+1] = { rule="lu-string-concat-hot", path=path, line=line_no, message=MSG["lu-string-concat-hot"] }
             break
           end
           pos = s + 1
         end
       end
-      -- "lu-print-in-loop": bare print(...), not to_print / buffered_print / ngx_print
+      -- "lu-print-hot": bare print(...), not to_print / buffered_print / ngx_print
       do
         local ps = code:find("print%s*%(")
         if ps and (ps == 1 or not code:sub(ps - 1, ps - 1):match("[%w_]")) then
-          findings[#findings+1] = { rule="lu-print-in-loop", path=path, line=line_no, message=MSG["lu-print-in-loop"] }
+          findings[#findings+1] = { rule="lu-print-hot", path=path, line=line_no, message=MSG["lu-print-hot"] }
         end
       end
     end
@@ -131,13 +133,13 @@ local function path_skipped(path)
   return false
 end
 
-local function scan_path(root)
+local function scan_path(root, scope)
   local attr = io.open(root, "r")
   if not attr then return {} end
   -- crude: if ends with .lua treat as file
   if root:match("%.lua$") then
     attr:close()
-    return scan_file(root)
+    return scan_file(root, scope)
   end
   attr:close()
   local all = {}
@@ -151,7 +153,7 @@ local function scan_path(root)
         rel = path:sub(#root + 2)
       end
       if not path_skipped(rel) then
-        for _, f in ipairs(scan_file(path)) do
+        for _, f in ipairs(scan_file(path, scope)) do
           all[#all+1] = f
         end
       end
@@ -166,6 +168,7 @@ end
 local args = {...}
 if #args == 0 then usage(2) end
 local format, strict_hints, no_fail = "text", false, false
+local scope = "all"
 local paths = {}
 local i = 1
 while i <= #args do
@@ -177,6 +180,8 @@ while i <= #args do
   elseif a:match("^%-%-severity=") then if not apply_sev(a:match("^%-%-severity=(.*)$")) then usage(2) end
   elseif a == "--strict-hints" then strict_hints = true
   elseif a == "--no-fail" then no_fail = true
+  elseif a == "--scope" then i=i+1; scope = args[i] or usage(2); if scope ~= "all" and scope ~= "loop" then usage(2) end
+  elseif a:match("^%-%-scope=") then scope = a:match("^%-%-scope=(.*)$"); if scope ~= "all" and scope ~= "loop" then usage(2) end
   elseif a:sub(1,1) == "-" then usage(2)
   else paths[#paths+1] = a end
   i = i + 1
@@ -185,7 +190,7 @@ if #paths == 0 then usage(2) end
 
 local findings = {}
 for _, p in ipairs(paths) do
-  for _, f in ipairs(scan_path(p)) do findings[#findings+1] = f end
+  for _, f in ipairs(scan_path(p, scope)) do findings[#findings+1] = f end
 end
 
 local nerr, nhint = 0, 0

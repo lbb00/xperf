@@ -35,7 +35,7 @@ Order of attack (same as the shared XPerf playbook):
 4. **Layout / compiler** — SoA, `restrict`, LTO: measure; wrong `restrict` is UB.
 5. **Verify** — counters and sanitizers (§3).
 
-Machine claims should record compiler, `-O` level, and CPU briefly. `cp-alloc-in-loop`, `cp-realloc-grow-one` and `cp-printf-in-loop` ship JSONL microbenches under `evidence/` (see [evidence-policy.md](evidence-policy.md)); other examples under `examples/` remain pattern demos (`cc -std=c17 -O2`).
+Machine claims should record compiler, `-O` level, and CPU briefly. `cp-alloc-hot`, `cp-realloc-grow-one` and `cp-printf-hot` ship JSONL microbenches under `evidence/` (see [evidence-policy.md](evidence-policy.md)); other examples under `examples/` remain pattern demos (`cc -std=c17 -O2`).
 
 Sources: [XPerf playbook](../../../docs/playbook.md) · [corpus.md](corpus.md)
 

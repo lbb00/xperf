@@ -9,7 +9,7 @@ Chaining `Enum.map/2` then `Enum.filter/2` (or `Enum.reject/2`) allocates an int
 ## How measured
 
 - Harness: `packages/beamperf/examples/bench/evidence_be004_be005.exs`
-- Timing: same as be-map-merge-in-loop; N=200000 ints spanning negatives and positives
+- Timing: same as be-map-merge-hot; N=200000 ints spanning negatives and positives
 - Pair A: `map(*2) |> filter(>0)` vs one-pass reduce + reverse (matches good `one_pass`)
 - Pair B: `map(+1) |> reject(==0)` vs one-pass reduce + reverse
 - Raw lines: [`be-enum-map-filter-chain.jsonl`](be-enum-map-filter-chain.jsonl)

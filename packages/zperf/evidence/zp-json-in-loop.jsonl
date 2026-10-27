@@ -1,2 +1,0 @@
-{"rule":"zp-json-in-loop","case":"parse_once","role":"after","zig":"0.17.0","optimize":"ReleaseFast","median_ms":0.003,"ops":2000,"ratio":1,"ts":"2026-10-23T07:05:00Z"}
-{"rule":"zp-json-in-loop","case":"parse_each_iter","role":"before","zig":"0.17.0","optimize":"ReleaseFast","median_ms":7.043,"ops":2000,"ratio":2683.175,"ts":"2026-10-23T07:05:00Z"}

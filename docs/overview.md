@@ -15,7 +15,7 @@ flowchart TB
 
 **Shared loop** (see [playbook.md](playbook.md)): inventory → evidence → corpus lint → reverse-opt → dogfood → docs. Severity escalates to default `error` only with paired fixtures **and** measured before/after JSONL.
 
-**Cross-lang index:** [smell-catalog.md](smell-catalog.md) maps the same *smell* across kits. Rule IDs are **per-kit** slugs; jsperf and jvmperf both use the `jp-` prefix with disjoint slug sets (jsperf `jp-alloc-in-loop` ≠ any jvmperf rule). A YES on one runtime does not transfer — re-bench when porting advice.
+**Cross-lang index:** [smell-catalog.md](smell-catalog.md) maps the same *smell* across kits. Rule IDs are **per-kit** slugs; jsperf and jvmperf both use the `jp-` prefix with disjoint slug sets (jsperf `jp-alloc-hot` ≠ any jvmperf rule). A YES on one runtime does not transfer — re-bench when porting advice.
 
 ## Per-kit status
 
@@ -33,13 +33,13 @@ flowchart TB
 | **arktsperf** | `arktsperf-lint` (pure Node) | EN v0 · **corpus-ready** | at-includes / at-json hint; alloc/delete/console off |
 | **cppperf** | `cppperf-lint` (C++17) | EN v0 · **corpus-ready** | regex, endl, clock, ifstream, const-by-value, and vector-bool hints (string append and string-stream removed); ≠ cperf |
 | **csharpperf** | `csharpperf-lint` (dotnet) | EN v0 · **corpus-ready** | regex / LINQ materialize / format / JSON / file-read / clock / field-by-name hint; list/string+/console off; needs `dotnet` |
-| **phpperf** | `phpperf-lint` (pure PHP) | EN v0 · **corpus-ready** | ph-array-merge-rebind error (G4); ph-string-dot-in-loop off; ph-echo-in-loop hint |
+| **phpperf** | `phpperf-lint` (pure PHP) | EN v0 · **corpus-ready** | ph-array-merge-rebind error (G4); ph-string-dot-hot off; ph-echo-hot hint |
 | **rubyperf** | `rubyperf-lint` (pure Ruby) | EN v0 · **corpus-ready** | hash-merge / regexp / JSON / file-read hint; string+/array+/puts off |
 | **rustperf** | `rustperf-lint` (Rust) | EN v0 · **corpus-ready** | format-rebind error; string+/println/vec/collect/regex/file-open/clock hint; alloc off |
 | **kotlinperf** | `kotlinperf-lint` (Kotlin) | EN v0 · **corpus-ready** | kt-* all off by default; empty-add rule removed; ≠ jvmperf JMH |
 | **objcperf** | `objcperf-lint` (C scan .m) | EN v0 · **corpus-ready** | append / nslog off; date-formatter, JSON, regex, file-read, clock, and value-for-key hints; array-add rules removed; ≠ swiftperf |
 | **dartperf** | `dartperf-lint` (Dart) | EN v0 · **corpus-ready** | dt-growable-add-empty hint; list/string+/print off |
-| **luaperf** | `luaperf-lint` (pure Lua) | EN v0 · **corpus-ready** | lu-string-concat-in-loop error (G4); lu-table-insert-in-loop off; lu-print-in-loop hint |
+| **luaperf** | `luaperf-lint` (pure Lua) | EN v0 · **corpus-ready** | lu-string-concat-hot error (G4); lu-table-insert-hot off; lu-print-hot hint |
 | **beamperf** | `beamperf-lint` (Elixir) | EN v0 · **corpus-ready** | be-list-concat / be-map-merge / be-enum-chain hint; string-<> removed; be-io-puts off |
 | **nimperf** | `nimperf-lint` (Nim) | EN v0 · **corpus-ready** | nm-seq-no-capacity hint; seq-add/string/echo off; needs `nim` |
 
