@@ -15,7 +15,7 @@ The bench reopens one one-byte file. A path that changes every iteration cannot 
 
 ## Matcher
 
-The checker reports `readFileSync` only in the loop body, after `{`. `for (const line of readFileSync(path).split("\n"))` runs the read once, as the iterable, and is not reported. A path that is the loop binding (`files[i]`) is not reported either. A `while (readFileSync(path))` condition re-reads on every check and is outside the body, so it is not reported. The hint says to hoist only when the path stays the same.
+Default `--scope all` reports `readFileSync` wherever the path looks stable. Under `--scope loop`, only the loop body after `{` matches, so `for (const line of readFileSync(path).split("\n"))` (read once as the iterable) is not reported. A path that is the loop binding (`files[i]`) is not reported either. The hint invites reading once when the path is stable.
 
 ## Unblock
 Do not set the default to `error` from this file alone. A changing input, a cold path, or another ABI can erase the difference. Corpus triage is still required before any default change.

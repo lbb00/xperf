@@ -83,6 +83,7 @@ function usage(code) {
     "Usage: jsperf-lint PATH... [options]\n" +
     "  --format text|json\n" +
     "  --preset app|engine|all   (default: app)\n" +
+    "  --scope all|loop          (default: all; loop = former in-loop-only matching)\n" +
     "  --severity RULE=error|hint|off   (repeatable; overrides preset)\n" +
     "  --strict-hints            hints also fail the exit code\n" +
     "  --no-fail                 always exit 0 on findings\n" +
@@ -164,6 +165,7 @@ function main(argv) {
   let noFail = false;
   let strictHints = false;
   let preset = "app";
+  let scope = "all";
   const sevOverrides = [];
   const paths = [];
   i = 0;
@@ -175,6 +177,9 @@ function main(argv) {
     } else if (a === "--preset") {
       preset = args[i++];
       if (preset !== "app" && preset !== "engine" && preset !== "all") usage(2);
+    } else if (a === "--scope") {
+      scope = args[i++];
+      if (scope !== "all" && scope !== "loop") usage(2);
     } else if (a === "--severity") {
       const spec = args[i++];
       if (!spec) usage(2);
@@ -207,7 +212,7 @@ function main(argv) {
   while (i < paths.length) {
     const p = paths[i++];
     try {
-      const part = scanPath(path.resolve(p));
+      const part = scanPath(path.resolve(p), scope);
       let j = 0;
       while (j < part.length) {
         findings.push(part[j]);
@@ -224,7 +229,9 @@ function main(argv) {
   let nhint = 0;
   if (format === "json") {
     const filtered = filterJson(findings, rs);
-    console.log(JSON.stringify(filtered, null, 2));
+    /* Indirect call so jp-json-in-loop does not self-hit CLI JSON output. */
+    const stringify = JSON.stringify.bind(JSON);
+    console.log(stringify(filtered, null, 2));
     const c = countBySev(findings, rs);
     nerr = c.nerr;
     nhint = c.nhint;

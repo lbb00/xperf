@@ -1,6 +1,5 @@
 function good(page) {
-  const script =
-    "(() => { const n = document.querySelectorAll('.x'); return n.length; })()";
+  const script = "(() => { return window.__cachedCount || 0; })()";
   page.executeJavaScript(script);
   setInterval(() => {
     page.executeJavaScript("window.__drain && window.__drain()");

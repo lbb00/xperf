@@ -1,4 +1,4 @@
-# jp-console-in-loop — `console.*` in a loop
+# jp-console-in-loop — `console.*`
 
 ## Claim
 
@@ -27,11 +27,11 @@ Calling `console.log` (and siblings) inside a hot loop is far slower than a quie
 
 ## Lint mapping
 
-jp-console-in-loop flags `console.*` in a loop window. Severity stays **`hint`** (`engine`) / **`off`** (`app`) under [evidence-policy](../docs/evidence-policy.md):
+jp-console-in-loop flags `console.*` (default `--scope all` includes sites outside loops; `--scope loop` keeps the former in-loop-only match). Severity stays **`hint`** (`engine`) / **`off`** (`app`) under [evidence-policy](../docs/evidence-policy.md):
 
 - Cost is **real** on this machine even without a TTY.
 - Still not an `error` gate: intentional debug loops, test helpers, and CLI progress printers are common; ratio swings with sink (discard vs pipe vs TTY) and logger libraries.
-- Treat as a review prompt for hot paths, not a “must fix for speed” CI fail.
+- Treat as a review prompt for extreme stacks (cost adds up even off a hot path), not a “must fix for speed” CI fail under the app preset.
 
 ## Limits
 

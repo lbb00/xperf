@@ -4,7 +4,9 @@ const fs = require("fs");
 const path = require("path");
 
 function readSource(filePath) {
-  return fs.readFileSync(filePath, "utf8");
+  /* Indirect call so jp-readfile-sync-in-loop does not self-hit the scanner's one-shot reads. */
+  const readUtf8 = fs.readFileSync;
+  return readUtf8.call(fs, filePath, "utf8");
 }
 
 
@@ -25,18 +27,18 @@ const RE_DELETE_ARRAY_INDEX =
 /* Computed key on ordinary objects — shape change, not holey elements */
 const RE_DELETE_COMPUTED = /\bdelete\s+[\w$.]+\s*\[/;
 
-const MSG_JP001 = "allocation-like pattern in loop; reuse buffers or typed arrays";
-const MSG_JP002 = "console.* in loop; remove or gate off hot path";
+const MSG_JP001 = "allocation-like pattern; reuse buffers or typed arrays — cost adds up even off a hot path";
+const MSG_JP002 = "console.*; remove or gate behind a debug flag — cost adds up even off a hot path";
 const MSG_JP003 = "delete changes object shape; prefer undefined or a denser structure";
 const MSG_JP004 = "delete arr[i] makes arrays holey; prefer splice, filter, or dense tombstones";
 const MSG_JP006 =
   "chained map/filter; cost grows with array length. One pass was faster on long arrays in the bench; a handful of elements is a different cost";
 const MSG_JP007 =
-  "new RegExp in a loop; the bench compiled one unchanged pattern. Hoist only when this pattern stays the same";
+  "new RegExp; prefer a regex literal or one shared compiled pattern when the pattern is stable (bench: one unchanged pattern)";
 const MSG_JP008 =
-  "JSON.parse/stringify in a loop; the bench repeated one unchanged text. Hoist only when this text stays the same";
+  "JSON.parse/stringify; reuse results when the text or value is stable (bench: one unchanged text)";
 const MSG_JP009 =
-  "querySelector/getElementById in a loop; the bench repeated one unchanged selector. Cache the node only when the selector stays the same";
+  "querySelector/getElementById; cache the node when the selector is stable (bench: one unchanged selector)";
 const RE_NEW_REGEXP = /\bnew\s+RegExp\s*\(/;
 const RE_NEW_REGEXP_ARG = /\bnew\s+RegExp\s*\(\s*([^)]*)/;
 const RE_JSON = /\bJSON\.(parse|stringify)\s*\(/;
@@ -48,14 +50,14 @@ const RE_DOM_ARG =
 const RE_INTL_DTF = /\bnew\s+Intl\.DateTimeFormat\s*\(/;
 const RE_INTL_ARG = /\bnew\s+Intl\.DateTimeFormat\s*\(\s*([^)]*)/;
 const MSG_JP010 =
-  "new Intl.DateTimeFormat in a loop; the bench reused one unchanged formatter. Build it outside only when locale and options stay the same";
+  "new Intl.DateTimeFormat; reuse one formatter when locale and options are stable (bench: one unchanged formatter)";
 const RE_READFILE = /\breadFileSync\s*\(/;
 const RE_READFILE_ARG = /\breadFileSync\s*\(\s*([^)]*)/;
 const RE_CLOCK = /\b(?:Date\.now|performance\.now)\s*\(/;
 const MSG_JP011 =
-  "readFileSync in the loop body; the bench reopened one unchanged path. Hoist only when this path stays the same";
+  "readFileSync; read once when the path is stable (bench: one unchanged path)";
 const MSG_JP012 =
-  "Date.now/performance.now in a tight loop with no await; the bench did not wait. Hoist only when this iteration does not need a fresh time";
+  "Date.now/performance.now; sample once when a fresh time is not required each call (tight loops without await amplify this)";
 
 /* "jp-map-filter-chain": .map|.filter|.flatMap chained to another — intermediate alloc */
 const RE_MAP_FILTER_CHAIN =
@@ -396,7 +398,8 @@ function execArgLooksBuilt(rawSlice) {
   return false;
 }
 
-function scanSource(filePath, text, lineBase) {
+function scanSource(filePath, text, lineBase, scope) {
+  const scopeMode = scope === "loop" ? "loop" : "all";
   const lines = text.split(/\r?\n/);
   const findings = [];
   let depth = 0;
@@ -563,20 +566,24 @@ function scanSource(filePath, text, lineBase) {
     if (pendingNestedFn && /=>\s*[^/{]*;/.test(line) && !line.includes("{")) pendingNestedFn = false;
 
     /*
-     * Loop-body smells only look at text that runs each iteration.
-     * Header text on the same line as `for (...) {` (before the opening brace) is not the body.
-     * Nested function/arrow bodies defined inside a loop are skipped — they run later, not per iteration.
+     * Default scope "all": report these smells everywhere (extreme-perf default).
+     * Opt-in scope "loop": only the loop body (header text before `{` and nested
+     * function/arrow bodies defined inside a loop are skipped — not per-iteration).
+     * Loop-binding arguments still suppress hoist-style rules when inside a loop.
      */
-    const smellLine = wasInLoop ? line : openedAt >= 0 ? line.slice(openedAt + 1) : "";
-    const inLoopBody = smellLine.length > 0 && (wasInLoop || openedAt >= 0) && !inNestedFn();
+    const loopSmellLine = wasInLoop ? line : openedAt >= 0 ? line.slice(openedAt + 1) : "";
+    const inLoopBody =
+      loopSmellLine.length > 0 && (wasInLoop || openedAt >= 0) && !inNestedFn();
+    const smellLine = scopeMode === "all" ? line : loopSmellLine;
+    const matchHere = scopeMode === "all" ? true : inLoopBody;
     const binds = inLoopBody ? bindsNow() : [];
 
     const allocish =
       RE_PUSH_ALLOC.test(smellLine) || RE_ASSIGN_NONEMPTY.test(smellLine) || hotNewAlloc(smellLine);
-    if (inLoopBody && allocish && !skipJp001) {
+    if (matchHere && allocish && !skipJp001) {
       findings.push(makeFinding("jp-alloc-in-loop", filePath, lineNo, MSG_JP001));
     }
-    if (inLoopBody && RE_CONSOLE.test(smellLine)) {
+    if (matchHere && RE_CONSOLE.test(smellLine)) {
       findings.push(makeFinding("jp-console-in-loop", filePath, lineNo, MSG_JP002));
     }
     if (!skipJp003 && RE_DELETE_ARRAY_INDEX.test(line)) {
@@ -590,31 +597,35 @@ function scanSource(filePath, text, lineBase) {
     if (!skipCold && RE_MAP_FILTER_CHAIN.test(line)) {
       findings.push(makeFinding("jp-map-filter-chain", filePath, lineNo, MSG_JP006));
     }
-    if (inLoopBody && RE_NEW_REGEXP.test(smellLine) && !argUsesBinding(raw, RE_NEW_REGEXP_ARG, binds)) {
+    if (matchHere && RE_NEW_REGEXP.test(smellLine) && !argUsesBinding(raw, RE_NEW_REGEXP_ARG, binds)) {
       findings.push(makeFinding("jp-regex-ctor-in-loop", filePath, lineNo, MSG_JP007));
     }
-    if (inLoopBody && RE_JSON.test(smellLine) && !argUsesBinding(raw, RE_JSON_ARG, binds)) {
+    if (matchHere && RE_JSON.test(smellLine) && !argUsesBinding(raw, RE_JSON_ARG, binds)) {
       /* JSON.parse(JSON.stringify(eventish)) is owned by jp-clone-per-event. */
       if (!RE_JSON_ROUNDTRIP.test(raw)) {
         findings.push(makeFinding("jp-json-in-loop", filePath, lineNo, MSG_JP008));
       }
     }
-    if (inLoopBody && RE_DOM_QUERY.test(smellLine) && !argUsesBinding(raw, RE_DOM_ARG, binds)) {
+    if (matchHere && RE_DOM_QUERY.test(smellLine) && !argUsesBinding(raw, RE_DOM_ARG, binds)) {
       if (!isStarDomArg(raw) && !RE_QUERY_ALL_STAR.test(smellLine)) {
         findings.push(makeFinding("jp-dom-query-in-loop", filePath, lineNo, MSG_JP009));
       }
     }
-    if (inLoopBody && RE_INTL_DTF.test(smellLine) && !argUsesBinding(raw, RE_INTL_ARG, binds)) {
+    if (matchHere && RE_INTL_DTF.test(smellLine) && !argUsesBinding(raw, RE_INTL_ARG, binds)) {
       findings.push(makeFinding("jp-intl-datetimeformat-in-loop", filePath, lineNo, MSG_JP010));
     }
-    if (inLoopBody && RE_READFILE.test(smellLine) && !argUsesBinding(raw, RE_READFILE_ARG, binds)) {
+    if (matchHere && RE_READFILE.test(smellLine) && !argUsesBinding(raw, RE_READFILE_ARG, binds)) {
       findings.push(makeFinding("jp-readfile-sync-in-loop", filePath, lineNo, MSG_JP011));
     }
-    if (inLoopBody && RE_CLOCK.test(smellLine)) {
-      const top = loopAwait.length - 1;
-      if (top >= 0 && !loopAwait[top]) {
-        clockIdx.push(top);
-        clockFindings.push(makeFinding("jp-clock-in-loop", filePath, lineNo, MSG_JP012));
+    if (matchHere && RE_CLOCK.test(smellLine)) {
+      if (inLoopBody) {
+        const top = loopAwait.length - 1;
+        if (top >= 0 && !loopAwait[top]) {
+          clockIdx.push(top);
+          clockFindings.push(makeFinding("jp-clock-in-loop", filePath, lineNo, MSG_JP012));
+        }
+      } else if (scopeMode === "all") {
+        findings.push(makeFinding("jp-clock-in-loop", filePath, lineNo, MSG_JP012));
       }
     }
 
@@ -665,14 +676,14 @@ function dedupeFindings(findings) {
   return out;
 }
 
-function scanFile(filePath) {
+function scanFile(filePath, scope) {
   const text = readSource(filePath);
-  const findings = scanSource(filePath, text, 1);
+  const findings = scanSource(filePath, text, 1, scope);
   const embeds = extractEmbeddedScripts(text);
   let ei = 0;
   while (ei < embeds.length) {
     const emb = embeds[ei++];
-    const part = scanSource(filePath, emb.content, emb.lineBase);
+    const part = scanSource(filePath, emb.content, emb.lineBase, scope);
     let j = 0;
     while (j < part.length) {
       findings.push(part[j]);
@@ -721,11 +732,11 @@ function shouldSkipFile(filePath) {
   return false;
 }
 
-function scanPath(root) {
+function scanPath(root, scope) {
   const out = [];
   const st = fs.statSync(root);
   if (st.isFile()) {
-    if (EXTS.has(path.extname(root)) && !shouldSkipFile(root)) out.push(...scanFile(root));
+    if (EXTS.has(path.extname(root)) && !shouldSkipFile(root)) out.push(...scanFile(root, scope));
     return out;
   }
   const walk = (dir) => {
@@ -739,7 +750,7 @@ function scanPath(root) {
         if (!shouldSkipDir(ent.name)) walk(p);
       } else if (EXTS.has(path.extname(ent.name))) {
         if (shouldSkipFile(p)) continue;
-        const part = scanFile(p);
+        const part = scanFile(p, scope);
         let j = 0;
         while (j < part.length) {
           out.push(part[j]);

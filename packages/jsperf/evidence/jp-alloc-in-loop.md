@@ -1,4 +1,4 @@
-# jp-alloc-in-loop — allocation-like patterns in loops
+# jp-alloc-in-loop — allocation-like patterns
 
 ## Claim
 
@@ -33,7 +33,7 @@ Earlier correlation on Node v22.22.3 / V8 12.4 showed ~**49×** for the Uint8Arr
 
 ## Lint mapping
 
-`jsperf-lint` jp-alloc-in-loop flags `.push({` / non-empty binders / clear `new` / `Object.create` in a loop window. Default severity is **`off`** under [evidence-policy](../docs/evidence-policy.md) (`--preset all` or `--severity jp-alloc-in-loop=hint` enables it): wall-clock agrees, but the mechanism is GC/alloc — **not** a JIT/deopt gate — and residual Node `lib/` hits need human review (SafeMap, once-init, streams).
+`jsperf-lint` jp-alloc-in-loop flags `.push({` / non-empty binders / clear `new` / `Object.create`. Default `--scope all` reports those patterns outside loops too; `--scope loop` keeps the former in-loop-only match. Default severity is **`off`** under [evidence-policy](../docs/evidence-policy.md) (`--preset all` or `--severity jp-alloc-in-loop=hint` enables it): wall-clock agrees, but the mechanism is GC/alloc — **not** a JIT/deopt gate — and residual Node `lib/` hits need human review (SafeMap, once-init, streams).
 
 ## Limits
 

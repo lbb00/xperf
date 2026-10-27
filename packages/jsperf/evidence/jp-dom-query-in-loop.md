@@ -15,7 +15,7 @@ A larger document can move this number. Default stays hint.
 
 ## Matcher
 
-The bench repeated one unchanged selector. A selector that names the loop binding (`ids[i]`) is not reported. When the hint fires, it says to cache the node only when the selector stays the same.
+The bench repeated one unchanged selector. A selector that names the loop binding (`ids[i]`) is not reported. Default `--scope all` reports stable-selector DOM queries outside loops too; `--scope loop` keeps the former in-loop-only match. The hint invites caching the node when the selector is stable.
 
 ## Unblock
 Do not set the default to `error` from this file alone. Another input or a cold path can erase the difference. Corpus triage is still required before any default change.

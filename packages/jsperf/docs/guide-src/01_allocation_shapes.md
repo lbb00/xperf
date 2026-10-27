@@ -22,7 +22,7 @@ Per-iteration allocation creates garbage and GC pauses when the loop is hot:
 
 Prefer typed arrays (`examples/p01_typed_array.js`), object pools, or preallocated structures **when profiles show GC time** — not by default on every `.push`.
 
-**Evidence (this machine):** [`evidence/jp-alloc-in-loop`](../evidence/jp-alloc-in-loop.md) — `new Uint8Array` in-loop vs once **~19×**; `.push({i})` vs prealloc fill **~6.4×** (Node v20.19.2). Mechanism is alloc/GC (STATIC-VS-V8 PARTIAL for deopt). Default severity is **off** (`--preset all` or `--severity jp-alloc-in-loop=hint` enables it) — see [evidence-policy](evidence-policy.md).
+**Evidence (this machine):** [`evidence/jp-alloc-in-loop`](../evidence/jp-alloc-in-loop.md) — `new Uint8Array` in-loop vs once **~19×**; `.push({i})` vs prealloc fill **~6.4×** (Node v20.19.2). Mechanism is alloc/GC (STATIC-VS-V8 PARTIAL for deopt). Default severity is **off** (`--preset all` or `--severity jp-alloc-in-loop=hint` enables it) — see [evidence-policy](evidence-policy.md). Default **`--scope all`** reports these patterns outside loops too; `--scope loop` keeps the former in-loop-only match.
 
 ### 1.3 Corpus dogfood (heuristic)
 

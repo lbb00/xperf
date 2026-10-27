@@ -19,6 +19,8 @@ Canonical ids are **slugs only**. Numerics from the old map are historical and *
 | `jp-execjs-in-timer` |
 | `jp-clone-per-event` |
 
+Matching scope defaults to **`--scope all`** (report everywhere). Opt in to **`--scope loop`** for the former in-loop-only match. Slug names keep the historical `-in-loop` suffix.
+
 ## Removed (tombstone; never reuse)
 
 - `jp-string-plus-in-loop` — `push` + `join` was not ~2× on the matched shapes. See `evidence/_removed/`.

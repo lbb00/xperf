@@ -17,7 +17,7 @@ The microbench shows a cost for this one shape. Default stays **hint** until the
 
 ## Matcher
 
-The bench compiled one fixed pattern. If the argument names a `for` binding (`word`, `parts[i]`, a destructured `{word}`), the checker does not report the call. That pattern changes every iteration, so compiling once does not apply. When the hint does fire, it says to hoist only when the pattern stays the same.
+The bench compiled one fixed pattern. If the argument names a `for` binding (`word`, `parts[i]`, a destructured `{word}`), the checker does not report the call. That pattern changes every iteration, so compiling once does not apply. Default `--scope all` reports stable-pattern `new RegExp` outside loops too; `--scope loop` keeps the former in-loop-only match. The hint invites a literal or one shared compiled pattern when the pattern is stable.
 
 ## Unblock
 

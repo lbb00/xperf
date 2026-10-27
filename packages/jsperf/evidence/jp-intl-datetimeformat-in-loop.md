@@ -15,7 +15,7 @@ Node **v26.12.1** on linux x64, load 0.74. Harness: `examples/bench/evidence_jp_
 
 ## Matcher
 
-The bench built one unchanged formatter. A locale or options argument that names the loop binding is not reported. When the hint fires, it says to build the formatter outside only when locale and options stay the same.
+The bench built one unchanged formatter. A locale or options argument that names the loop binding is not reported. Default `--scope all` reports stable formatters outside loops too; `--scope loop` keeps the former in-loop-only match. The hint invites reusing one formatter when locale and options are stable.
 
 ## Unblock
 Do not set the default to `error` from this file alone. Another input or a cold path can erase the difference. Corpus triage is still required before any default change.

@@ -24,12 +24,12 @@ As of 2026-10-23. "Default" is the `app` preset; `--preset all` raises every rul
 
 | jp-string-plus-in-loop | **removed** | [tombstone](../evidence/_removed/jp-string-plus-in-loop.REMOVED.md) | `push` + `join` was not ~2× on the matched shapes; matcher deleted |
 | jp-map-filter-chain | **hint** | [jp-map-filter-chain.md](../evidence/jp-map-filter-chain.md) · [jsonl](../evidence/jp-map-filter-chain.jsonl) | 35000 rows about 4.6× / 9.8×; a 3-row filter+map is 1.28×; stay hint |
-| jp-regex-ctor-in-loop | **hint** | measured (`jp-regex-ctor-in-loop.md` + `jp-regex-ctor-in-loop.jsonl`); stay hint | `new RegExp` in loop; not corpus-triaged |
-| jp-json-in-loop | **hint** | measured (`jp-json-in-loop.md` + `jp-json-in-loop.jsonl`); stay hint | `JSON.parse` / `stringify` in loop; not corpus-triaged |
-| jp-dom-query-in-loop | **hint** | measured (`jp-dom-query-in-loop.md` + `jp-dom-query-in-loop.jsonl`); stay hint | DOM query in loop; about 16× on Node 26, a tiny linkedom document |
-| jp-intl-datetimeformat-in-loop | **hint** | measured (`jp-intl-datetimeformat-in-loop.md` + `jp-intl-datetimeformat-in-loop.jsonl`); stay hint | `new Intl.DateTimeFormat` in loop; Node 26 about 36×; not corpus-triaged |
-| jp-readfile-sync-in-loop | **hint** | measured (`jp-readfile-sync-in-loop.md` + `jp-readfile-sync-in-loop.jsonl`); stay hint | `readFileSync` in a loop; same path only; not corpus-triaged |
-| jp-clock-in-loop | **hint** | measured (`jp-clock-in-loop.md` + `jp-clock-in-loop.jsonl`); stay hint | `Date.now` / `performance.now` in a loop; not corpus-triaged |
+| jp-regex-ctor-in-loop | **hint** | measured (`jp-regex-ctor-in-loop.md` + `jp-regex-ctor-in-loop.jsonl`); stay hint | `new RegExp` (stable pattern); not corpus-triaged |
+| jp-json-in-loop | **hint** | measured (`jp-json-in-loop.md` + `jp-json-in-loop.jsonl`); stay hint | `JSON.parse` / `stringify` (stable text); not corpus-triaged |
+| jp-dom-query-in-loop | **hint** | measured (`jp-dom-query-in-loop.md` + `jp-dom-query-in-loop.jsonl`); stay hint | DOM query (stable selector); about 16× on Node 26, a tiny linkedom document |
+| jp-intl-datetimeformat-in-loop | **hint** | measured (`jp-intl-datetimeformat-in-loop.md` + `jp-intl-datetimeformat-in-loop.jsonl`); stay hint | `new Intl.DateTimeFormat`; Node 26 about 36×; not corpus-triaged |
+| jp-readfile-sync-in-loop | **hint** | measured (`jp-readfile-sync-in-loop.md` + `jp-readfile-sync-in-loop.jsonl`); stay hint | `readFileSync` (stable path); not corpus-triaged |
+| jp-clock-in-loop | **hint** | measured (`jp-clock-in-loop.md` + `jp-clock-in-loop.jsonl`); stay hint | `Date.now` / `performance.now`; not corpus-triaged |
 
 Hint text states the measured premise (unchanged path, text, pattern, selector, or formatter; a tight loop with no `await` for the clock). A rule with no JSONL does not name a replacement. A call that only looks like the bench is not given the bench's rewrite. This policy is the **keep / escalate** contract for guides and `--preset`.
 

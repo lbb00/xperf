@@ -48,29 +48,65 @@ check_pair() {
   [[ "$be" -eq 1 ]] || { echo "$rule bad should exit 1, got $be"; exit 1; }
   [[ "$ge" -eq 0 ]] || { echo "$rule good should exit 0, got $ge"; exit 1; }
 }
-check_pair jp-regex-ctor-in-loop "$ROOT/jsperf-lint/fixtures/bad/jp-regex-ctor-in-loop_ctor_loop.js" "$ROOT/jsperf-lint/fixtures/good/jp-regex-ctor-in-loop_ctor_once.js"
-check_pair jp-json-in-loop "$ROOT/jsperf-lint/fixtures/bad/jp-json-in-loop_json_loop.js" "$ROOT/jsperf-lint/fixtures/good/jp-json-in-loop_json_once.js"
-check_pair jp-dom-query-in-loop "$ROOT/jsperf-lint/fixtures/bad/jp-dom-query-in-loop_query_loop.js" "$ROOT/jsperf-lint/fixtures/good/jp-dom-query-in-loop_query_once.js"
-check_pair jp-intl-datetimeformat-in-loop "$ROOT/jsperf-lint/fixtures/bad/jp-intl-datetimeformat-in-loop_format_loop.js" "$ROOT/jsperf-lint/fixtures/good/jp-intl-datetimeformat-in-loop_format_once.js"
-check_pair jp-readfile-sync-in-loop "$ROOT/jsperf-lint/fixtures/bad/jp-readfile-sync-in-loop_read_loop.js" "$ROOT/jsperf-lint/fixtures/good/jp-readfile-sync-in-loop_read_once.js"
-check_pair jp-clock-in-loop "$ROOT/jsperf-lint/fixtures/bad/jp-clock-in-loop_clock_loop.js" "$ROOT/jsperf-lint/fixtures/good/jp-clock-in-loop_clock_once.js"
+check_pair jp-regex-ctor-in-loop "$ROOT/jsperf-lint/fixtures/bad/jp-regex-ctor-in-loop_ctor_loop.js" "$ROOT/jsperf-lint/fixtures/good/jp-regex-ctor-in-loop_literal.js"
+check_pair jp-json-in-loop "$ROOT/jsperf-lint/fixtures/bad/jp-json-in-loop_json_loop.js" "$ROOT/jsperf-lint/fixtures/good/jp-json-in-loop_preparsed.js"
+check_pair jp-dom-query-in-loop "$ROOT/jsperf-lint/fixtures/bad/jp-dom-query-in-loop_query_loop.js" "$ROOT/jsperf-lint/fixtures/good/jp-dom-query-in-loop_node_arg.js"
+check_pair jp-intl-datetimeformat-in-loop "$ROOT/jsperf-lint/fixtures/bad/jp-intl-datetimeformat-in-loop_format_loop.js" "$ROOT/jsperf-lint/fixtures/good/jp-intl-datetimeformat-in-loop_fmt_arg.js"
+check_pair jp-readfile-sync-in-loop "$ROOT/jsperf-lint/fixtures/bad/jp-readfile-sync-in-loop_read_loop.js" "$ROOT/jsperf-lint/fixtures/good/jp-readfile-sync-in-loop_buf_arg.js"
+check_pair jp-clock-in-loop "$ROOT/jsperf-lint/fixtures/bad/jp-clock-in-loop_clock_loop.js" "$ROOT/jsperf-lint/fixtures/good/jp-clock-in-loop_stamp_arg.js"
 check_pair jp-query-all-star "$ROOT/jsperf-lint/fixtures/bad/jp-query-all-star_star_query.js" "$ROOT/jsperf-lint/fixtures/good/jp-query-all-star_narrow.js"
 check_pair jp-query-all-star "$ROOT/jsperf-lint/fixtures/bad/jp-query-all-star_in_template.js" "$ROOT/jsperf-lint/fixtures/good/jp-query-all-star_template_narrow.js"
 check_pair jp-execjs-in-timer "$ROOT/jsperf-lint/fixtures/bad/jp-execjs-in-timer_interval.js" "$ROOT/jsperf-lint/fixtures/good/jp-execjs-in-timer_once.js"
 check_pair jp-clone-per-event "$ROOT/jsperf-lint/fixtures/bad/jp-clone-per-event_structured.js" "$ROOT/jsperf-lint/fixtures/good/jp-clone-per-event_field.js"
 check_pair jp-clone-per-event "$ROOT/jsperf-lint/fixtures/bad/jp-clone-per-event_json_roundtrip.js" "$ROOT/jsperf-lint/fixtures/good/jp-clone-per-event_unrelated.js"
-# G3 reverse-opt: loop header / nested fn bodies must stay clean
+
+# Default --scope all: outside-loop / header / nested-fn sites fire
+outside_bad_fire() {
+  local rule="$1" file="$2"
+  local out
+  out=$(node "$BIN" "$file" --format text --no-fail --severity "${rule}=hint")
+  echo "$out" | grep -q "$rule" || { echo "scope=all expected $rule on $(basename "$file")"; exit 1; }
+}
+outside_bad_fire jp-regex-ctor-in-loop "$ROOT/jsperf-lint/fixtures/bad/jp-regex-ctor-in-loop_ctor_once.js"
+outside_bad_fire jp-json-in-loop "$ROOT/jsperf-lint/fixtures/bad/jp-json-in-loop_json_once.js"
+outside_bad_fire jp-dom-query-in-loop "$ROOT/jsperf-lint/fixtures/bad/jp-dom-query-in-loop_query_once.js"
+outside_bad_fire jp-dom-query-in-loop "$ROOT/jsperf-lint/fixtures/bad/jp-dom-query-in-loop_for_of_header.js"
+outside_bad_fire jp-intl-datetimeformat-in-loop "$ROOT/jsperf-lint/fixtures/bad/jp-intl-datetimeformat-in-loop_format_once.js"
+outside_bad_fire jp-readfile-sync-in-loop "$ROOT/jsperf-lint/fixtures/bad/jp-readfile-sync-in-loop_read_once.js"
+outside_bad_fire jp-readfile-sync-in-loop "$ROOT/jsperf-lint/fixtures/bad/jp-readfile-sync-in-loop_for_of_once.js"
+outside_bad_fire jp-clock-in-loop "$ROOT/jsperf-lint/fixtures/bad/jp-clock-in-loop_clock_once.js"
+outside_bad_fire jp-clock-in-loop "$ROOT/jsperf-lint/fixtures/bad/jp-clock-in-loop_nested_fn_later.js"
+outside_bad_fire jp-clock-in-loop "$ROOT/jsperf-lint/fixtures/bad/jp-clock-in-loop_arrow_nested.js"
+outside_bad_fire jp-console-in-loop "$ROOT/jsperf-lint/fixtures/bad/jp-console-in-loop_console_outside_loop.js"
+
+# Opt-in --scope loop restores former loop-only matching (those sites stay clean)
+scope_loop_clean() {
+  local file="$1"
+  set +e
+  node "$BIN" "$file" --scope loop --strict-hints
+  local ec=$?
+  set -e
+  [[ "$ec" -eq 0 ]] || { echo "--scope loop should keep $(basename "$file") clean, got $ec"; exit 1; }
+}
+scope_loop_clean "$ROOT/jsperf-lint/fixtures/bad/jp-regex-ctor-in-loop_ctor_once.js"
+scope_loop_clean "$ROOT/jsperf-lint/fixtures/bad/jp-json-in-loop_json_once.js"
+scope_loop_clean "$ROOT/jsperf-lint/fixtures/bad/jp-dom-query-in-loop_query_once.js"
+scope_loop_clean "$ROOT/jsperf-lint/fixtures/bad/jp-dom-query-in-loop_for_of_header.js"
+scope_loop_clean "$ROOT/jsperf-lint/fixtures/bad/jp-intl-datetimeformat-in-loop_format_once.js"
+scope_loop_clean "$ROOT/jsperf-lint/fixtures/bad/jp-readfile-sync-in-loop_read_once.js"
+scope_loop_clean "$ROOT/jsperf-lint/fixtures/bad/jp-readfile-sync-in-loop_for_of_once.js"
+scope_loop_clean "$ROOT/jsperf-lint/fixtures/bad/jp-clock-in-loop_clock_once.js"
+scope_loop_clean "$ROOT/jsperf-lint/fixtures/bad/jp-clock-in-loop_nested_fn_later.js"
+scope_loop_clean "$ROOT/jsperf-lint/fixtures/bad/jp-clock-in-loop_arrow_nested.js"
+scope_loop_clean "$ROOT/jsperf-lint/fixtures/bad/jp-console-in-loop_console_outside_loop.js"
+
+# Loop-body bad still fires under --scope loop
 set +e
-node "$BIN" "$ROOT/jsperf-lint/fixtures/good/jp-dom-query-in-loop_for_of_header.js" --strict-hints
-h1=$?
-node "$BIN" "$ROOT/jsperf-lint/fixtures/good/jp-clock-in-loop_nested_fn_later.js" --strict-hints
-h2=$?
-node "$BIN" "$ROOT/jsperf-lint/fixtures/good/jp-clock-in-loop_arrow_nested.js" --strict-hints
-h3=$?
+node "$BIN" "$ROOT/jsperf-lint/fixtures/bad/jp-clock-in-loop_clock_loop.js" --scope loop --severity jp-clock-in-loop=error
+loop_still=$?
 set -e
-[[ "$h1" -eq 0 ]] || { echo "for-of header query must stay clean, got $h1"; exit 1; }
-[[ "$h2" -eq 0 ]] || { echo "nested fn Date.now must stay clean, got $h2"; exit 1; }
-[[ "$h3" -eq 0 ]] || { echo "nested arrow performance.now must stay clean, got $h3"; exit 1; }
+[[ "$loop_still" -eq 1 ]] || { echo "--scope loop must still flag loop-body clock, got $loop_still"; exit 1; }
+
 # Path skips: *.test.ts and e2e/ must not be walked when scanning a tree
 SKIP_ROOT=$(mktemp -d)
 mkdir -p "$SKIP_ROOT/e2e" "$SKIP_ROOT/playwright-report" "$SKIP_ROOT/src"

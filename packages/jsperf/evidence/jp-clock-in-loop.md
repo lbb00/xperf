@@ -19,7 +19,7 @@ Node **v26.12.1**, V8 **14.6.202.34-node.40**, linux x64, load 0.61. Warm 3, med
 
 ## Matcher
 
-The ratios above are a tight loop that does not wait. A loop that contains `await`, and a `for await` loop, are not reported. Hoist the sample only when that iteration does not need a fresh time. A rate limit or a worker that reads the clock each pass has nothing to move.
+The ratios above are a tight loop that does not wait. A loop that contains `await`, and a `for await` loop, are not reported. Default `--scope all` also reports clock samples outside loops when a fresh time is not required each call; `--scope loop` keeps the former in-loop-only match. A rate limit or a worker that must read the clock each pass has nothing to move.
 
 ## Unblock
 Do not set the default to `error` from this file alone. A changing input, a cold path, or another ABI can erase the difference. Corpus triage is still required before any default change.

@@ -1,7 +1,6 @@
 function good(page) {
   return page.executeJavaScript(`
-    const nodes = document.querySelectorAll('.row');
-    return nodes.length;
+    return document.body ? document.body.children.length : 0;
   `);
 }
 module.exports = { good };

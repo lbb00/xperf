@@ -158,9 +158,9 @@ These slugs are **hint**. Fixtures are paired. There is no JSONL, and they are n
 |-----|------|-------|
 | pyperf | pp-json-in-loop | `json.loads` / `dumps` in loop |
 | pyperf | pp-deepcopy-in-loop | `deepcopy` in loop |
-| jsperf | jp-regex-ctor-in-loop | `new RegExp` in loop |
-| jsperf | jp-json-in-loop | `JSON.parse` / `stringify` in loop |
-| jsperf | jp-dom-query-in-loop | `querySelector` / `getElementById` in loop |
+| jsperf | jp-regex-ctor-in-loop | `new RegExp` (stable pattern; default scope all) |
+| jsperf | jp-json-in-loop | `JSON.parse` / `stringify` (stable text; default scope all) |
+| jsperf | jp-dom-query-in-loop | `querySelector` / `getElementById` (stable selector; default scope all) |
 
 | jsperf | jp-query-all-star | `querySelectorAll('*')` full-tree walk (templates too) |
 | jsperf | jp-execjs-in-timer | built `executeJavaScript`/`evaluate` inside timers |

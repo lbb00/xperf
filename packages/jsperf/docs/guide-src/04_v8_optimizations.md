@@ -81,8 +81,8 @@ Code may climb tiers as it heats up and fall back on deopt. **Do not** overclaim
 
 | Rule | Sees | Does **not** see |
 |------|------|------------------|
-| jp-alloc-in-loop | Loop-adjacent `.push({`, non-empty binders, clear `new` containers | IC polymorphism; whether alloc causes deopt (usually it does not — it causes GC) |
-| jp-console-in-loop | `console.*` in a loop window | Whether logging is actually hot |
+| jp-alloc-in-loop | `.push({`, non-empty binders, clear `new` containers (default scope all) | IC polymorphism; whether alloc causes deopt (usually it does not — it causes GC) |
+| jp-console-in-loop | `console.*` (default scope all) | Whether logging is worth gating even off a hot path |
 | jp-delete-shape | `delete obj.key`-style members | Dictionary mode already; deopt vs “just slow” |
 | jp-delete-array-hole | `delete arr[i]` (holey) | Runtime elements kind; holey from skipped indices without `delete` |
 | jp-string-plus-in-loop | removed | `push` + `join` was not about 2× on the matched `+=` shapes |

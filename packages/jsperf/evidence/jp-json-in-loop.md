@@ -17,7 +17,7 @@ The microbench shows a cost for this one shape. Default stays **hint** until the
 
 ## Matcher
 
-The bench parsed one unchanged text. `JSON.parse(rows[i])` and `JSON.parse(line)` in `for (const line of lines)` are a different text every iteration. The checker does not report those. It does not say to fold a JSONL file into one parse. When the hint does fire, it says to hoist only when the text stays the same.
+The bench parsed one unchanged text. `JSON.parse(rows[i])` and `JSON.parse(line)` in `for (const line of lines)` are a different text every iteration. The checker does not report those. It does not say to fold a JSONL file into one parse. Default `--scope all` reports stable-text JSON calls outside loops too; `--scope loop` keeps the former in-loop-only match. The hint invites reusing results when the text is stable.
 
 ## Unblock
 
