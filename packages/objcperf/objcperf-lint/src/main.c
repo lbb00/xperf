@@ -65,6 +65,20 @@ int main(int argc, char **argv) {
     if (strcmp(a, "--severity") == 0 && i + 1 < argc) { if (!apply_sev(rs, argv[++i])) usage(2); continue; }
     if (strncmp(a, "--severity=", 11) == 0) { if (!apply_sev(rs, a + 11)) usage(2); continue; }
     if (strcmp(a, "--strict-hints") == 0) { strict_hints = 1; continue; }
+    if (strcmp(a, "--scope") == 0 && i + 1 < argc) {
+      const char *s = argv[++i];
+      if (strcmp(s, "all") == 0) g_scope_all = 1;
+      else if (strcmp(s, "loop") == 0) g_scope_all = 0;
+      else usage(2);
+      continue;
+    }
+    if (strncmp(a, "--scope=", 8) == 0) {
+      const char *s = a + 8;
+      if (strcmp(s, "all") == 0) g_scope_all = 1;
+      else if (strcmp(s, "loop") == 0) g_scope_all = 0;
+      else usage(2);
+      continue;
+    }
     if (strcmp(a, "--no-fail") == 0) { no_fail = 1; continue; }
     if (strcmp(a, "--raw-paths") == 0) { g_enable_reverse_opt = 0; continue; }
     if (a[0] == '-') usage(2);
