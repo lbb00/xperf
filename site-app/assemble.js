@@ -117,6 +117,30 @@ function relLink(fromLogical, toPath) {
   return path.posix.relative(origin, toPath);
 }
 
+// Fumadocs serves pages as directories (trailingSlash), not as `.md` files.
+// Map a content logical path to that URL path (always with a trailing slash,
+// except the site root which is `./` from nested pages and `` from root).
+function sitePath(destLogical) {
+  let dest = destLogical.replaceAll('\\', '/');
+  if (dest === 'index.md') return '';
+  if (dest.endsWith('/index.md')) dest = dest.slice(0, -'index.md'.length);
+  else if (dest.endsWith('.md')) dest = `${dest.slice(0, -3)}/`;
+  if (dest && !dest.endsWith('/')) dest = `${dest}/`;
+  return dest;
+}
+
+function pageHref(fromLogical, destLogical) {
+  // Pages use trailingSlash, so the browser resolves relatives against the
+  // page directory (…/guide/), not the parent of a virtual guide.md file.
+  const fromDir = sitePath(publishPath(fromLogical)) || '.';
+  const dest = sitePath(publishPath(destLogical));
+  let rel = path.posix.relative(fromDir, dest || '.');
+  if (!rel || rel === '.') return './';
+  if (dest.endsWith('/') && !rel.endsWith('/')) rel = `${rel}/`;
+  return rel;
+}
+
+
 // `en/guide.md` and `zh-CN/guide.md` are the same page. The Chinese file is
 // published as `guide.zh.md` next to the English one.
 function publishPath(logical) {
@@ -195,27 +219,23 @@ function mapUrl(raw, logical, copied, repoSet, remote) {
     return null;
   }
   if (kind === 'static') {
-    const base = (process.env.PAGES_BASE_PATH || '').trim().replace(/\/$/, '');
+    // Root-absolute without the Pages basePath. fumadocs/Next add basePath once;
+    // prefixing it here produced `/xperf/xperf/…`, and page-relative links break
+    // under the `/zh/` locale copy (static files only live at the site root).
     rewritten += 1;
-    return `${base}/${dest}${query}${frag}`;
+    return `/${dest}${query}${frag}`;
   }
   if (kind === 'github') {
     const mode = repoSet.has(dest) ? 'blob' : 'tree';
     rewritten += 1;
     return `${remote}/${mode}/main/${dest}${frag}`;
   }
-  const from = publishPath(logical);
-  const publishedDest = publishPath(dest);
-  const moved = from !== logical || publishedDest !== dest;
   const fixed = frag ? siteAnchor(frag) : '';
-  if (!moved && dest === target) {
-    if (!fixed || fixed === frag) return null;
-    rewritten += 1;
-    return `${urlPath}${query}${fixed}`;
-  }
+  const href = pageHref(logical, dest);
+  // Always emit a directory URL for pages. Leaving `.md` (or a folder that was
+  // rewritten into `…/index.md`) makes GitHub Pages 404.
   rewritten += 1;
-  if (moved) return `${relLink(from, publishedDest)}${query}${frag}`;
-  return `${relLink(logical, dest)}${query}${fixed}`;
+  return `${href}${query}${fixed || frag}`;
 }
 
 function rewriteChunk(chunk, logical, copied, repoSet, remote) {
@@ -599,6 +619,14 @@ function assemble() {
   staticFiles = new Set(files);
 
   for (const srcRel of files) {
+    // Extensionless legal files must be directories: Next `trailingSlash` turns
+    // `/LICENSE` into `/LICENSE/`, which 404s if `LICENSE` is a bare file.
+    if (srcRel === 'LICENSE' || srcRel === 'NOTICE') {
+      const dir = path.join(PUBLIC, srcRel);
+      fs.mkdirSync(dir, { recursive: true });
+      fs.copyFileSync(path.join(ROOT, srcRel), path.join(dir, 'index.html'));
+      continue;
+    }
     const dest = path.join(PUBLIC, srcRel);
     fs.mkdirSync(path.dirname(dest), { recursive: true });
     fs.copyFileSync(path.join(ROOT, srcRel), dest);
@@ -617,6 +645,34 @@ function assemble() {
   );
   if (unresolved.length) {
     console.error(`build-pages: ${unresolved.length} links left unchanged\n${unresolved.slice(0, 40).join('\n')}`);
+    process.exit(1);
+  }
+  const mdHrefs = [];
+  for (const [, , published] of mdFiles) {
+    const body = fs.readFileSync(path.join(CONTENT, published), 'utf8');
+    let fence = false;
+    for (const line of body.split(/\r?\n/)) {
+      if (FENCE_RE.test(line)) {
+        fence = !fence;
+        continue;
+      }
+      if (fence) continue;
+      const re = /\]\((<[^>]+>|[^)\s]+)/g;
+      let m;
+      while ((m = re.exec(line))) {
+        let raw = m[1];
+        if (raw.startsWith('<') && raw.endsWith('>')) raw = raw.slice(1, -1);
+        if (/^[A-Za-z][A-Za-z0-9+.-]*:/.test(raw)) continue;
+        const pathOnly = raw.split('#', 1)[0].split('?', 1)[0];
+        if (pathOnly.endsWith('.md')) mdHrefs.push(`${published}: ${raw}`);
+      }
+    }
+  }
+  if (mdHrefs.length) {
+    console.error(
+      `build-pages: ${mdHrefs.length} page links still end in .md (Pages will 404)\n${mdHrefs.slice(0, 40).join('\n')}`,
+    );
+    process.exit(1);
   }
 }
 

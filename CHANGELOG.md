@@ -8,6 +8,8 @@ Versions apply to the whole repository and are git tags (see [docs/release.md](d
 Kits are not released separately and carry no version of their own.
 
 ## [Unreleased]
+- **Docs site:** page links no longer keep a trailing `.md` (that 404s on GitHub Pages). Assemble rewrites them to trailing-slash directory URLs relative to the page directory, fails the build if any `.md` hrefs remain, emits static files as root-absolute paths so the `/zh/` locale works, and publishes `LICENSE` / `NOTICE` as directories so `trailingSlash` can open them.
+
 - **All kits:** default matching is **`--scope all`** where the kit CLI supports it (opt in to **`--scope loop`** for the former in-loop-only match). Finding messages no longer imply non-loop sites are out of scope. Rule slugs containing `in-loop` were **renamed** to `*-hot` (including leftover `rs-map-new-in-loop` → `rs-map-new-hot`; see per-kit Renamed tables); old slugs are tombstoned under each kit `evidence/_removed/*.REMOVED.md` and must never be reused. See each kit `docs/rule-ids.md` Renamed table. jsperf also keeps adopter FP cuts + new hints from earlier commits on this branch. No severity escalations.
 
 - jsperf-lint: default **`--scope all`** reports former in-loop smells everywhere (extreme-perf default); opt in to **`--scope loop`** for the old in-loop-only match. Finding messages and docs no longer imply non-loop sites are out of scope. Still includes loop-header / nested-function FP cuts; path skips for `e2e/`, `playwright-report/`, and `*.test.*` / `*.spec.*`; new hints `jp-query-all-star`, `jp-execjs-in-timer`, and `jp-clone-per-event` (stay hint); scanner reads JS inside `executeJavaScript` / `evaluate` templates. No severity escalations; `jp-string-plus-in-loop` stays tombstoned.
