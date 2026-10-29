@@ -57,7 +57,7 @@ static class EvidenceCs
     Directory.CreateDirectory(dir);
     Console.WriteLine("dotnet " + Environment.Version + " out=" + dir);
 
-    // cs-regex-in-loop Regex.IsMatch(pattern) each call vs Compiled
+    // cs-regex-hot Regex.IsMatch(pattern) each call vs Compiled
     int n = int.Parse(Environment.GetEnvironmentVariable("CS004_N") ?? "50000");
     var names = new string[n];
     for (int i = 0; i < n; i++) names[i] = (i % 3 == 0) ? "abc" : "X" + i;
@@ -77,7 +77,7 @@ static class EvidenceCs
         if (compiled.IsMatch(names[i])) c++;
       return c;
     });
-    Emit(dir, "cs-regex-in-loop", new[] {
+    Emit(dir, "cs-regex-hot", new[] {
       ("compiled_regex", "after", after4, n),
       ("regex_ismatch_loop", "before", before4, n),
     });
@@ -102,7 +102,7 @@ static class EvidenceCs
       ("list_add_nocap", "before", before1, n1),
     });
 
-    // cs-string-plus-in-loop string += vs StringBuilder
+    // cs-string-plus-hot string += vs StringBuilder
     int n2 = int.Parse(Environment.GetEnvironmentVariable("CS002_N") ?? "30000");
     double before2 = TimeMany(() =>
     {
@@ -116,12 +116,12 @@ static class EvidenceCs
       for (int i = 0; i < n2; i++) sb.Append(i);
       return sb.Length;
     });
-    Emit(dir, "cs-string-plus-in-loop", new[] {
+    Emit(dir, "cs-string-plus-hot", new[] {
       ("stringbuilder", "after", after2, n2),
       ("string_plus_equals", "before", before2, n2),
     });
 
-    // cs-console-in-loop Console in loop vs once (discard)
+    // cs-console-hot Console in loop vs once (discard)
     int n3 = int.Parse(Environment.GetEnvironmentVariable("CS003_N") ?? "20000");
     var oldOut = Console.Out;
     Console.SetOut(TextWriter.Null);
@@ -139,7 +139,7 @@ static class EvidenceCs
       return s;
     });
     Console.SetOut(oldOut);
-    Emit(dir, "cs-console-in-loop", new[] {
+    Emit(dir, "cs-console-hot", new[] {
       ("console_once", "after", after3, n3),
       ("console_in_loop", "before", before3, n3),
     });

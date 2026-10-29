@@ -1,5 +1,5 @@
 #!/usr/bin/env lua
--- Evidence for "lu-table-insert-in-loop": table.insert vs t[i]= / t[#t+1]=
+-- Evidence for "lu-table-insert-hot": table.insert vs t[i]= / t[#t+1]=
 local ROUNDS = tonumber(os.getenv("LU001_ROUNDS") or "9")
 local WARM = tonumber(os.getenv("LU001_WARM") or "3")
 local N = tonumber(os.getenv("LU001_N") or "200000")
@@ -43,12 +43,12 @@ local ts = os.date("!%Y-%m-%dT%H:%M:%SZ")
 local lines = {}
 local function emit(case, role, med, ops, ratio)
   lines[#lines + 1] = string.format(
-    '{"rule":"lu-table-insert-in-loop","case":"%s","role":"%s","lua":"%s","median_ms":%.6f,"ops":%d,"ratio":%.6f,"ts":"%s"}',
+    '{"rule":"lu-table-insert-hot","case":"%s","role":"%s","lua":"%s","median_ms":%.6f,"ops":%d,"ratio":%.6f,"ts":"%s"}',
     case, role, ver, med, ops, ratio, ts)
   io.stderr:write(string.format("  %s %s median=%.3f ms ops=%d ratio=%.3f\n", role, case, med, ops, ratio))
 end
 
-io.stderr:write(string.format("lu-table-insert-in-loop insert-vs-index n=%d\n", N))
+io.stderr:write(string.format("lu-table-insert-hot insert-vs-index n=%d\n", N))
 local med_a = time_many(function()
   local t = {}
   for i = 1, N do t[i] = i end
@@ -92,7 +92,7 @@ end)
 emit("small_index", "after", med_sa, N_SMALL, 1)
 emit("small_insert", "before", med_sb, N_SMALL, med_sb / math.max(med_sa, 1e-9))
 
-local path = OUT:gsub("/+$", "") .. "/lu-table-insert-in-loop.jsonl"
+local path = OUT:gsub("/+$", "") .. "/lu-table-insert-hot.jsonl"
 local f = assert(io.open(path, "w"))
 for _, line in ipairs(lines) do f:write(line .. "\n") end
 f:close()

@@ -1,2 +1,0 @@
-{"rule":"rb-json-in-loop","case":"parse_once","role":"after","ruby":"Ruby 4.0.8","median_ms":0.781000,"ops":20000,"ratio":1.000000,"ts":"2026-10-23T12:17:42Z"}
-{"rule":"rb-json-in-loop","case":"parse_each_iter","role":"before","ruby":"Ruby 4.0.8","median_ms":6.116000,"ops":20000,"ratio":7.830985,"ts":"2026-10-23T12:17:42Z"}

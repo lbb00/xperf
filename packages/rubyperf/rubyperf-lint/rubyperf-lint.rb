@@ -2,12 +2,12 @@
 # frozen_string_literal: true
 
 MSG = {
-  "rb-string-plus-in-loop" => "string += in loop; prefer <<",
-  "rb-array-plus-rebind" => "Array + / concat rebinding in loop; prefer <<",
-  "rb-puts-in-loop" => "puts/print in loop; gate or buffer",
-  "rb-regexp-new-in-loop" => "Regexp.new in a loop; compile outside only when this pattern stays the same",
-  "rb-json-in-loop" => "JSON.parse/generate in a loop; hoist only when this text stays the same",
-  "rb-file-read-in-loop" => "file read in a loop; read once when the path stays the same",
+  "rb-string-plus-hot" => "string +=; prefer << — cost adds up even off a hot path",
+  "rb-array-plus-rebind" => "Array + / concat rebinding; prefer << — cost adds up even off a hot path",
+  "rb-puts-hot" => "puts/print; gate or buffer — cost adds up even off a hot path",
+  "rb-regexp-new-hot" => "Regexp.new; compile outside only when this pattern stays the same — cost adds up even off a hot path",
+  "rb-json-hot" => "JSON.parse/generate; hoist only when this text stays the same — cost adds up even off a hot path",
+  "rb-file-read-hot" => "file read; read once when the path stays the same — cost adds up even off a hot path",
 }.freeze
 RE_REGEXP_NEW = /Regexp\.new\b|Regexp\.compile\b/
 RE_JSON = /JSON\.(?:parse|generate|dump|pretty_generate|load)\b/
@@ -29,6 +29,7 @@ def usage(code)
       --format text|json
       --severity RULE=error|hint|off
       --strict-hints
+      --scope all|loop   (default: all)
       --no-fail
       --raw-paths          include test/spec (baseline dumps)
   USAGE
@@ -113,7 +114,8 @@ def arg_uses?(code, re, names)
   names.any? { |n| arg.match?(/\b#{Regexp.escape(n)}\b/) }
 end
 
-def scan_file(path)
+def scan_file(path, scope = "all")
+  scope_mode = scope == "loop" ? "loop" : "all"
   out = []
   depth = 0
   in_loop = 0
@@ -131,11 +133,12 @@ def scan_file(path)
       in_loop = depth + 1
       loop_names.concat(for_names(code))
     end
-    if in_loop.positive? && depth >= in_loop
+    match_here = scope_mode == "all" ? true : (in_loop.positive? && depth >= in_loop)
+    if match_here
       if code =~ /\w+\s*\+=\s*/
         skip_rb1 = $enable_reverse_opt && path.include?("/tui/")
         if !skip_rb1 && (!$enable_reverse_opt || looks_string_plus?(code))
-          out << Finding.new("rb-string-plus-in-loop", path, line_no, MSG["rb-string-plus-in-loop"])
+          out << Finding.new("rb-string-plus-hot", path, line_no, MSG["rb-string-plus-hot"])
         end
       end
       # reverse-opt: bare Array#concat mutates in place (good); only flag rebinding
@@ -157,16 +160,16 @@ def scan_file(path)
           skip = true if base == "cli.rb" || base == "monitor.rb" || path.include?("/tui/")
           skip = true if path.include?("/tasks/") && code =~ /\bputs\b/
         end
-        out << Finding.new("rb-puts-in-loop", path, line_no, MSG["rb-puts-in-loop"]) unless skip
+        out << Finding.new("rb-puts-hot", path, line_no, MSG["rb-puts-hot"]) unless skip
       end
       if RE_REGEXP_NEW.match?(code) && !arg_uses?(code, RE_REGEXP_ARG, loop_names)
-        out << Finding.new("rb-regexp-new-in-loop", path, line_no, MSG["rb-regexp-new-in-loop"])
+        out << Finding.new("rb-regexp-new-hot", path, line_no, MSG["rb-regexp-new-hot"])
       end
       if RE_JSON.match?(code) && !arg_uses?(code, RE_JSON_ARG, loop_names)
-        out << Finding.new("rb-json-in-loop", path, line_no, MSG["rb-json-in-loop"])
+        out << Finding.new("rb-json-hot", path, line_no, MSG["rb-json-hot"])
       end
       if RE_FILE_READ.match?(code) && !arg_uses?(code, RE_FILE_ARG, loop_names)
-        out << Finding.new("rb-file-read-in-loop", path, line_no, MSG["rb-file-read-in-loop"])
+        out << Finding.new("rb-file-read-hot", path, line_no, MSG["rb-file-read-hot"])
       end
     end
     depth += opens_brace + do_count - closes_brace - end_count
@@ -194,23 +197,24 @@ def skip_path?(path, root)
   false
 end
 
-def scan_path(root)
+def scan_path(root, scope = "all")
   root = File.expand_path(root)
   if File.file?(root)
-    return root.end_with?(".rb") ? scan_file(root) : []
+    return root.end_with?(".rb") ? scan_file(root, scope) : []
   end
   all = []
   Dir.glob(File.join(root, "**", "*.rb")).each do |f|
     next if skip_path?(f, root)
-    scan_file(f).each { |finding| all << finding }
+    scan_file(f, scope).each { |finding| all << finding }
   end
   all
 end
 
-sev = { "rb-string-plus-in-loop" => "off", "rb-array-plus-rebind" => "off", "rb-puts-in-loop" => "off", "rb-regexp-new-in-loop" => "hint", "rb-json-in-loop" => "hint", "rb-file-read-in-loop" => "hint" }
+sev = { "rb-string-plus-hot" => "off", "rb-array-plus-rebind" => "off", "rb-puts-hot" => "off", "rb-regexp-new-hot" => "hint", "rb-json-hot" => "hint", "rb-file-read-hot" => "hint" }
 format = "text"
 strict_hints = false
 no_fail = false
+scope = "all"
 paths = []
 argv = ARGV.dup
 usage(2) if argv.empty?
@@ -233,6 +237,14 @@ while i < argv.length
     apply_sev!(sev, a.split("=", 2)[1])
   when "--strict-hints" then strict_hints = true
   when "--no-fail" then no_fail = true
+  when "--scope"
+    i += 1
+    usage(2) if i >= argv.length
+    scope = argv[i]
+    usage(2) unless %w[all loop].include?(scope)
+  when /\A--scope=/
+    scope = a.split("=", 2)[1]
+    usage(2) unless %w[all loop].include?(scope)
   when "--raw-paths" then $enable_reverse_opt = false
   else
     usage(2) if a.start_with?("-")
@@ -244,7 +256,7 @@ usage(2) if paths.empty?
 
 findings = []
 paths.each do |p|
-  scan_path(p).each { |f| findings << f }
+  scan_path(p, scope).each { |f| findings << f }
 end
 nerr = 0
 nhint = 0

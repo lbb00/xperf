@@ -1,0 +1,2 @@
+{"rule":"at-alloc-hot","case":"reuse_buffer","role":"after","runtime":"node-proxy","note":"Not ArkTS VM","node":"v20.19.2","v8":"11.3.244.8-node.38","median_ms":0.14607,"ops":200000,"ratio":1,"ts":"2026-10-22T08:08:45.446Z"}
+{"rule":"at-alloc-hot","case":"new_in_loop","role":"before","runtime":"node-proxy","note":"Not ArkTS VM","node":"v20.19.2","v8":"11.3.244.8-node.38","median_ms":4.768482,"ops":200000,"ratio":32.64518381597863,"ts":"2026-10-22T08:08:45.446Z"}

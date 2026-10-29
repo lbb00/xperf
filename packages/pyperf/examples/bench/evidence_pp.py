@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Evidence microbench for pp-str-plus-in-loop–PP004 → packages/pyperf/evidence/PP*.jsonl"""
+"""Evidence microbench for pp-str-plus-hot–PP004 → packages/pyperf/evidence/PP*.jsonl"""
 from __future__ import annotations
 
 import gc
@@ -53,21 +53,21 @@ def main() -> None:
         lines_by.setdefault(rule, []).append(obj)
         print(f"  {rule} {role} {case} median={med:.3f} ms ops={ops} ratio={ratio:.3f}", file=sys.stderr)
 
-    # --- pp-str-plus-in-loop: str += vs join ---
+    # --- pp-str-plus-hot: str += vs join ---
     n1 = int(os.environ.get("PP001_N", "50000"))
     parts = ["x"] * n1
-    print(f"pp-str-plus-in-loop str-plus n={n1}", file=sys.stderr)
+    print(f"pp-str-plus-hot str-plus n={n1}", file=sys.stderr)
     med1a = time_many(lambda: len("".join(parts)))
     med1b = time_many(lambda: _str_plus(parts))
-    emit("pp-str-plus-in-loop", "str_join", "after", med1a, n1, 1.0)
-    emit("pp-str-plus-in-loop", "str_plus", "before", med1b, n1, med1b / max(med1a, 1e-9))
+    emit("pp-str-plus-hot", "str_join", "after", med1a, n1, 1.0)
+    emit("pp-str-plus-hot", "str_plus", "before", med1b, n1, med1b / max(med1a, 1e-9))
 
     n1s = int(os.environ.get("PP001_N_SMALL", "100"))
     parts_s = parts[:n1s]
     med1sa = time_many(lambda: len("".join(parts_s)))
     med1sb = time_many(lambda: _str_plus(parts_s))
-    emit("pp-str-plus-in-loop", "small_join", "after", med1sa, n1s, 1.0)
-    emit("pp-str-plus-in-loop", "small_str_plus", "before", med1sb, n1s, med1sb / max(med1sa, 1e-9))
+    emit("pp-str-plus-hot", "small_join", "after", med1sa, n1s, 1.0)
+    emit("pp-str-plus-hot", "small_str_plus", "before", med1sb, n1s, med1sb / max(med1sa, 1e-9))
 
     # --- pp-list-plus-rebind: list + [x] vs append ---
     n2 = int(os.environ.get("PP002_N", "20000"))
@@ -83,10 +83,10 @@ def main() -> None:
     emit("pp-list-plus-rebind", "small_append", "after", med2sa, n2s, 1.0)
     emit("pp-list-plus-rebind", "small_list_plus", "before", med2sb, n2s, med2sb / max(med2sa, 1e-9))
 
-    # --- pp-print-in-loop: print in loop vs join once (stdout discarded) ---
+    # --- pp-print-hot: print in loop vs join once (stdout discarded) ---
     n3 = int(os.environ.get("PP003_N", "20000"))
     items = list(range(n3))
-    print(f"pp-print-in-loop print-loop n={n3}", file=sys.stderr)
+    print(f"pp-print-hot print-loop n={n3}", file=sys.stderr)
     devnull = open(os.devnull, "w")
 
     def print_loop():
@@ -110,8 +110,8 @@ def main() -> None:
 
     med3a = time_many(print_join)
     med3b = time_many(print_loop)
-    emit("pp-print-in-loop", "print_join_once", "after", med3a, n3, 1.0)
-    emit("pp-print-in-loop", "print_in_loop", "before", med3b, n3, med3b / max(med3a, 1e-9))
+    emit("pp-print-hot", "print_join_once", "after", med3a, n3, 1.0)
+    emit("pp-print-hot", "print_in_loop", "before", med3b, n3, med3b / max(med3a, 1e-9))
     devnull.close()
 
     # --- PP004: ad-hoc re.sub vs compiled (many calls) ---

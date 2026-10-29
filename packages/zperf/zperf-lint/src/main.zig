@@ -22,13 +22,14 @@ const usage =
     \\
     \\选项:
     \\  -f, --format <text|json>    输出格式（默认 text）
-    \\  --enable <规则,...>         只启用这些规则（zp-alloc-in-loop 或 alloc-in-loop 形式均可）
+    \\  --enable <规则,...>         只启用这些规则（zp-alloc-hot 或 alloc-in-loop 形式均可）
     \\  --disable <规则,...>        禁用这些规则
     \\  --large-struct-bytes <N>    zp-large-struct-by-value 的阈值（默认 64）
     \\  --hot-fn <名字,...>          zp-per-packet-alloc 额外的热函数名（以 * 结尾为前缀匹配，如 onPkt*）
     \\  --hot-fn-preset <name>      追加热函数名预设：server（accept/handleRequest/serve/…）
     \\  --no-hot-propagation        热度不沿本文件调用传播
-    \\  --strict-log-in-loop        zp-print-in-loop 同时报告循环内的 std.log.* / log.*（默认只报 debug.print）
+    \\  --scope all|loop             (default: all; loop = former in-loop-only)
+    \\  --strict-log-in-loop        zp-print-hot 同时报告循环内的 std.log.* / log.*（默认只报 debug.print）
     \\  --include-tests             也检查 build.zig、tests/、*test*.zig、testing/、Build/、*benchmark*.zig、*fuzz*（默认跳过）
     \\  --include-scripts           也检查 scripts/ 下的文件（默认跳过）
     \\  --include-compiler-rt       也检查 compiler_rt / lib/compiler_rt（默认跳过）
@@ -39,7 +40,7 @@ const usage =
     \\  -h, --help                  显示帮助
     \\
     \\热标注:    // zperf-lint: hot             （，zp-per-packet-alloc ）
-    \\行内忽略:  // zperf-lint: ignore zp-alloc-in-loop        （；=）
+    \\行内忽略:  // zperf-lint: ignore zp-alloc-hot        （；=）
     \\文件忽略:  // zperf-lint: ignore-file zp-large-struct-by-value
     \\退出码:    0 无发现（或 --no-fail）/ 1 有发现 / 2 用法、I/O 或解析错误（--no-fail 时解析错误不强制 2）
     \\提示:      tip Zig 的 `errdefer |err|` 等语法若无法解析，会记入 parse_errors；其余文件照常检查
@@ -141,6 +142,12 @@ pub fn main(init: std.process.Init) !u8 {
             fail = false;
         } else if (std.mem.eql(u8, a, "--strict-log-in-loop")) {
             cfg.strict_log_in_loop = true;
+        } else if (optValue(args, &i, a, "--scope", null)) |v| {
+            if (std.mem.eql(u8, v, "all")) {
+                cfg.scope_all = true;
+            } else if (std.mem.eql(u8, v, "loop")) {
+                cfg.scope_all = false;
+            } else return usageError(err, "--scope all|loop", v);
         } else if (std.mem.eql(u8, a, "--include-tests")) {
             include_tests = true;
         } else if (std.mem.eql(u8, a, "--include-scripts")) {
@@ -356,7 +363,7 @@ fn workFiles(sh: *Shared, w: *Worker) !void {
         local_cfg.path = sh.files[idx];
         const res = try lint.lintSourceProf(a, source, &local_cfg, if (sh.profile) &w.prof else null);
         if (res.parse_error) |pe| {
-            slot.parse_err = try result_arena.dupe(u8, pe); // zperf-lint: ignore zp-alloc-in-loop
+            slot.parse_err = try result_arena.dupe(u8, pe); // zperf-lint: ignore zp-alloc-hot
             continue;
         }
         slot.compat = res.compat;

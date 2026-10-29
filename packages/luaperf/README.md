@@ -4,12 +4,12 @@
 
 Lua performance notes, small examples, and `luaperf-lint`.
 
-Part of [XPerf](../../README.md). Shared docs: [docs/README.md](../../docs/README.md). Heuristic lint (**corpus-ready: yes**; **lu-string-concat-in-loop=error** with G4; lu-table-insert-in-loop=off; lu-print-in-loop=hint with G4). Guide v0.
+Part of [XPerf](../../README.md). Shared docs: [docs/README.md](../../docs/README.md). Heuristic lint (**corpus-ready: yes**; **lu-string-concat-hot=error** with G4; lu-table-insert-hot=off; lu-print-hot=hint with G4). Guide v0.
 
 ## Contents
 
 - [English guide (v0)](docs/lua-performance-guide.md) — from `docs/guide-src/`
-- [`luaperf-lint`](luaperf-lint/README.md) — lu-table-insert-in-loop–lu-print-in-loop
+- [`luaperf-lint`](luaperf-lint/README.md) — lu-table-insert-hot–lu-print-hot
 - [Corpus pins](docs/corpus.md)
 
 ## Focus
@@ -31,7 +31,7 @@ Exit `1` only for **error**-severity findings (hints exit `0` unless `--strict-h
 ```text
 docs/guide-src/   chapter sources
 docs/             assembled guide + corpus.md + evidence-policy.md
-evidence/         lu-string-concat-in-loop measured (error); lu-print-in-loop measured (hint); lu-table-insert-in-loop measured (off)
+evidence/         lu-string-concat-hot measured (error); lu-print-hot measured (hint); lu-table-insert-hot measured (off)
 examples/         tiny demos
 luaperf-lint/      checker + fixtures
 scripts/          smoke-lint.sh, self-lint.sh

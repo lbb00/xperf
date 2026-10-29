@@ -1,0 +1,2 @@
+{"rule":"oc-regex-hot","case":"regex_once","role":"after","cc":"clang -O2 -framework Foundation","median_ms":0.555,"ops":2000,"ratio":1,"ts":"2026-10-23T05:08:54Z"}
+{"rule":"oc-regex-hot","case":"regex_each_iter","role":"before","cc":"clang -O2 -framework Foundation","median_ms":8.29,"ops":2000,"ratio":14.936929,"ts":"2026-10-23T05:08:54Z"}

@@ -1,0 +1,2 @@
+{"rule":"cx-clock-hot","case":"sample_once","role":"after","node":null,"v8":null,"cc":"clang++ -std=c++17 -O2","median_ms":0.013417,"ops":100000,"ratio":1,"ts":"2026-10-23T05:20:31Z"}
+{"rule":"cx-clock-hot","case":"steady_clock_now_each_iter","role":"before","node":null,"v8":null,"cc":"clang++ -std=c++17 -O2","median_ms":1.97388,"ops":100000,"ratio":147.117,"ts":"2026-10-23T05:20:31Z"}

@@ -6,5 +6,5 @@ elixir "$ROOT/beamperf-lint/beamperf_lint.exs" \
   "$ROOT/examples/m01_cons.exs" \
   "$ROOT/examples/m01_cons.erl" \
   "$ROOT/examples/p01_iodata.exs" \
-  --strict-hints
+  --scope loop --strict-hints
 echo "beamperf-lint self-lint ok"

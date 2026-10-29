@@ -25,9 +25,9 @@ As of 2026-10-22 (Asia/Shanghai); benches on JDK 25.0.4.1 + COH. Policy is each 
 | Rule | Policy | Evidence | Correlate / note |
 |------|--------|----------|------------------|
 | **jp-boxed-primitive-collection** | **off** | [jp-boxed-primitive-collection](../evidence/jp-boxed-primitive-collection.md) | JDK 27 n=1e6 ~**1.32×**, n=1e5 ~**7.37×**; quiet JDK 21 ~**11×** / ~**8.5×** |
-| **jp-string-concat-in-loop** | **error** | [jp-string-concat-in-loop](../evidence/jp-string-concat-in-loop.md) | JDK 27 J23 parts=256 ~**21.3×** |
-| jp-regex-in-loop | **off** | [jp-regex-in-loop](../evidence/jp-regex-in-loop.md) | JDK 27 time ~**0.76×**, alloc ~**2.4×**; quiet JDK 21 time ~**1.67×** |
-| **jp-format-in-loop** | **off** | [jp-format-in-loop](../evidence/jp-format-in-loop.md) | JDK 27 ~**29×** |
+| **jp-string-concat-hot** | **error** | [jp-string-concat-hot](../evidence/jp-string-concat-hot.md) | JDK 27 J23 parts=256 ~**21.3×** |
+| jp-regex-hot | **off** | [jp-regex-hot](../evidence/jp-regex-hot.md) | JDK 27 time ~**0.76×**, alloc ~**2.4×**; quiet JDK 21 time ~**1.67×** |
+| **jp-format-hot** | **off** | [jp-format-hot](../evidence/jp-format-hot.md) | JDK 27 ~**29×** |
 | jp-unpresized-collection | **off** | [jp-unpresized-collection](../evidence/jp-unpresized-collection.md) | JDK 27 n=10k ~**1.43×** |
 | **jp-boxed-stream** | **error** | [jp-boxed-stream](../evidence/jp-boxed-stream.md) | JDK 27 boxedReduce/mapToInt ~**37×** |
 | **jp-exception-control-flow** | **off** | [jp-exception-control-flow](../evidence/jp-exception-control-flow.md) | JDK 27 ~**4.0×** (spikes); quiet JDK 21 ~**27×** |
@@ -36,14 +36,14 @@ As of 2026-10-22 (Asia/Shanghai); benches on JDK 25.0.4.1 + COH. Policy is each 
 | **jp-enum-key-hash-collection** | **error** | [jp-enum-key-hash-collection](../evidence/jp-enum-key-hash-collection.md) | JDK 27 EnumMap ~**11.6×** |
 | **jp-collection-chain** | **off** | [jp-collection-chain](../evidence/jp-collection-chain.md) | JDK 27 / Kotlin 2.4.21 eager/seq ~**265×** |
 | **jp-value-class-boxing** | **hint** | [jp-value-class-boxing](../evidence/jp-value-class-boxing.md) | JDK 27 time ~**4.0×**, alloc ~**5.0×** |
-| **jp-lambda-to-non-inline-in-loop** | **off** | [jp-lambda-to-non-inline-in-loop](../evidence/jp-lambda-to-non-inline-in-loop.md) | JDK 27 alloc ~**244×**; time ~**0.47×** |
+| **jp-lambda-to-non-inline-hot** | **off** | [jp-lambda-to-non-inline-hot](../evidence/jp-lambda-to-non-inline-hot.md) | JDK 27 alloc ~**244×**; time ~**0.47×** |
 | jp-lazy-default-mode | **off** | [jp-lazy-default-mode.md](../evidence/jp-lazy-default-mode.md) only | **pending measure** — situational lazy mode |
-| **jp-data-copy-in-loop** | **error** | [jp-data-copy-in-loop](../evidence/jp-data-copy-in-loop.md) | JDK 27 time ~**208×**, alloc ~**10001×** |
+| **jp-data-copy-hot** | **error** | [jp-data-copy-hot](../evidence/jp-data-copy-hot.md) | JDK 27 time ~**208×**, alloc ~**10001×** |
 | jp-android-sparse-array | hint | stub md | **pending** — needs ART/device |
-| **jp-log-in-loop** | **off** | [jp-log-in-loop](../evidence/jp-log-in-loop.md) | JDK 27 time mean ~**0.43×** (one spike); quiet JDK 21 ~**18×**; alloc ~**23200 B** |
+| **jp-log-hot** | **off** | [jp-log-hot](../evidence/jp-log-hot.md) | JDK 27 time mean ~**0.43×** (one spike); quiet JDK 21 ~**18×**; alloc ~**23200 B** |
 | jp-sleep-polling | **off** | stub md | **pending** — sleep dominates; design not micro |
 | jp-finalize | hint | stub md | **pending** — finalize correctness / Cleaner |
-| jp-expensive-alloc-in-loop | **off** | [jp-expensive-alloc-in-loop](../evidence/jp-expensive-alloc-in-loop.md) | tiny-pool **negative** |
+| jp-expensive-alloc-hot | **off** | [jp-expensive-alloc-hot](../evidence/jp-expensive-alloc-hot.md) | tiny-pool **negative** |
 | jp-hot-heavy-alloc | **off** | stub md | **pending** — ART/device hot alloc |
 | jp-hot-format-log | **off** | stub md | **pending** — ART/device hot format/log |
 | jp-hot-system-call | hint | stub md | **pending** — ART/device system call |
@@ -54,7 +54,7 @@ As of 2026-10-22 (Asia/Shanghai); benches on JDK 25.0.4.1 + COH. Policy is each 
 | **jp-hot-payload-copy** | **error** | [jp-hot-payload-copy](../evidence/jp-hot-payload-copy.md) | JDK 27 newFrame/reuse ~**158×** |
 | vt-unsafe-threadlocal-pool | — (not shipped) | [stub](../evidence/vt-unsafe-threadlocal-pool.md); guide fixtures | guide-first §10.2 |
 | **jp-client-factory-recreate** | **error** | [jp-client-factory-recreate](../evidence/jp-client-factory-recreate.md) | JDK 27 HttpClient new+close/reuse ~**1.97e5×** |
-| **jp-string-intern-in-loop** | **error** | [jp-string-intern-in-loop](../evidence/jp-string-intern-in-loop.md) | JDK 27 intern/plain ~**6.3×** |
+| **jp-string-intern-hot** | **error** | [jp-string-intern-hot](../evidence/jp-string-intern-hot.md) | JDK 27 intern/plain ~**6.3×** |
 | jp-non-static-field-updater | hint | [jp-non-static-field-updater](../evidence/jp-non-static-field-updater.md) | JDK 27 create ~**526×**; quiet JDK 21 steady-state ~**1.13×** |
 
 **Counts (current defaults):** active rules **29** (was 31; removed jp-legacy-synchronized-type / jp-many-boolean-fields): 8 **error**, 8 **hint**, 13 **off**. The table still lists the tombstones and the not-shipped rule. Default severity follows `Rule.java` / G3 reverse-opt.

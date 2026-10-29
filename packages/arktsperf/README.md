@@ -2,7 +2,7 @@
 
 HarmonyOS **ArkTS** performance notes, small examples, and `arktsperf-lint` (pure Node, zero npm deps). ArkTS is TypeScript-like; the checker accepts `.ets`, `.ts`, and `.js`.
 
-Part of [XPerf](../../README.md). Shared docs: [docs/README.md](../../docs/README.md). **Corpus-ready** (AGENT.md G3). Defaults: `at-includes-in-loop` and `at-json-in-loop` **hint**; `at-alloc-in-loop` and `at-console-in-loop` **off**. `at-object-delete` was removed after a Node proxy stayed about 1×. Guide v0 scaffold.
+Part of [XPerf](../../README.md). Shared docs: [docs/README.md](../../docs/README.md). **Corpus-ready** (AGENT.md G3). Defaults: `at-includes-hot` and `at-json-hot` **hint**; `at-alloc-hot` and `at-console-hot` **off**. `at-object-delete` was removed after a Node proxy stayed about 1×. Guide v0 scaffold.
 
 ## Contents
 
@@ -12,7 +12,7 @@ Part of [XPerf](../../README.md). Shared docs: [docs/README.md](../../docs/READM
 
 ## Focus
 
-Embed / mini-program-like constraints: hot allocation, polymorphic object shapes, and sync bridge / console chatter on the UI or worker hot path. **at-console-in-loop** (`console.*` in loop) defaults to **off** after G3 (sample noise); enable with `--severity at-console-in-loop=hint`. Claims without a device or local bench stay provisional. **corpus-ready: yes** — see [docs/corpus.md](docs/corpus.md).
+Embed / mini-program-like constraints: hot allocation, polymorphic object shapes, and sync bridge / console chatter on the UI or worker hot path. **at-console-hot** (`console.*` in loop) defaults to **off** after G3 (sample noise); enable with `--severity at-console-hot=hint`. Claims without a device or local bench stay provisional. **corpus-ready: yes** — see [docs/corpus.md](docs/corpus.md).
 
 ## Run lint
 

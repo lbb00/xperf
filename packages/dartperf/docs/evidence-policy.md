@@ -11,6 +11,6 @@ As of 2026-10-22 (Batch B G4).
 | Rule | Severity (default) | Evidence | Smell |
 |------|--------------------|----------|-------|
 | dt-list-add-empty | off | **yes** ~3.1× | empty List + add |
-| dt-string-plus-in-loop | off | **yes** ~247× | string + |
-| dt-print-in-loop | off | **yes** ~128× | print/write |
+| dt-string-plus-hot | off | **yes** ~247× | string + |
+| dt-print-hot | off | **yes** ~128× | print/write |
 | dt-growable-add-empty | hint | **yes** ~2.4× | empty + add sized |

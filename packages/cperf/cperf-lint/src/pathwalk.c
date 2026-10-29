@@ -73,7 +73,7 @@ int should_skip_path(const char *path) {
     if (strstr(lower, "makeucnid") || strstr(lower, "makeuname")) return 1;
     if (strstr(lower, "dump") && has_ext(lower)) return 1;
     if (strstr(lower, "bitintpow10")) return 1;
-    /* Pretty-printers / linker helpers / dep printers — cp-printf-in-loop noise factories */
+    /* Pretty-printers / linker helpers / dep printers — cp-printf-hot noise factories */
     if (strstr(lower, "treeview")) return 1;
     if (strstr(lower, "collect2")) return 1;
     if (strstr(lower, "mkdeps")) return 1;
@@ -102,7 +102,7 @@ static void format_child_path(char *dst, size_t dstsz, const char *dir,
     snprintf(dst, dstsz, "%s/%s", dir, name);
 }
 
-static int scan_dir(const char *dir, FindingList *out) {
+static int scan_dir(const char *dir, FindingList *out, const char *scope) {
     DIR *d = opendir(dir);
     if (!d) return -1;
     int err = 0;
@@ -155,10 +155,10 @@ static int scan_dir(const char *dir, FindingList *out) {
             if (should_skip_path(child)) continue;
             /* also skip by dirname alone */
             if (should_skip_path(names[i])) continue;
-            if (scan_dir(child, out) != 0) err = -1;
+            if (scan_dir(child, out, scope) != 0) err = -1;
         } else if (S_ISREG(st.st_mode) && has_ext(names[i])) {
             if (should_skip_path(child)) continue;
-            if (scan_file(child, out) != 0) err = -1;
+            if (scan_file(child, out, scope) != 0) err = -1;
         }
     }
     for (size_t i = 0; i < nlen; i++) free(names[i]);
@@ -166,14 +166,14 @@ static int scan_dir(const char *dir, FindingList *out) {
     return err;
 }
 
-int scan_path(const char *path, FindingList *out) {
+int scan_path(const char *path, FindingList *out, const char *scope) {
     struct stat st;
     if (stat(path, &st) != 0) return -1;
     if (S_ISREG(st.st_mode)) {
         if (!has_ext(path)) return 0;
         if (should_skip_path(path)) return 0;
-        return scan_file(path, out);
+        return scan_file(path, out, scope);
     }
-    if (S_ISDIR(st.st_mode)) return scan_dir(path, out);
+    if (S_ISDIR(st.st_mode)) return scan_dir(path, out, scope);
     return 0;
 }

@@ -10,5 +10,5 @@ if ! command -v dart >/dev/null 2>&1; then
 fi
 cd "$ROOT/dartperf-lint"
 dart pub get
-dart run bin/dartperf_lint.dart ../examples --strict-hints
+dart run bin/dartperf_lint.dart ../examples --scope loop --strict-hints
 echo "dartperf-lint self-lint ok"

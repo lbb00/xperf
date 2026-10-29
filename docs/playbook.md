@@ -26,8 +26,8 @@ Corpora named per kit (first dogfood round 2026-10-21 Asia/Shanghai; later round
 
 | Package | Lint | Corpora dogfooded (r1–r3) | Guide chapters tied to findings |
 |---------|------|---------------------------|----------------------------------|
-| **cperf** | `cperf-lint` cp-alloc-in-loop–cp-strcat-in-loop | quickjs, lua, gcc (sparse), sqlite `src/` | `01_allocation` (cp-alloc-in-loop, cp-realloc-grow-one), `02_hot_io` (cp-printf-in-loop dump/codegen) |
-| **jsperf** | `jsperf-lint` jp-alloc-in-loop–jp-map-filter-chain | Node `lib/`, Preact `src/`, quickjs `*.js`, TypeScript `packages/typescript/src` + V8 benches | `01`…`03`, **`04_v8_optimizations`** (lint≠JIT; `STATIC-VS-V8.md`) |
+| **cperf** | `cperf-lint` cp-alloc-hot–cp-strcat-hot | quickjs, lua, gcc (sparse), sqlite `src/` | `01_allocation` (cp-alloc-hot, cp-realloc-grow-one), `02_hot_io` (cp-printf-hot dump/codegen) |
+| **jsperf** | `jsperf-lint` jp-alloc-hot–jp-map-filter-chain | Node `lib/`, Preact `src/`, quickjs `*.js`, TypeScript `packages/typescript/src` + V8 benches | `01`…`03`, **`04_v8_optimizations`** (lint≠JIT; `STATIC-VS-V8.md`) |
 | **zperf** | `zperf-lint` | zig std + selected apps (see zperf docs) | full EN |
 | **jvmperf** | `jvmperf-lint` 29 active rules, slugs in `packages/jvmperf/docs/rule-ids.md` | okhttp, retrofit, kotlinx.coroutines, guava `src`, vert.x, fastjson2, jetty-core, netty buffer+common | EN with JMH/JOL Evidence; `packages/jvmperf/docs/corpus.md` |
 
@@ -42,7 +42,7 @@ Re-run: path/dir skips → rule suppressions → before/after tables in the kit'
 
 ## Severity and presets (cperf / jsperf 0.3.x)
 
-Default **`app`**: keep rules that correlate with measured pain as `error` (C: cp-alloc-in-loop and cp-realloc-grow-one; JS: jp-delete-array-hole); demote noisy corpus-heavy rules to `hint` or `off` (C: cp-printf-in-loop and cp-strcat-in-loop off; JS: jp-alloc-in-loop, jp-console-in-loop and jp-delete-shape off, jp-map-filter-chain hint). JS `jp-string-plus-in-loop` was removed after `push` + `join` missed ~2×. **`engine`** keeps the same idea with a few more hints for engine trees. **`all`** restores “every finding fails” (pre-0.3 behavior). Hints still print; they do not fail CI unless `--strict-hints`. Prefer evidence gates over residual counts.
+Default **`app`**: keep rules that correlate with measured pain as `error` (C: cp-alloc-hot and cp-realloc-grow-one; JS: jp-delete-array-hole); demote noisy corpus-heavy rules to `hint` or `off` (C: cp-printf-hot and cp-strcat-hot off; JS: jp-alloc-hot, jp-console-hot and jp-delete-shape off, jp-map-filter-chain hint). JS `jp-string-plus-in-loop` was removed after `push` + `join` missed ~2×. **`engine`** keeps the same idea with a few more hints for engine trees. **`all`** restores “every finding fails” (pre-0.3 behavior). Hints still print; they do not fail CI unless `--strict-hints`. Prefer evidence gates over residual counts.
 
 ## What else
 

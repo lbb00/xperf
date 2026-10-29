@@ -32,7 +32,7 @@ Stable shapes, fewer per-iteration allocations — plus a separate chapter on to
 ## 0. Scope and method
 
 1. **Shapes first** — initialize fields in one order; avoid polymorphic hot paths (§1, §4.1).
-2. **Alloc in loops** — `.push({…})`, `new` per iteration, non-empty object binders (§1).
+2. **Alloc pressure** — `.push({…})`, `new`, non-empty object binders; default scope reports these outside loops too (§1).
 3. **`delete`** — prefer tombstones or parallel structures on hot objects (§2); avoid `delete arr[i]` holes (§4.2, jp-delete-array-hole).
 4. **Embed** — same alloc/shape rules without assuming `window` / DOM or V8 tiers (§3).
 5. **V8 Node/Chrome** — elements kinds, IC state, deopts, pipeline sketch (§4).
@@ -53,7 +53,7 @@ Engines (V8 and friends) assign a **hidden class** / map based on property addit
 - Avoid `if` branches that add different properties first.
 - See `examples/m01_hidden_class.js` (illustrative; no timing claim).
 
-### 1.2 Allocation in loops (jp-alloc-in-loop)
+### 1.2 Allocation in loops (jp-alloc-hot)
 
 Per-iteration allocation creates garbage and GC pauses when the loop is hot:
 
@@ -67,7 +67,7 @@ Per-iteration allocation creates garbage and GC pauses when the loop is hot:
 
 Prefer typed arrays (`examples/p01_typed_array.js`), object pools, or preallocated structures **when profiles show GC time** — not by default on every `.push`.
 
-**Evidence (this machine):** [`evidence/jp-alloc-in-loop`](../evidence/jp-alloc-in-loop.md) — `new Uint8Array` in-loop vs once **~19×**; `.push({i})` vs prealloc fill **~6.4×** (Node v20.19.2). Mechanism is alloc/GC (STATIC-VS-V8 PARTIAL for deopt). Default severity is **off** (`--preset all` or `--severity jp-alloc-in-loop=hint` enables it) — see [evidence-policy](evidence-policy.md).
+**Evidence (this machine):** [`evidence/jp-alloc-hot`](../evidence/jp-alloc-hot.md) — `new Uint8Array` in-loop vs once **~19×**; `.push({i})` vs prealloc fill **~6.4×** (Node v20.19.2). Mechanism is alloc/GC (STATIC-VS-V8 PARTIAL for deopt). Default severity is **off** (`--preset all` or `--severity jp-alloc-hot=hint` enables it) — see [evidence-policy](evidence-policy.md). Default **`--scope all`** reports these patterns outside loops too; `--scope loop` keeps the former in-loop-only match.
 
 ### 1.3 Corpus dogfood (heuristic)
 
@@ -75,10 +75,10 @@ Counts below come from earlier line-window revisions of the linter (r1–r3) and
 
 | Corpus | r1 → r2 → r3 | Notes |
 |--------|--------------|-------|
-| Node `lib/` | 60 → 179 → **115** (jp-alloc-in-loop **33 → 158 → 94**; jp-delete-shape 27 → 21 → 21) | r2 intentional `new` / non-empty binders raised jp-alloc-in-loop; r3 comment/`for` FP cut it. Residual jp-alloc-in-loop: `inspect.js` `new SafeMap()` (~16), stream `pull.js` / `share.js` / `broadcast.js` `IterResult` / `Uint8Array`, `abort_controller.js` `??= new SafeSet()` inside a real `for` |
+| Node `lib/` | 60 → 179 → **115** (jp-alloc-hot **33 → 158 → 94**; jp-delete-shape 27 → 21 → 21) | r2 intentional `new` / non-empty binders raised jp-alloc-hot; r3 comment/`for` FP cut it. Residual jp-alloc-hot: `inspect.js` `new SafeMap()` (~16), stream `pull.js` / `share.js` / `broadcast.js` `IterResult` / `Uint8Array`, `abort_controller.js` `??= new SafeSet()` inside a real `for` |
 | Preact `src/` | **0 → 0 → 0** | Clean baseline — rules may be narrow for framework cores (little `.push({` / loop `new`) |
-| quickjs `*.js` | 5 → 4 → **2** jp-alloc-in-loop | tests/ skipped; leftover codegen-ish scripts |
-| TypeScript `packages/typescript/src` | — → 47 → **15** jp-alloc-in-loop | Post-Go-migration tip (~50 `.ts`); comment/loop fix helped. Classic `src/compiler` not in this tree |
+| quickjs `*.js` | 5 → 4 → **2** jp-alloc-hot | tests/ skipped; leftover codegen-ish scripts |
+| TypeScript `packages/typescript/src` | — → 47 → **15** jp-alloc-hot | Post-Go-migration tip (~50 `.ts`); comment/loop fix helped. Classic `src/compiler` not in this tree |
 
 **Reading Node residual:** once-init `??= new` inside a real loop is often **true** allocation (severity tier vs `.push({` still open). `inspect.js` SafeMap construction can be loop-adjacent without being per-element hot — review, do not mass-rewrite.
 
@@ -86,7 +86,7 @@ Counts below come from earlier line-window revisions of the linter (r1–r3) and
 
 - Drop empty `{}`/`[]` binders (r2) — killed Node options-bag noise; kept `.push({`.
 - Multi-line block comments + brace-less `for` fix (r3) — JSDoc `for` and `for (…)\n stmt;` no longer open fake loops (Console prototype install, etc.).
-- Fixtures: `good/empty_opts_in_loop.js`, `good/comment_for_not_loop.js`, `good/throw_new_in_loop.js`, `good/jp-alloc-in-loop_reuse_buffer.js`, `bad/jp-alloc-in-loop_new_in_loop.js`, `bad/jp-alloc-in-loop_push_object.js`.
+- Fixtures: `good/empty_opts_in_loop.js`, `good/comment_for_not_loop.js`, `good/throw_new_in_loop.js`, `good/jp-alloc-hot_reuse_buffer.js`, `bad/jp-alloc-hot_new_in_loop.js`, `bad/jp-alloc-hot_push_object.js`.
 
 ### 1.5 String `+=` in a loop (removed)
 
@@ -140,7 +140,7 @@ Node’s `lib/internal/bootstrap/**` uses `delete` for module cache and feature 
 
 **jsperf-lint:** skips files under `internal/bootstrap/`, filenames matching `*bootstrap*`, and inspect/debugger/test-runner paths for jp-delete-shape and jp-delete-array-hole.
 
-**Evidence (dogfood):** Node `lib/` jp-delete-shape **27 → 21** after bootstrap skip (r1→r2); held at **21** in r3 while jp-alloc-in-loop moved. Remaining deletes need case-by-case review (CLI teardown, rare maps).
+**Evidence (dogfood):** Node `lib/` jp-delete-shape **27 → 21** after bootstrap skip (r1→r2); held at **21** in r3 while jp-alloc-hot moved. Remaining deletes need case-by-case review (CLI teardown, rare maps).
 
 ### 2.3 Optional future
 
@@ -154,9 +154,9 @@ Node’s `lib/internal/bootstrap/**` uses `delete` for module cache and feature 
 
 QuickJS, Hermes-like embeds, and 小程序 JS runtimes still pay for:
 
-- Per-iteration object allocation (jp-alloc-in-loop patterns).
+- Per-iteration object allocation (jp-alloc-hot patterns).
 - Shape changes via `delete` or divergent property order.
-- Logging in tight loops (**jp-console-in-loop** — `console.log` / `console.debug`). Evidence: [`jp-console-in-loop`](../evidence/jp-console-in-loop.md) (~**1300×** vs quiet even with discarded stdout) — default **off** (`app`) / **hint** (`engine`), not a CI error.
+- Logging in tight loops (**jp-console-hot** — `console.log` / `console.debug`). Evidence: [`jp-console-hot`](../evidence/jp-console-hot.md) (~**1300×** vs quiet even with discarded stdout) — default **off** (`app`) / **hint** (`engine`), not a CI error.
 
 They often **lack** a browser Performance panel, DOM, or large IC budgets. Advice that starts with “open DevTools → …” does not transfer. Prefer:
 
@@ -168,7 +168,7 @@ They often **lack** a browser Performance panel, DOM, or large IC budgets. Advic
 
 ### 3.2 Shared quickjs tree
 
-cperf dogfoods the **C** engine; jsperf dogfoods the `*.js` beside it (tests and `gen-*` skipped). The current rules report **0** findings there ([corpus.md](corpus.md)); earlier revisions reported 2 jp-alloc-in-loop. Low pressure, but useful as an embed-adjacent sample. Do not expect Preact-level cleanliness on generator scripts.
+cperf dogfoods the **C** engine; jsperf dogfoods the `*.js` beside it (tests and `gen-*` skipped). The current rules report **0** findings there ([corpus.md](corpus.md)); earlier revisions reported 2 jp-alloc-hot. Low pressure, but useful as an embed-adjacent sample. Do not expect Preact-level cleanliness on generator scripts.
 
 ### 3.3 What not to recommend here
 
@@ -264,8 +264,8 @@ Code may climb tiers as it heats up and fall back on deopt. **Do not** overclaim
 
 | Rule | Sees | Does **not** see |
 |------|------|------------------|
-| jp-alloc-in-loop | Loop-adjacent `.push({`, non-empty binders, clear `new` containers | IC polymorphism; whether alloc causes deopt (usually it does not — it causes GC) |
-| jp-console-in-loop | `console.*` in a loop window | Whether logging is actually hot |
+| jp-alloc-hot | `.push({`, non-empty binders, clear `new` containers (default scope all) | IC polymorphism; whether alloc causes deopt (usually it does not — it causes GC) |
+| jp-console-hot | `console.*` (default scope all) | Whether logging is worth gating even off a hot path |
 | jp-delete-shape | `delete obj.key`-style members | Dictionary mode already; deopt vs “just slow” |
 | jp-delete-array-hole | `delete arr[i]` (holey) | Runtime elements kind; holey from skipped indices without `delete` |
 | jp-string-plus-in-loop | removed | `push` + `join` was not about 2× on the matched `+=` shapes |
@@ -301,11 +301,11 @@ Experiment: `examples/bench/static_vs_v8_correlate.js` · `scripts/run-static-vs
 | Packed vs holey `delete a[i]` | jp-delete-array-hole-like | **5.47×** | **YES** (time); deopt noisy |
 | `Float64Array` vs holey `number[]` | holey | **1.34×** | **PARTIAL** (muted) |
 | `delete obj.k` vs `= undefined` | jp-delete-shape | **165×** | **YES** (time); deopt counts alike |
-| Control: `new` in loop vs once | jp-alloc-in-loop | **49.3×** | **PARTIAL** — alloc/GC pain, not deopt |
+| Control: `new` in loop vs once | jp-alloc-hot | **49.3×** | **PARTIAL** — alloc/GC pain, not deopt |
 
 **Do not pretend the jp-* rules equal JIT awareness.** Agreement is strongest for shapes / holey / hot `delete`; weakest when using deopt line counts as an oracle or when selling typed arrays as always faster than packed doubles.
 
-**JSONL gates (Node v20.19.2 on this machine, re-run `scripts/regen-evidence.sh`):** jp-delete-array-hole ~**3.2×** → **error**; jp-delete-shape ~**474×** (corpus hits almost all OK-idiom) → **off**; jp-alloc-in-loop ~**19×** (alloc/GC) → **off**; jp-console-in-loop ~**1328×** (discard sink, env-dependent) → **off** (`app`) / **hint** (`engine`). See [`evidence-policy`](evidence-policy.md) and `evidence/jp-*.md`.
+**JSONL gates (Node v20.19.2 on this machine, re-run `scripts/regen-evidence.sh`):** jp-delete-array-hole ~**3.2×** → **error**; jp-delete-shape ~**474×** (corpus hits almost all OK-idiom) → **off**; jp-alloc-hot ~**19×** (alloc/GC) → **off**; jp-console-hot ~**1328×** (discard sink, env-dependent) → **off** (`app`) / **hint** (`engine`). See [`evidence-policy`](evidence-policy.md) and `evidence/jp-*.md`.
 
 ---
 
@@ -383,7 +383,7 @@ Do **not** interpret a clean jsperf-lint self-lint as “startup is fine.” Do 
 
 ## 6. Constructors, JSON, DOM queries, and date formats
 
-Each hint below is one measured shape. The hint line states that premise. A call that only looks similar is not given that rewrite.
+Each hint below is one measured shape. The hint line states that premise. A call that only looks similar is not given that rewrite. Default **`--scope all`** reports these smells everywhere — extreme stacks treat drip-by-drip cost as in-scope even off a loop. Opt in to **`--scope loop`** for the former in-loop-only match. Messages do not tell readers or models that non-loop sites can be ignored.
 
 `new RegExp(pattern)` compiles on every call when the pattern stays the same. A regex literal is cached. If the pattern is the loop variable, or `parts[i]`, the checker does not say to compile once. The bench compiled one fixed pattern, about 4.4× on Node 26.
 
@@ -391,33 +391,33 @@ Each hint below is one measured shape. The hint line states that premise. A call
 
 `querySelector` / `getElementById` of one unchanged selector was about 16× on Node 26, a tiny linkedom document. A selector built from the loop index is not that bench. `new Intl.DateTimeFormat` with unchanged locale and options was about 36× on Node 26; both sides still format. `new Date` is not this rule.
 
-`fs.readFileSync` of one unchanged path, inside the loop body, was about 114× on Node 26 versus reading once. `for (const line of readFileSync(file).split("\n"))` runs the read once, before `{`. The checker reports the call only in the body. A path that changes every iteration cannot be hoisted. A `while (readFileSync(path))` condition is outside the body and is not reported.
+`fs.readFileSync` of one unchanged path was about 114× on Node 26 versus reading once. Under `--scope loop`, only the loop body after `{` is matched (a `for` iterable that runs the read once is then skipped). Under default `--scope all`, the call is reported wherever it appears when the path is stable. A path that changes every iteration (loop binding) is not reported.
 
-`Date.now` was about 26× and `performance.now` about 19× versus one sample, in a tight loop that did not wait. A loop that contains `await`, or a `for await` loop, is not reported. Hoist the clock only when that iteration does not need a fresh time. A rate limiter that reads the clock each pass has nothing to move.
+`Date.now` was about 26× and `performance.now` about 19× versus one sample, in a tight loop that did not wait. A loop that contains `await`, or a `for await` loop, is not reported for the clock rule. Sample once when a fresh time is not required each call. A rate limiter that must read the clock each pass has nothing to move.
 
-**jp-regex-ctor-in-loop** and **jp-json-in-loop** stay **hint** on the app and engine presets. JSONL exists for those two, and the 2026-10-22 verdict does not cover them. **jp-dom-query-in-loop** (about 16× on Node 26, a tiny linkedom document) and **jp-intl-datetimeformat-in-loop** (about 36× on Node 26, both sides still format) have JSONL and stay **hint**. They are outside that verdict. `--preset all` is error for every rule that still exists.
+**jp-regex-ctor-hot** and **jp-json-hot** stay **hint** on the app and engine presets. JSONL exists for those two, and the 2026-10-22 verdict does not cover them. **jp-dom-query-hot** (about 16× on Node 26, a tiny linkedom document) and **jp-intl-datetimeformat-hot** (about 36× on Node 26, both sides still format) have JSONL and stay **hint**. They are outside that verdict. `--preset all` is error for every rule that still exists.
 
 `Reflect.get` was about 8× and was not given a rule.
 
-Companion lint: **jp-regex-ctor-in-loop**, **jp-json-in-loop**, **jp-dom-query-in-loop**, **jp-intl-datetimeformat-in-loop**, **jp-readfile-sync-in-loop**, **jp-clock-in-loop**.
+Companion lint: **jp-regex-ctor-hot**, **jp-json-hot**, **jp-dom-query-hot**, **jp-intl-datetimeformat-hot**, **jp-readfile-sync-hot**, **jp-clock-hot**.
 ### Lint map
 
 | ID | Topic | Severity | Evidence / note |
 |----|--------|----------|-----------------|
-| jp-alloc-in-loop | object/array/`new` alloc in loop | **off** (`all`: error) | [`jp-alloc-in-loop`](../evidence/jp-alloc-in-loop.md) ~19× / ~6.4× — GC/alloc, not deopt |
-| jp-console-in-loop | `console.*` in loop | **hint** (`engine`) / **off** (`app`) | [`jp-console-in-loop`](../evidence/jp-console-in-loop.md) ~1328× discard sink — env-dependent |
+| jp-alloc-hot | object/array/`new` alloc | **off** (`all`: error) | [`jp-alloc-hot`](../evidence/jp-alloc-hot.md) ~19× / ~6.4× — GC/alloc, not deopt |
+| jp-console-hot | `console.*` | **hint** (`engine`) / **off** (`app`) | [`jp-console-hot`](../evidence/jp-console-hot.md) ~1328× discard sink — env-dependent |
 | jp-delete-shape | `delete` on plain members | **off** (`all`: error) | [`jp-delete-shape`](../evidence/jp-delete-shape.md) ~474× vs tombstone; corpus hits almost all OK-idiom |
 | jp-delete-array-hole | `delete` with computed index (holey arrays) | **error** | [`jp-delete-array-hole`](../evidence/jp-delete-array-hole.md) ~3.2× vs packed |
 | jp-map-filter-chain | chained `.map` / `.filter` / `.flatMap` | **hint** | long arrays about 4.6×–9.8×; a 3-row filter+map is 1.28× |
-| jp-regex-ctor-in-loop | `new RegExp` in loop, pattern not a loop binding | **hint** | Node 26 fixed pattern about 4.4×; hoist only when it stays the same |
-| jp-json-in-loop | `JSON.parse` / `stringify` in loop, text not a loop binding | **hint** | Node 26 one unchanged text about 140×; hoist only when it stays the same |
-| jp-dom-query-in-loop | DOM query in loop | **hint** | JSONL about 16× on Node 26, a tiny linkedom document; not corpus-triaged |
-| jp-intl-datetimeformat-in-loop | `new Intl.DateTimeFormat` in loop | **hint** | Node 26 about 36×; both sides still format; not corpus-triaged |
-| jp-readfile-sync-in-loop | `readFileSync` in the loop body | **hint** | Node 26, one unchanged path about 114×; the `for` iterable runs once and is not reported |
-| jp-clock-in-loop | `Date.now` / `performance.now` in a tight loop | **hint** | Node 26 about 70× / 110× with no `await`; hoist only when this pass does not need a fresh time |
+| jp-regex-ctor-hot | `new RegExp`, pattern not a loop binding | **hint** | Node 26 fixed pattern about 4.4×; prefer a literal or one shared compile |
+| jp-json-hot | `JSON.parse` / `stringify`, text not a loop binding | **hint** | Node 26 one unchanged text about 140×; reuse when stable |
+| jp-dom-query-hot | DOM query, selector not a loop binding | **hint** | JSONL about 16× on Node 26, a tiny linkedom document; not corpus-triaged |
+| jp-intl-datetimeformat-hot | `new Intl.DateTimeFormat` | **hint** | Node 26 about 36×; both sides still format; not corpus-triaged |
+| jp-readfile-sync-hot | `readFileSync`, path not a loop binding | **hint** | Node 26, one unchanged path about 114× |
+| jp-clock-hot | `Date.now` / `performance.now` | **hint** | Node 26 about 70× / 110× with no `await`; sample once when fresh time is not required |
 | *(none)* | module resolution / eager graph / barrels | — | §5 — use `--cpu-prof` |
 
-Severities above are the default `app` preset. Policy: [`evidence-policy.md`](evidence-policy.md). Fixtures: `jsperf-lint/fixtures/{bad,good}/`.
+Severities above are the default `app` preset. Matching scope defaults to **`--scope all`** (everywhere); `--scope loop` restores in-loop-only matching. Policy: [`evidence-policy.md`](evidence-policy.md). Fixtures: `jsperf-lint/fixtures/{bad,good}/`.
 
 ### References
 

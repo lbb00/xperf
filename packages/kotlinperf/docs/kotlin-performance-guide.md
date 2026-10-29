@@ -23,15 +23,15 @@ Prefer `ArrayList(n)` / `MutableList` with capacity when size is known. Avoid al
 
 ## 2. Strings and hot I/O
 
-`s += x` in a loop is a classic builder case (`StringBuilder` / `buildString`). Keep `println` out of tight loops. For measured string concat, see jvmperf `jp-string-concat-in-loop`.
+`s += x` in a loop is a classic builder case (`StringBuilder` / `buildString`). Keep `println` out of tight loops. For measured string concat, see jvmperf `jp-string-concat-hot`.
 
 ## Lint map
 
 | ID | Smell | Default |
 |----|-------|---------|
-| kt-list-add-in-loop | list alloc / add growth in loop | off |
-| kt-string-plus-in-loop | string `+=` in loop | off |
-| kt-println-in-loop | `println` in loop | off |
+| kt-list-add-hot | list alloc / add growth in loop | off |
+| kt-string-plus-hot | string `+=` in loop | off |
+| kt-println-hot | `println` in loop | off |
 
 Escalate only with `evidence/<rule>.jsonl` — see [evidence-policy.md](evidence-policy.md). Measured JVM claims: [jvmperf](../../jvmperf/).
 

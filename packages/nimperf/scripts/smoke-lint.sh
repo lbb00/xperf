@@ -9,7 +9,7 @@ fi
 BIN=("$ROOT/nimperf-lint/nimperf-lint")
 set +e
 "${BIN[@]}" "$ROOT/nimperf-lint/fixtures/bad" \
-  --severity nm-seq-add-in-loop=error --severity nm-echo-in-loop=error --severity nm-seq-no-capacity=error
+  --severity nm-seq-add-hot=error --severity nm-echo-hot=error --severity nm-seq-no-capacity=error
 b=$?
 "${BIN[@]}" "$ROOT/nimperf-lint/fixtures/good"
 g=$?

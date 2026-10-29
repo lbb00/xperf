@@ -1,9 +1,9 @@
 "use strict";
 /**
- * Evidence microbench for jp-alloc-in-loop / jp-console-in-loop → packages/jsperf/evidence/*.jsonl
- * jp-alloc-in-loop kernels match static_vs_v8_correlate.js case 5 (+ push vs prealloc).
- * "jp-console-in-loop": console.log in loop vs quiet loop (stdout discarded so the run is
- * not TTY-bound; see jp-console-in-loop.md for env limits).
+ * Evidence microbench for jp-alloc-hot / jp-console-hot → packages/jsperf/evidence/*.jsonl
+ * jp-alloc-hot kernels match static_vs_v8_correlate.js case 5 (+ push vs prealloc).
+ * "jp-console-hot": console.log in loop vs quiet loop (stdout discarded so the run is
+ * not TTY-bound; see jp-console-hot.md for env limits).
  */
 const fs = require("fs");
 const path = require("path");
@@ -37,7 +37,7 @@ function timeMany(fn) {
   return median(samples);
 }
 
-/* --- jp-alloc-in-loop --- */
+/* --- jp-alloc-hot --- */
 function case_new_in_loop() {
   let s = 0;
   for (let i = 0; i < N; i++) {
@@ -75,7 +75,7 @@ function case_prealloc_fill() {
   return s;
 }
 
-/* --- jp-console-in-loop --- */
+/* --- jp-console-hot --- */
 function withDiscardStdout(fn) {
   const discard = new Writable({
     write(_chunk, _enc, cb) {
@@ -137,7 +137,7 @@ const consoleLoop = timeMany(case_console_in_loop);
 
 const jp001 = [
   {
-    rule: "jp-alloc-in-loop",
+    rule: "jp-alloc-hot",
     case: "new_once_outside",
     role: "after",
     node,
@@ -148,7 +148,7 @@ const jp001 = [
     ts,
   },
   {
-    rule: "jp-alloc-in-loop",
+    rule: "jp-alloc-hot",
     case: "new_in_loop",
     role: "before",
     node,
@@ -159,7 +159,7 @@ const jp001 = [
     ts,
   },
   {
-    rule: "jp-alloc-in-loop",
+    rule: "jp-alloc-hot",
     case: "prealloc_fill_sum",
     role: "after",
     node,
@@ -170,7 +170,7 @@ const jp001 = [
     ts,
   },
   {
-    rule: "jp-alloc-in-loop",
+    rule: "jp-alloc-hot",
     case: "push_object_literal",
     role: "before",
     node,
@@ -184,7 +184,7 @@ const jp001 = [
 
 const jp002 = [
   {
-    rule: "jp-console-in-loop",
+    rule: "jp-console-hot",
     case: "quiet_loop",
     role: "after",
     node,
@@ -195,7 +195,7 @@ const jp002 = [
     ts,
   },
   {
-    rule: "jp-console-in-loop",
+    rule: "jp-console-hot",
     case: "console_once_after",
     role: "after",
     node,
@@ -206,7 +206,7 @@ const jp002 = [
     ts,
   },
   {
-    rule: "jp-console-in-loop",
+    rule: "jp-console-hot",
     case: "console_log_in_loop",
     role: "before",
     node,
@@ -230,8 +230,8 @@ function writeRule(id, rows) {
   );
 }
 
-writeRule("jp-alloc-in-loop", jp001);
-writeRule("jp-console-in-loop", jp002);
+writeRule("jp-alloc-hot", jp001);
+writeRule("jp-console-hot", jp002);
 console.log(
   "node=%s v8=%s N=%d N_CONSOLE=%d new_loop/once=%s push/prealloc=%s console/quiet=%s",
   node,

@@ -1,5 +1,5 @@
 #!/usr/bin/env ruby
-# Evidence for rb-string-plus-in-loop–rb-file-read-in-loop → packages/rubyperf/evidence/
+# Evidence for rb-string-plus-hot–rb-file-read-hot → packages/rubyperf/evidence/
 require 'benchmark'
 
 WARM = (ENV['RB_WARM'] || '3').to_i
@@ -40,10 +40,10 @@ emit = lambda do |rule, case_name, role, med, ops, ratio|
   warn format('  %s %s %s median=%.3f ms ops=%d ratio=%.3f', rule, role, case_name, med, ops, ratio)
 end
 
-# rb-string-plus-in-loop string += vs <<
+# rb-string-plus-hot string += vs <<
 n1 = (ENV['RB001_N'] || '50000').to_i
 parts = Array.new(n1, 'x')
-warn "rb-string-plus-in-loop str-plus n=#{n1}"
+warn "rb-string-plus-hot str-plus n=#{n1}"
 med1a = time_many do
   s = +''
   parts.each { |p| s << p }
@@ -54,15 +54,15 @@ med1b = time_many do
   parts.each { |p| s += p }
   s.length
 end
-emit.call('rb-string-plus-in-loop', 'shovel', 'after', med1a, n1, 1.0)
-emit.call('rb-string-plus-in-loop', 'str_plus', 'before', med1b, n1, med1b / [med1a, 1e-9].max)
+emit.call('rb-string-plus-hot', 'shovel', 'after', med1a, n1, 1.0)
+emit.call('rb-string-plus-hot', 'str_plus', 'before', med1b, n1, med1b / [med1a, 1e-9].max)
 
 n1s = (ENV['RB001_N_SMALL'] || '100').to_i
 parts_s = parts[0, n1s]
 med1sa = time_many { s = +''; parts_s.each { |p| s << p }; s.length }
 med1sb = time_many { s = ''; parts_s.each { |p| s += p }; s.length }
-emit.call('rb-string-plus-in-loop', 'small_shovel', 'after', med1sa, n1s, 1.0)
-emit.call('rb-string-plus-in-loop', 'small_str_plus', 'before', med1sb, n1s, med1sb / [med1sa, 1e-9].max)
+emit.call('rb-string-plus-hot', 'small_shovel', 'after', med1sa, n1s, 1.0)
+emit.call('rb-string-plus-hot', 'small_str_plus', 'before', med1sb, n1s, med1sb / [med1sa, 1e-9].max)
 
 # rb-array-plus-rebind array + [x] vs <<
 n2 = (ENV['RB002_N'] || '20000').to_i
@@ -88,9 +88,9 @@ med2sb = time_many { a = []; items_s.each { |x| a = a + [x] }; a.length }
 emit.call('rb-array-plus-rebind', 'small_shovel', 'after', med2sa, n2s, 1.0)
 emit.call('rb-array-plus-rebind', 'small_array_plus', 'before', med2sb, n2s, med2sb / [med2sa, 1e-9].max)
 
-# rb-puts-in-loop puts in loop vs join (stdout to /dev/null)
+# rb-puts-hot puts in loop vs join (stdout to /dev/null)
 n3 = (ENV['RB003_N'] || '20000').to_i
-warn "rb-puts-in-loop puts-loop n=#{n3}"
+warn "rb-puts-hot puts-loop n=#{n3}"
 med3a = time_many do
   File.open('/dev/null', 'w') do |f|
     buf = (0...n3).map(&:to_s)
@@ -104,8 +104,8 @@ med3b = time_many do
   end
   n3
 end
-emit.call('rb-puts-in-loop', 'join_once', 'after', med3a, n3, 1.0)
-emit.call('rb-puts-in-loop', 'puts_each', 'before', med3b, n3, med3b / [med3a, 1e-9].max)
+emit.call('rb-puts-hot', 'join_once', 'after', med3a, n3, 1.0)
+emit.call('rb-puts-hot', 'puts_each', 'before', med3b, n3, med3b / [med3a, 1e-9].max)
 
 Dir.mkdir(OUT) unless Dir.exist?(OUT)
 lines.each do |rule, objs|

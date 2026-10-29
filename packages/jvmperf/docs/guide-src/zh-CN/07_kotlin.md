@@ -277,7 +277,7 @@ data class State(val x: Int, val y: Int, val steps: Int)
 
 fun simulateCopy(n: Int): State {
     var s = State(0, 0, 0)
-    // jvmperf-lint: ignore jp-data-copy-in-loop -- Intentional counterexample.
+    // jvmperf-lint: ignore jp-data-copy-hot -- Intentional counterexample.
     repeat(n) { s = s.copy(x = s.x + 1, steps = s.steps + 1) }   // n allocations; escape analysis may not remove them.
     return s
 }

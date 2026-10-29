@@ -1,0 +1,2 @@
+{"rule":"gp-reflect-hot","case":"direct_field","role":"after","go":"go1.27.3","median_ms":0.061292,"ops":200000,"ratio":1.000000,"ts":"2026-10-23T12:22:07Z"}
+{"rule":"gp-reflect-hot","case":"fieldbyname_each_iter","role":"before","go":"go1.27.3","median_ms":6.220041,"ops":200000,"ratio":101.482102,"ts":"2026-10-23T12:22:07Z"}

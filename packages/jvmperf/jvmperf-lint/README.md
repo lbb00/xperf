@@ -43,9 +43,9 @@ Directories are scanned recursively for `.java`, `.kt`, and `.kts` files. Build,
 
 Exit code `0` means no findings (or `--no-fail`), `1` means findings, and `2` means an argument, I/O, or strict parse error. With `--no-fail`, per-file analysis exceptions are recorded in JSON `analysis_errors` and do not force exit `2`.
 
-`System.out` / `System.err` / Kotlin `print`/`println` inside loops are **not** flagged unless `--strict-stdio-in-loop` is set. Framework loggers (and Android `Log`) still fire jp-log-in-loop, with demotions for `main`/`dump*`/`print*`/`debug*` methods, `samples/`/`examples/` paths, level guards (`isDebugEnabled` / `isLoggable`), and simple sampling branches.
+`System.out` / `System.err` / Kotlin `print`/`println` inside loops are **not** flagged unless `--strict-stdio-in-loop` is set. Framework loggers (and Android `Log`) still fire jp-log-hot, with demotions for `main`/`dump*`/`print*`/`debug*` methods, `samples/`/`examples/` paths, level guards (`isDebugEnabled` / `isLoggable`), and simple sampling branches.
 
-Suppress a finding on the current or following line with `// jvmperf-lint: ignore jp-boxed-primitive-collection`. Use `// jvmperf-lint: ignore-file jp-regex-in-loop` to suppress a rule for the entire file. Kotlin uses the same comment syntax.
+Suppress a finding on the current or following line with `// jvmperf-lint: ignore jp-boxed-primitive-collection`. Use `// jvmperf-lint: ignore-file jp-regex-hot` to suppress a rule for the entire file. Kotlin uses the same comment syntax.
 
 Use `--list-rules` for the complete rule catalog. The [performance guide](../docs/en/performance-guide.md) explains the patterns and tradeoffs.
 

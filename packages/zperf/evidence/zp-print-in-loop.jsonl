@@ -1,2 +1,0 @@
-{"rule":"zp-print-in-loop","case":"debug_print_in_loop","role":"before","zig":"0.17.0","optimize":"fast","median_ms":2.860492,"ops":2000,"ratio":63566.488889,"ts":"2026-10-21T11:24:26Z"}
-{"rule":"zp-print-in-loop","case":"quiet_counter","role":"after","zig":"0.17.0","optimize":"fast","median_ms":4.5e-05,"ops":2000,"ratio":1.0,"ts":"2026-10-21T11:24:26Z"}

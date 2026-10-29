@@ -23,10 +23,10 @@ int finding_list_push(FindingList *fl, const char *rule, const char *path,
                       int line, const char *message);
 
 /* Scan one file; append findings. Returns 0 on success, -1 on I/O error. */
-int scan_file(const char *path, FindingList *out);
+int scan_file(const char *path, FindingList *out, const char *scope);
 
 /* Scan file or directory tree. Returns 0 on success, -1 if any I/O error. */
-int scan_path(const char *path, FindingList *out);
+int scan_path(const char *path, FindingList *out, const char *scope);
 
 int should_skip_path(const char *path);
 

@@ -1,0 +1,6 @@
+{"rule":"lu-table-insert-hot","case":"index_assign","role":"after","lua":"Lua 5.5","median_ms":0.663000,"ops":200000,"ratio":1.000000,"ts":"2026-10-23T12:27:05Z"}
+{"rule":"lu-table-insert-hot","case":"table_insert","role":"before","lua":"Lua 5.5","median_ms":4.327000,"ops":200000,"ratio":6.526395,"ts":"2026-10-23T12:27:05Z"}
+{"rule":"lu-table-insert-hot","case":"hash_len_append","role":"after","lua":"Lua 5.5","median_ms":1.241000,"ops":200000,"ratio":1.000000,"ts":"2026-10-23T12:27:05Z"}
+{"rule":"lu-table-insert-hot","case":"table_insert_vs_len","role":"before","lua":"Lua 5.5","median_ms":4.327000,"ops":200000,"ratio":3.486704,"ts":"2026-10-23T12:27:05Z"}
+{"rule":"lu-table-insert-hot","case":"small_index","role":"after","lua":"Lua 5.5","median_ms":1.564000,"ops":100,"ratio":1.000000,"ts":"2026-10-23T12:27:05Z"}
+{"rule":"lu-table-insert-hot","case":"small_insert","role":"before","lua":"Lua 5.5","median_ms":5.701000,"ops":100,"ratio":3.645141,"ts":"2026-10-23T12:27:05Z"}

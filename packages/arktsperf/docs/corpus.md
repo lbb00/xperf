@@ -8,10 +8,10 @@ As of 2026-10-22 (Asia/Shanghai); real ArkTS trees.
 
 | Tree | Commit / source | Lint r2 → r3 redesign | Notes |
 |------|-----------------|----------------------|-------|
-| **BasicFeature** | gitee `openharmony/applications_app_samples` `a826ab0e` `code/BasicFeature` | 29 → **22** | at-includes-in-loop, at-json-in-loop |
-| **UI** | same repo `code/UI` | 13 → **8** | at-includes-in-loop |
-| **dimina-harmony** | local Harmony/ArkTS tree (not vendored; pin URL+commit when published) @ `cfd73f9914da1f417a4f1af62fa08b7642548f5d` | 6 → **26** | BASE64 at-includes-in-loop TP |
+| **BasicFeature** | gitee `openharmony/applications_app_samples` `a826ab0e` `code/BasicFeature` | 29 → **22** | at-includes-hot, at-json-hot |
+| **UI** | same repo `code/UI` | 13 → **8** | at-includes-hot |
+| **dimina-harmony** | local Harmony/ArkTS tree (not vendored; pin URL+commit when published) @ `cfd73f9914da1f417a4f1af62fa08b7642548f5d` | 6 → **26** | BASE64 at-includes-hot TP |
 
-**corpus-ready: yes** (r3 redesign). Defaults: `at-includes-in-loop` and `at-json-in-loop` **hint**; the other three rules **off**. No G4.
+**corpus-ready: yes** (r3 redesign). Defaults: `at-includes-hot` and `at-json-hot` **hint**; the other three rules **off**. No G4.
 
 Do not commit corpus sources into `packages/arktsperf`.

@@ -676,7 +676,7 @@ static int has_strcat_call(const char *line) {
     return 0;
 }
 
-/* cp-alloc-in-loop reverse-opt: capacity-doubling realloc is OK-idiom, not per-iter smell. */
+/* cp-alloc-hot reverse-opt: capacity-doubling realloc is OK-idiom, not per-iter smell. */
 static int is_doubling_realloc(const char *line) {
     const char *p = cperf_find_word(line, "realloc");
     if (!p) return 0;
@@ -697,17 +697,17 @@ static const char *k_clock_names[] = {"gettimeofday", "clock_gettime", NULL};
 static const char *k_regex_names[] = {"reg" "comp", NULL};
 
 static const char k_msg_buf_fmt[] =
-    "formatted buffer write in loop; reuse one buffer outside the loop";
+    "formatted buffer write; reuse one buffer — cost adds up even off a hot path";
 static const char k_msg_file_open[] =
-    "file open in a loop; open outside only when this path stays the same";
+    "file open; open once when the path stays the same — cost adds up even off a hot path";
 static const char k_msg_clock[] =
     "clock sample in a tight loop; hoist only when this iteration does not need a fresh time";
 static const char k_msg_regex[] =
-    "regular expression compiled in a loop; compile outside only when this pattern stays the same";
+    "regular expression compile; compile once when the pattern stays the same — cost adds up even off a hot path";
 /* Pieces stay split so this file never contains the stack-call token. */
 static const char *k_stack_names[] = {"all" "oca", "__builtin_all" "oca", NULL};
 static const char k_msg_stack[] =
-    "stack allocation in a loop grows until the function returns; reuse one buffer";
+    "stack allocation (alloca) that repeats grows until the function returns; reuse one buffer — cost adds up even off a hot path";
 static const char k_msg_byvalue[] =
     "large struct passed by value; pass a pointer unless the callee needs its own copy";
 
@@ -1029,7 +1029,8 @@ static int has_named_call(const char *line, const char *const *names) {
     return 0;
 }
 
-int scan_file(const char *path, FindingList *out) {
+int scan_file(const char *path, FindingList *out, const char *scope) {
+    int scope_all = !(scope && strcmp(scope, "loop") == 0);
     FILE *fp = fopen(path, "rb");
     if (!fp) return -1;
 
@@ -1155,24 +1156,24 @@ int scan_file(const char *path, FindingList *out) {
             }
         }
 
-        int active = (loop_sp > 0) || single_body;
+        int active = scope_all || (loop_sp > 0) || single_body;
         int in_dump = ifdef_any(ifdef_stack, ifdef_sp);
         if (active && has_alloc_call(line) && !in_dump) {
             if (!has_return_alloc(line) && !is_doubling_realloc(line)) {
-                finding_list_push(out, "cp-alloc-in-loop", path, lineno,
-                                  "allocation in loop body; consider arena/pool or hoist");
+                finding_list_push(out, "cp-alloc-hot", path, lineno,
+                                  "allocation; consider arena/pool or hoist — cost adds up even off a hot path");
             }
         }
         if (active && has_print_call(line)) {
             if (!should_skip_cp003(line, raw, prev_nonempty, current_func, in_dump)) {
-                finding_list_push(out, "cp-printf-in-loop", path, lineno,
-                                  "stdio print in loop; buffer or remove from hot path");
+                finding_list_push(out, "cp-printf-hot", path, lineno,
+                                  "stdio print; buffer or remove — cost adds up even off a hot path");
             }
         }
         /* cp-strlen-in-cond: strlen in for/while condition (line-local; does not need loop_sp). */
         if (has_strlen_in_loop_cond(line) && !in_dump) {
             finding_list_push(out, "cp-strlen-in-cond", path, lineno,
-                              "strlen in loop condition; hoist length to a local");
+                              "strlen in condition; hoist length to a local — cost adds up even off a hot path");
         }
         if (active && has_strcat_call(line) && !in_dump) {
             /* macro continuation — definition site, not a hot loop body */
@@ -1181,26 +1182,26 @@ int scan_file(const char *path, FindingList *out) {
                                 isspace((unsigned char)raw[rlen - 1])))
                 rlen--;
             if (!(rlen > 0 && raw[rlen - 1] == '\\')) {
-                finding_list_push(out, "cp-strcat-in-loop", path, lineno,
-                                  "strcat/strncat in loop; track end pointer or use memcpy");
+                finding_list_push(out, "cp-strcat-hot", path, lineno,
+                                  "strcat/strncat; track end pointer or use memcpy — cost adds up even off a hot path");
             }
         }
         if (active && !in_dump && has_named_call(line, k_buf_fmt_names)) {
-            finding_list_push(out, "cp-sprintf-in-loop", path, lineno, k_msg_buf_fmt);
+            finding_list_push(out, "cp-sprintf-hot", path, lineno, k_msg_buf_fmt);
         }
         if (active && !in_dump && has_named_call(line, k_file_open_names) &&
             !named_call_uses_bind(line, k_file_open_names, bind_names, bind_n)) {
-            finding_list_push(out, "cp-fopen-in-loop", path, lineno, k_msg_file_open);
+            finding_list_push(out, "cp-fopen-hot", path, lineno, k_msg_file_open);
         }
         if (active && !in_dump && has_named_call(line, k_clock_names)) {
-            finding_list_push(out, "cp-gettime-in-loop", path, lineno, k_msg_clock);
+            finding_list_push(out, "cp-gettime-hot", path, lineno, k_msg_clock);
         }
         if (active && !in_dump && has_named_call(line, k_regex_names) &&
             !named_call_uses_bind(line, k_regex_names, bind_names, bind_n)) {
-            finding_list_push(out, "cp-regex-in-loop", path, lineno, k_msg_regex);
+            finding_list_push(out, "cp-regex-hot", path, lineno, k_msg_regex);
         }
         if (active && !in_dump && has_named_call(line, k_stack_names)) {
-            finding_list_push(out, "cp-alloca-in-loop", path, lineno, k_msg_stack);
+            finding_list_push(out, "cp-alloca-hot", path, lineno, k_msg_stack);
         }
         if (!in_record && cperf_find_word(line, "struct") && strchr(line, '{')) {
             in_record = 1;

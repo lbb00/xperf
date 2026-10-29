@@ -13,12 +13,12 @@ The rule catalog is in [`zperf-lint/README.md`](../zperf-lint/README.md), or run
 
 | ID | Name | Severity | Detection |
 |---|---|---|---|
-| zp-alloc-in-loop | `alloc-in-loop` | off | heap allocation inside a loop body |
+| zp-alloc-hot | `alloc-in-loop` | off | heap allocation inside a loop body |
 | zp-append-without-reserve | `append-without-reserve` | off | append in a loop without prior ensureTotalCapacity/ensureUnusedCapacity |
 | zp-page-allocator-small | `page-allocator-small` | warning | std.heap.page_allocator used directly for small or container allocations |
 | zp-debug-allocator | `debug-allocator` | off | GeneralPurposeAllocator/DebugAllocator used without switching on builtin.mode |
 | zp-large-struct-by-value | `large-struct-by-value` | off | large struct passed by value |
-| zp-print-in-loop | `print-in-loop` | off | std.debug.print inside a loop (std.log only with --strict-log-in-loop) |
+| zp-print-hot | `print-in-loop` | off | std.debug.print inside a loop (std.log only with --strict-log-in-loop) |
 | zp-unbuffered-io | `unbuffered-io` | off | reader/writer created with an empty buffer (&.{}) |
 | zp-missing-free | `missing-free` | off | allocated or initialized resource is never freed, deinit-ed, or handed off in this function |
 | zp-broad-runtime-safety | `broad-runtime-safety` | warning | @setRuntimeSafety(false) covers too large a scope |
@@ -30,7 +30,7 @@ The rule catalog is in [`zperf-lint/README.md`](../zperf-lint/README.md), or run
 | zp-optional-scalar-field | `optional-scalar-field` | off | optional scalar field (?u32 etc.) adds a flag byte padded by alignment |
 | zp-bool-array | `bool-array` | off | array/slice of bool used as a bit set |
 | zp-static-string-map | `static-string-map` | info | StringHashMap populated only with literal keys |
-| zp-runtime-div-in-loop | `runtime-div-in-loop` | off | division/modulo by a runtime value inside a loop |
+| zp-runtime-div-hot | `runtime-div-in-loop` | off | division/modulo by a runtime value inside a loop |
 | zp-queue-ordered-remove | `queue-ordered-remove` | warning | ArrayList removal shifts all following elements |
 | zp-shift-on-read | `shift-on-read` | warning | remaining bytes shifted back to the front after consuming a prefix |
 | zp-per-packet-alloc | `per-packet-alloc` | off | heap allocation on a per-packet / per-frame hot path |
@@ -38,12 +38,12 @@ The rule catalog is in [`zperf-lint/README.md`](../zperf-lint/README.md), or run
 | zp-map-put-without-ensure | `map-put-without-ensure` | off | HashMap put/getOrPut in a loop without prior ensureTotalCapacity/ensureUnusedCapacity |
 | zp-catch-unreachable-io | `catch-unreachable-io` | off | `catch unreachable` on fallible I/O (read/write/accept/connect/send/recv/…) |
 | zp-arena-reset-free-all | `arena-reset-free-all` | warning | ArenaAllocator.reset(.free_all) or deinit+recreate inside a loop |
-| zp-create-destroy-in-loop | `create-destroy-in-loop` | info | allocator.create(T) paired with destroy in the same loop |
-| zp-fixed-size-alloc-in-loop | `fixed-size-alloc-in-loop` | info | alloc(u8, comptime_int) of fixed size inside a loop |
-| zp-open-file-in-loop | `open-file-in-loop` | hint | openFile / openFileAbsolute inside a loop |
-| zp-clock-in-loop | `clock-in-loop` | hint | Io.Clock now inside a loop |
-| zp-json-in-loop | `json-in-loop` | hint | json.parseFromSlice of an unchanged payload inside a loop |
-| zp-alloc-print-in-loop | `alloc-print-in-loop` | hint | allocPrint / Allocator.print of a loop-invariant value |
+| zp-create-destroy-hot | `create-destroy-in-loop` | info | allocator.create(T) paired with destroy in the same loop |
+| zp-fixed-size-alloc-hot | `fixed-size-alloc-in-loop` | info | alloc(u8, comptime_int) of fixed size inside a loop |
+| zp-open-file-hot | `open-file-in-loop` | hint | openFile / openFileAbsolute inside a loop |
+| zp-clock-hot | `clock-in-loop` | hint | Io.Clock now inside a loop |
+| zp-json-hot | `json-in-loop` | hint | json.parseFromSlice of an unchanged payload inside a loop |
+| zp-alloc-print-hot | `alloc-print-in-loop` | hint | allocPrint / Allocator.print of a loop-invariant value |
 
 Example output from the rule fixtures. The message line has the Chinese message, then the English one; the `建议:` line (suggested fix) and the summary line are Chinese:
 
@@ -57,7 +57,7 @@ $ echo $?
 1
 ```
 
-Use `// zperf-lint: ignore zp-alloc-in-loop` to suppress a rule on the current and next line, or `// zperf-lint: ignore-file zp-packable-bools` to suppress a rule for the whole file. Some examples use these directives because they intentionally demonstrate an anti-pattern. The linter itself should report no findings in `examples/`.
+Use `// zperf-lint: ignore zp-alloc-hot` to suppress a rule on the current and next line, or `// zperf-lint: ignore-file zp-packable-bools` to suppress a rule for the whole file. Some examples use these directives because they intentionally demonstrate an anti-pattern. The linter itself should report no findings in `examples/`.
 
 Version 0.3 added:
 

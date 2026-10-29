@@ -23,22 +23,22 @@ Less quadratic list growth, fewer binary rebuilds, quieter hot loops.
 
 `Map.merge/2` or `Keyword.merge/2` on every element of a reduce was measured slower than `Map.put/3` (see [evidence-policy.md](evidence-policy.md)). Use `Map.put/3`, or merge outside only when the other map stays the same. Chained `Enum.map/2` then `Enum.filter/2` builds an intermediate list. On the measured chain of about 200000 integers that was about 4.5×; a short list is a different cost.
 
-Companion lint: **be-list-concat-reduce**, **be-map-merge-in-loop**, **be-enum-map-filter-chain** (all default **hint**).
+Companion lint: **be-list-concat-reduce**, **be-map-merge-hot**, **be-enum-map-filter-chain** (all default **hint**).
 
 ## 2. Binaries / strings and hot I/O
 
 `a <> b` (Elixir) or repeated binary append in a loop rebuilds binaries. Prefer iolists / `IO.iodata_to_binary/1`. No lint rule covers this smell (its former rule, `BE002`, was retired). Keep `IO.puts` / `:io.format` / `io:format` out of tight loops.
 
-Companion lint: **be-io-puts-in-loop** (default **off**).
+Companion lint: **be-io-puts-hot** (default **off**).
 
 ## Lint map
 
 | ID | Smell | Default |
 |----|-------|---------|
 | be-list-concat-reduce | list `++` in loop | hint |
-| be-map-merge-in-loop | `Map`/`Keyword.merge` in loop | hint |
+| be-map-merge-hot | `Map`/`Keyword.merge` in loop | hint |
 | be-enum-map-filter-chain | chained `Enum.map`/`filter` | hint |
-| be-io-puts-in-loop | `IO.puts` / `io:format` in loop | off |
+| be-io-puts-hot | `IO.puts` / `io:format` in loop | off |
 
 Escalate only with `evidence/be-*.jsonl` — see [evidence-policy.md](evidence-policy.md).
 

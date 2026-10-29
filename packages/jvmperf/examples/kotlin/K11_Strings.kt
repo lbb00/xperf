@@ -8,7 +8,7 @@ fun render(items: List<Pair<String, Int>>): String =
 
 fun renderSlow(items: List<Pair<String, Int>>): String {
     var s = ""
-    // jvmperf-lint: ignore jp-string-concat-in-loop -- Intentional counterexample.
+    // jvmperf-lint: ignore jp-string-concat-hot -- Intentional counterexample.
     for ((k, v) in items) s += "$k=$v\n"              // Copies the entire string on each iteration.
     return s
 }

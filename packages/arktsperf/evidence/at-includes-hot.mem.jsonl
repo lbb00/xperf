@@ -1,0 +1,3 @@
+{"rule":"at-includes-hot","case":"includes_loop","role":"mem","heap_delta_bytes":1254432,"heap_after_bytes":5605680,"rss_delta_kb":1152,"n":50000,"runtime":"node-proxy","node":"v20.19.2","method":"process.memoryUsage().heapUsed + /proc VmRSS"}
+{"rule":"at-includes-hot","case":"set_has","role":"mem","heap_delta_bytes":1425136,"heap_after_bytes":5712880,"rss_delta_kb":16,"n":50000,"runtime":"node-proxy","node":"v20.19.2","method":"process.memoryUsage().heapUsed + /proc VmRSS"}
+{"rule":"at-includes-hot","case":"set_structure_only","role":"mem","heap_delta_bytes":184072,"heap_after_bytes":4474104,"rss_delta_kb":0,"n":50000,"runtime":"node-proxy","node":"v20.19.2","method":"process.memoryUsage().heapUsed + /proc VmRSS"}

@@ -1,0 +1,2 @@
+{"rule":"sp-json-decode-hot","case":"decode_once","role":"after","swiftc":"swiftc -O","median_ms":0.011086,"ops":20000,"ratio":1,"ts":"2026-10-23T05:09:02Z"}
+{"rule":"sp-json-decode-hot","case":"decode_each_iter","role":"before","swiftc":"swiftc -O","median_ms":21.706939,"ops":20000,"ratio":1957.967742,"ts":"2026-10-23T05:09:02Z"}

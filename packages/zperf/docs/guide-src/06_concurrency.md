@@ -116,7 +116,7 @@ test "Allocating writer" {
 }
 ```
 
-**Anti-patterns:** `file.writer(io, &.{})` uses an empty buffer and can issue a system call for every write. Calling `std.debug.print` in a hot loop locks stderr and uses only a 64-byte buffer (see `lib/std/debug.zig`). zperf-lint rules zp-unbuffered-io and zp-print-in-loop report these patterns.
+**Anti-patterns:** `file.writer(io, &.{})` uses an empty buffer and can issue a system call for every write. Calling `std.debug.print` in a hot loop locks stderr and uses only a 64-byte buffer (see `lib/std/debug.zig`). zperf-lint rules zp-unbuffered-io and zp-print-hot report these patterns.
 
 **Evidence pack (L = local, U = upstream):**
 

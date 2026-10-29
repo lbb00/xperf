@@ -10,12 +10,12 @@ pub struct Finding {
     pub message: &'static str,
 }
 
-const MSG001: &str = "alloc/clone in loop; reuse buffers when profiles show pressure";
-const MSG003: &str = "println!/eprintln! in loop; gate debug or buffer outside";
-const MSG004: &str = "format! rebind accum in loop; prefer with_capacity + write!";
-const MSG006: &str = "collect::<Vec<_>> in loop; reuse a buffer or avoid per-iter collect";
-const MSG007: &str = "Regex::new in a loop; compile outside only when this pattern stays the same";
-const MSG008: &str = "file open in a loop; open once when the path stays the same";
+const MSG001: &str = "alloc/clone; reuse buffers when profiles show pressure — cost adds up even off a hot path";
+const MSG003: &str = "println!/eprintln!; gate debug or buffer outside — cost adds up even off a hot path";
+const MSG004: &str = "format! rebind accum; prefer with_capacity + write! — cost adds up even off a hot path";
+const MSG006: &str = "collect::<Vec<_>>; reuse a buffer or avoid per-iter collect — cost adds up even off a hot path";
+const MSG007: &str = "Regex::new; compile outside only when this pattern stays the same — cost adds up even off a hot path";
+const MSG008: &str = "file open; open once when the path stays the same — cost adds up even off a hot path";
 const MSG009: &str = "clock sample in a tight loop with no await; hoist only when this iteration does not need a fresh time";
 
 /// When false (via --raw-paths), noise path skips + heuristics are disabled for baseline dumps.
@@ -106,7 +106,7 @@ fn string_builder_path_skip(path: &Path) -> bool {
     false
 }
 
-/// Cold CLI / shell skips for rs-collect-vec-in-loop — keep styled_str + textwrap (real wrap allocs).
+/// Cold CLI / shell skips for rs-collect-vec-hot — keep styled_str + textwrap (real wrap allocs).
 fn cold_cli_path_skip(path: &Path) -> bool {
     let s = path.to_string_lossy();
     if s.contains("/shells/") || s.contains("clap_complete") || s.contains("clap_mangen") {
@@ -520,7 +520,8 @@ fn file_arg_uses(code: &str, names: &[String]) -> bool {
     arg_uses(code, &n, names)
 }
 
-pub fn scan_file(path: &Path) -> Vec<Finding> {
+pub fn scan_file(path: &Path, scope: &str) -> Vec<Finding> {
+    let scope_mode = if scope == "loop" { "loop" } else { "all" };
     let Ok(text) = fs::read_to_string(path) else {
         return vec![];
     };
@@ -579,10 +580,11 @@ pub fn scan_file(path: &Path) -> Vec<Finding> {
             }
             loop_names.extend(for_bind_names(&code));
         }
-        if in_loop > 0 && depth >= in_loop && !in_test {
+        let match_here = scope_mode == "all" || (in_loop > 0 && depth >= in_loop);
+        if match_here && !in_test {
             if rs001_signal(&code) {
                 out.push(Finding {
-                    rule: "rs-alloc-in-loop",
+                    rule: "rs-alloc-hot",
                     path: path.display().to_string(),
                     line: line_no,
                     message: MSG001,
@@ -590,7 +592,7 @@ pub fn scan_file(path: &Path) -> Vec<Finding> {
             }
             if rs004_signal(&code, path) {
                 out.push(Finding {
-                    rule: "rs-format-rebind-in-loop",
+                    rule: "rs-format-rebind-hot",
                     path: path.display().to_string(),
                     line: line_no,
                     message: MSG004,
@@ -598,7 +600,7 @@ pub fn scan_file(path: &Path) -> Vec<Finding> {
             }
             if rs003_signal(&code, path) {
                 out.push(Finding {
-                    rule: "rs-println-in-loop",
+                    rule: "rs-println-hot",
                     path: path.display().to_string(),
                     line: line_no,
                     message: MSG003,
@@ -609,7 +611,7 @@ pub fn scan_file(path: &Path) -> Vec<Finding> {
             }
             if rs_map_new_in_loop(&code) {
                 out.push(Finding {
-                    rule: "rs-map-new-in-loop",
+                    rule: "rs-map-new-hot",
                     path: path.display().to_string(),
                     line: line_no,
                     message: "HashMap::new in a loop; reuse one map when the inserts stay in this loop",
@@ -617,7 +619,7 @@ pub fn scan_file(path: &Path) -> Vec<Finding> {
             }
             if rs_regex_new_in_loop(&code) && !regex_arg_uses(&code, &loop_names) {
                 out.push(Finding {
-                    rule: "rs-regex-new-in-loop",
+                    rule: "rs-regex-new-hot",
                     path: path.display().to_string(),
                     line: line_no,
                     message: MSG007,
@@ -625,7 +627,7 @@ pub fn scan_file(path: &Path) -> Vec<Finding> {
             }
             if rs_file_open_in_loop(&code) && !file_arg_uses(&code, &loop_names) {
                 out.push(Finding {
-                    rule: "rs-file-open-in-loop",
+                    rule: "rs-file-open-hot",
                     path: path.display().to_string(),
                     line: line_no,
                     message: MSG008,
@@ -633,16 +635,16 @@ pub fn scan_file(path: &Path) -> Vec<Finding> {
             }
             if rs_clock_in_loop(&code) && !loop_await {
                 clock_hold.push(Finding {
-                    rule: "rs-clock-in-loop",
+                    rule: "rs-clock-hot",
                     path: path.display().to_string(),
                     line: line_no,
                     message: MSG009,
                 });
             }
-            // rs-collect-vec-in-loop: collect::<Vec in loop (keep textwrap/styled_str; skip cold CLI)
+            // rs-collect-vec-hot: collect::<Vec in loop (keep textwrap/styled_str; skip cold CLI)
             if rs006_signal(&code) && (!reverse || !skip_cold) {
                 out.push(Finding {
-                    rule: "rs-collect-vec-in-loop",
+                    rule: "rs-collect-vec-hot",
                     path: path.display().to_string(),
                     line: line_no,
                     message: MSG006,
@@ -675,10 +677,10 @@ pub fn scan_file(path: &Path) -> Vec<Finding> {
     out
 }
 
-pub fn scan_path(root: &Path) -> Vec<Finding> {
+pub fn scan_path(root: &Path, scope: &str) -> Vec<Finding> {
     if root.is_file() {
         return if is_rs(root) {
-            scan_file(root)
+            scan_file(root, scope)
         } else {
             vec![]
         };
@@ -704,7 +706,7 @@ pub fn scan_path(root: &Path) -> Vec<Finding> {
     }
     let mut all = Vec::with_capacity(64);
     for f in files {
-        all.extend(scan_file(&f));
+        all.extend(scan_file(&f, scope));
     }
     all
 }

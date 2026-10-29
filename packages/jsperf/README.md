@@ -17,14 +17,15 @@ Part of [XPerf](../../README.md). Shared docs: [docs/README.md](../../docs/READM
 ```sh
 node jsperf-lint/bin/jsperf-lint.js path/to/sources --preset app   # default
 node jsperf-lint/bin/jsperf-lint.js path/to/sources --preset all
-node jsperf-lint/bin/jsperf-lint.js path/to/sources --severity jp-alloc-in-loop=error
+node jsperf-lint/bin/jsperf-lint.js path/to/sources --scope all|loop   # default all
+node jsperf-lint/bin/jsperf-lint.js path/to/sources --severity jp-alloc-hot=error
 npm run self-lint   # dogfood own sources; must exit 0
 npm test            # fixtures + preset smoke
 ```
 
-Default **app**: jp-delete-array-hole = error; jp-map-filter-chain, jp-regex-ctor-in-loop, jp-json-in-loop, jp-dom-query-in-loop, jp-intl-datetimeformat-in-loop, jp-readfile-sync-in-loop, and jp-clock-in-loop = hint; jp-alloc-in-loop, jp-console-in-loop, and jp-delete-shape = off. jp-string-plus-in-loop is removed. Exit `1` only for error-severity findings.
+Default **app**: jp-delete-array-hole = error; jp-map-filter-chain, jp-regex-ctor-hot, jp-json-hot, jp-dom-query-hot, jp-intl-datetimeformat-hot, jp-readfile-sync-hot, and jp-clock-hot = hint; jp-alloc-hot, jp-console-hot, and jp-delete-shape = off. Default **`--scope all`** reports those smells outside loops too (opt in to `--scope loop` for the former in-loop-only match). jp-string-plus-in-loop is removed. Exit `1` only for error-severity findings.
 
-Evidence JSONL gates: [`evidence/`](evidence/) (jp-alloc-in-loop, jp-console-in-loop, jp-delete-shape, jp-delete-array-hole). Policy: [`docs/evidence-policy.md`](docs/evidence-policy.md). Regen: `bash scripts/regen-evidence.sh`.
+Evidence JSONL gates: [`evidence/`](evidence/) (jp-alloc-hot, jp-console-hot, jp-delete-shape, jp-delete-array-hole). Policy: [`docs/evidence-policy.md`](docs/evidence-policy.md). Regen: `bash scripts/regen-evidence.sh`.
 
 ## Layout
 

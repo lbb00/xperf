@@ -2,7 +2,7 @@ const std = @import("std");
 const builtin = @import("builtin");
 const bench = @import("bench_jsonl.zig");
 
-// zperf-lint: ignore-file zp-alloc-in-loop zp-catch-unreachable-alloc -- intentional GPA/arena/FBA alloc shootout baseline
+// zperf-lint: ignore-file zp-alloc-hot zp-catch-unreachable-alloc -- intentional GPA/arena/FBA alloc shootout baseline
 
 /// Compare general-purpose alloc+free vs arena reset vs FixedBufferAllocator
 /// for a fixed per-request allocation pattern (Zig 0.17).

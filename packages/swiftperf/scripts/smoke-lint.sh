@@ -11,11 +11,11 @@ check_one() {
   local ge=$?
   local out
   out=$("${LINT[@]}" "$badf" \
-    --severity sp-print-in-loop=error \
+    --severity sp-print-hot=error \
     --severity sp-array-no-reserve=error \
-    --severity sp-dateformatter-in-loop=error \
-    --severity sp-json-decode-in-loop=error \
-    --severity sp-regex-in-loop=error --severity sp-file-read-in-loop=error --severity sp-clock-in-loop=error --severity sp-value-for-key-in-loop=error \
+    --severity sp-dateformatter-hot=error \
+    --severity sp-json-decode-hot=error \
+    --severity sp-regex-hot=error --severity sp-file-read-hot=error --severity sp-clock-hot=error --severity sp-value-for-key-hot=error \
     2>/dev/null)
   local ae=$?
   set -e
@@ -35,9 +35,9 @@ run_fixtures() {
   LINT=("$@")
   set +e
   "${LINT[@]}" "$ROOT/swiftperf-lint/fixtures/bad" \
-    --severity sp-print-in-loop=error \
+    --severity sp-print-hot=error \
     --severity sp-array-no-reserve=error \
-    --severity sp-dateformatter-in-loop=error --severity sp-json-decode-in-loop=error --severity sp-regex-in-loop=error --severity sp-file-read-in-loop=error --severity sp-clock-in-loop=error --severity sp-value-for-key-in-loop=error
+    --severity sp-dateformatter-hot=error --severity sp-json-decode-hot=error --severity sp-regex-hot=error --severity sp-file-read-hot=error --severity sp-clock-hot=error --severity sp-value-for-key-hot=error
   b=$?
   "${LINT[@]}" "$ROOT/swiftperf-lint/fixtures/good" --strict-hints
   g=$?
@@ -46,24 +46,24 @@ run_fixtures() {
   [[ "$g" -eq 0 ]] || { echo "good should exit 0, got $g"; exit 1; }
   "${LINT[@]}" "$ROOT/swiftperf-lint/fixtures/bad/sp-array-no-reserve_append_no_reserve.swift" --no-fail 2>&1 | grep -q sp-array-no-reserve \
     || { echo "sp-array-no-reserve fixture must fire"; exit 1; }
-  check_one sp-dateformatter-in-loop \
-    "$ROOT/swiftperf-lint/fixtures/bad/sp-dateformatter-in-loop_formatter_loop.swift" \
-    "$ROOT/swiftperf-lint/fixtures/good/sp-dateformatter-in-loop_formatter_once.swift"
-  check_one sp-json-decode-in-loop \
-    "$ROOT/swiftperf-lint/fixtures/bad/sp-json-decode-in-loop_decode_loop.swift" \
-    "$ROOT/swiftperf-lint/fixtures/good/sp-json-decode-in-loop_decode_once.swift"
-  check_one sp-file-read-in-loop \
-    "$ROOT/swiftperf-lint/fixtures/bad/sp-file-read-in-loop_read_loop.swift" \
-    "$ROOT/swiftperf-lint/fixtures/good/sp-file-read-in-loop_read_once.swift"
-  check_one sp-clock-in-loop \
-    "$ROOT/swiftperf-lint/fixtures/bad/sp-clock-in-loop_clock_loop.swift" \
-    "$ROOT/swiftperf-lint/fixtures/good/sp-clock-in-loop_clock_once.swift"
-  check_one sp-value-for-key-in-loop \
-    "$ROOT/swiftperf-lint/fixtures/bad/sp-value-for-key-in-loop_key_loop.swift" \
-    "$ROOT/swiftperf-lint/fixtures/good/sp-value-for-key-in-loop_key_once.swift"
-  check_one sp-regex-in-loop \
-    "$ROOT/swiftperf-lint/fixtures/bad/sp-regex-in-loop_regex_loop.swift" \
-    "$ROOT/swiftperf-lint/fixtures/good/sp-regex-in-loop_regex_once.swift"
+  check_one sp-dateformatter-hot \
+    "$ROOT/swiftperf-lint/fixtures/bad/sp-dateformatter-hot_formatter_loop.swift" \
+    "$ROOT/swiftperf-lint/fixtures/good/sp-dateformatter-hot_quiet.swift"
+  check_one sp-json-decode-hot \
+    "$ROOT/swiftperf-lint/fixtures/bad/sp-json-decode-hot_decode_loop.swift" \
+    "$ROOT/swiftperf-lint/fixtures/good/sp-json-decode-hot_quiet.swift"
+  check_one sp-file-read-hot \
+    "$ROOT/swiftperf-lint/fixtures/bad/sp-file-read-hot_read_loop.swift" \
+    "$ROOT/swiftperf-lint/fixtures/good/sp-file-read-hot_path_varies.swift"
+  check_one sp-clock-hot \
+    "$ROOT/swiftperf-lint/fixtures/bad/sp-clock-hot_clock_loop.swift" \
+    "$ROOT/swiftperf-lint/fixtures/good/sp-clock-hot_await_loop.swift"
+  check_one sp-value-for-key-hot \
+    "$ROOT/swiftperf-lint/fixtures/bad/sp-value-for-key-hot_key_loop.swift" \
+    "$ROOT/swiftperf-lint/fixtures/good/sp-value-for-key-hot_quiet.swift"
+  check_one sp-regex-hot \
+    "$ROOT/swiftperf-lint/fixtures/bad/sp-regex-hot_regex_loop.swift" \
+    "$ROOT/swiftperf-lint/fixtures/good/sp-regex-hot_pattern_varies.swift"
 }
 if command -v swift >/dev/null 2>&1; then
   cd "$ROOT/swiftperf-lint"

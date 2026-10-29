@@ -32,7 +32,7 @@ Stable shapes, fewer per-iteration allocations — plus a separate chapter on to
 ## 0. Scope and method
 
 1. **Shapes first** — initialize fields in one order; avoid polymorphic hot paths (§1, §4.1).
-2. **Alloc in loops** — `.push({…})`, `new` per iteration, non-empty object binders (§1).
+2. **Alloc pressure** — `.push({…})`, `new`, non-empty object binders; default scope reports these outside loops too (§1).
 3. **`delete`** — prefer tombstones or parallel structures on hot objects (§2); avoid `delete arr[i]` holes (§4.2, jp-delete-array-hole).
 4. **Embed** — same alloc/shape rules without assuming `window` / DOM or V8 tiers (§3).
 5. **V8 Node/Chrome** — elements kinds, IC state, deopts, pipeline sketch (§4).

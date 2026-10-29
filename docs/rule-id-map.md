@@ -9,19 +9,19 @@ Removed ids (jitter 2026-10-22) have **no slug** and must not be reused: `CX001`
 
 | Old | Slug |
 |-----|------|
-| `AT001` | `at-alloc-in-loop` |
+| `AT001` | `at-alloc-hot` |
 | `AT002` | `at-object-delete` |
-| `AT003` | `at-console-in-loop` |
-| `AT004` | `at-includes-in-loop` |
-| `AT005` | `at-json-in-loop` |
+| `AT003` | `at-console-hot` |
+| `AT004` | `at-includes-hot` |
+| `AT005` | `at-json-hot` |
 
 ## beamperf
 
 | Old | Slug |
 |-----|------|
 | `BE001` | `be-list-concat-reduce` |
-| `BE003` | `be-io-puts-in-loop` |
-| `BE004` | `be-map-merge-in-loop` |
+| `BE003` | `be-io-puts-hot` |
+| `BE004` | `be-map-merge-hot` |
 | `BE005` | `be-enum-map-filter-chain` |
 
 Removed (tombstone only):
@@ -31,11 +31,11 @@ Removed (tombstone only):
 
 | Old | Slug |
 |-----|------|
-| `CP001` | `cp-alloc-in-loop` |
+| `CP001` | `cp-alloc-hot` |
 | `CP002` | `cp-realloc-grow-one` |
-| `CP003` | `cp-printf-in-loop` |
+| `CP003` | `cp-printf-hot` |
 | `CP004` | `cp-strlen-in-cond` |
-| `CP005` | `cp-strcat-in-loop` |
+| `CP005` | `cp-strcat-hot` |
 
 ## cppperf
 
@@ -53,35 +53,35 @@ Removed (tombstone only):
 | Old | Slug |
 |-----|------|
 | `CS001` | `cs-list-add-no-capacity` |
-| `CS002` | `cs-string-plus-in-loop` |
-| `CS003` | `cs-console-in-loop` |
-| `CS004` | `cs-regex-in-loop` |
+| `CS002` | `cs-string-plus-hot` |
+| `CS003` | `cs-console-hot` |
+| `CS004` | `cs-regex-hot` |
 
 ## dartperf
 
 | Old | Slug |
 |-----|------|
 | `DT001` | `dt-list-add-empty` |
-| `DT002` | `dt-string-plus-in-loop` |
-| `DT003` | `dt-print-in-loop` |
+| `DT002` | `dt-string-plus-hot` |
+| `DT003` | `dt-print-hot` |
 | `DT004` | `dt-growable-add-empty` |
 
 ## goperf
 
 | Old | Slug |
 |-----|------|
-| `GP001` | `gp-make-in-loop` |
-| `GP002` | `gp-string-plus-in-loop` |
-| `GP003` | `gp-fmt-in-loop` |
+| `GP001` | `gp-make-hot` |
+| `GP002` | `gp-string-plus-hot` |
+| `GP003` | `gp-fmt-hot` |
 | `GP004` | `gp-append-nil-slice` |
-| `GP005` | `gp-defer-in-loop` |
+| `GP005` | `gp-defer-hot` |
 
 ## jsperf
 
 | Old | Slug |
 |-----|------|
-| `JP001` | `jp-alloc-in-loop` |
-| `JP002` | `jp-console-in-loop` |
+| `JP001` | `jp-alloc-hot` |
+| `JP002` | `jp-console-hot` |
 | `JP003` | `jp-delete-shape` |
 | `JP004` | `jp-delete-array-hole` |
 | `JP005` | `jp-string-plus-in-loop` |
@@ -92,9 +92,9 @@ Removed (tombstone only):
 | Old | Slug |
 |-----|------|
 | `JP001` | `jp-boxed-primitive-collection` |
-| `JP002` | `jp-string-concat-in-loop` |
-| `JP003` | `jp-regex-in-loop` |
-| `JP004` | `jp-format-in-loop` |
+| `JP002` | `jp-string-concat-hot` |
+| `JP003` | `jp-regex-hot` |
+| `JP004` | `jp-format-hot` |
 | `JP005` | `jp-unpresized-collection` |
 | `JP006` | `jp-boxed-stream` |
 | `JP007` | `jp-exception-control-flow` |
@@ -103,14 +103,14 @@ Removed (tombstone only):
 | `JP010` | `jp-enum-key-hash-collection` |
 | `JP011` | `jp-collection-chain` |
 | `JP012` | `jp-value-class-boxing` |
-| `JP013` | `jp-lambda-to-non-inline-in-loop` |
+| `JP013` | `jp-lambda-to-non-inline-hot` |
 | `JP014` | `jp-lazy-default-mode` |
-| `JP015` | `jp-data-copy-in-loop` |
+| `JP015` | `jp-data-copy-hot` |
 | `JP016` | `jp-android-sparse-array` |
-| `JP017` | `jp-log-in-loop` |
+| `JP017` | `jp-log-hot` |
 | `JP018` | `jp-sleep-polling` |
 | `JP019` | `jp-finalize` |
-| `JP020` | `jp-expensive-alloc-in-loop` |
+| `JP020` | `jp-expensive-alloc-hot` |
 | `JP021` | `jp-hot-heavy-alloc` |
 | `JP022` | `jp-hot-format-log` |
 | `JP023` | `jp-hot-system-call` |
@@ -120,16 +120,16 @@ Removed (tombstone only):
 | `JP027` | `jp-baos-tobytearray-copy` |
 | `JP028` | `jp-hot-payload-copy` |
 | `JP030` | `jp-client-factory-recreate` |
-| `JP031` | `jp-string-intern-in-loop` |
+| `JP031` | `jp-string-intern-hot` |
 | `JP032` | `jp-non-static-field-updater` |
 
 ## kotlinperf
 
 | Old | Slug |
 |-----|------|
-| `KT001` | `kt-list-add-in-loop` |
-| `KT002` | `kt-string-plus-in-loop` |
-| `KT003` | `kt-println-in-loop` |
+| `KT001` | `kt-list-add-hot` |
+| `KT002` | `kt-string-plus-hot` |
+| `KT003` | `kt-println-hot` |
 
 Removed (tombstone only):
 - `KT004`
@@ -138,25 +138,25 @@ Removed (tombstone only):
 
 | Old | Slug |
 |-----|------|
-| `LU001` | `lu-table-insert-in-loop` |
-| `LU002` | `lu-string-concat-in-loop` |
-| `LU003` | `lu-print-in-loop` |
+| `LU001` | `lu-table-insert-hot` |
+| `LU002` | `lu-string-concat-hot` |
+| `LU003` | `lu-print-hot` |
 
 ## nimperf
 
 | Old | Slug |
 |-----|------|
-| `NM001` | `nm-seq-add-in-loop` |
+| `NM001` | `nm-seq-add-hot` |
 | `NM002` | `nm-string-amp-in-loop` (**removed**, tombstone) |
-| `NM003` | `nm-echo-in-loop` |
+| `NM003` | `nm-echo-hot` |
 | `NM004` | `nm-seq-no-capacity` |
 
 ## objcperf
 
 | Old | Slug |
 |-----|------|
-| `OC002` | `oc-nsstring-append-in-loop` |
-| `OC003` | `oc-nslog-in-loop` |
+| `OC002` | `oc-nsstring-append-hot` |
+| `OC003` | `oc-nslog-hot` |
 
 Removed (tombstone only):
 - `OC001`
@@ -166,17 +166,17 @@ Removed (tombstone only):
 
 | Old | Slug |
 |-----|------|
-| `PH001` | `ph-string-dot-in-loop` |
+| `PH001` | `ph-string-dot-hot` |
 | `PH002` | `ph-array-merge-rebind` |
-| `PH003` | `ph-echo-in-loop` |
+| `PH003` | `ph-echo-hot` |
 
 ## pyperf
 
 | Old | Slug |
 |-----|------|
-| `PP001` | `pp-str-plus-in-loop` |
+| `PP001` | `pp-str-plus-hot` |
 | `PP002` | `pp-list-plus-rebind` |
-| `PP003` | `pp-print-in-loop` |
+| `PP003` | `pp-print-hot` |
 
 Removed (tombstone only):
 - `PP004`
@@ -185,21 +185,21 @@ Removed (tombstone only):
 
 | Old | Slug |
 |-----|------|
-| `RB001` | `rb-string-plus-in-loop` |
+| `RB001` | `rb-string-plus-hot` |
 | `RB002` | `rb-array-plus-rebind` |
-| `RB003` | `rb-puts-in-loop` |
+| `RB003` | `rb-puts-hot` |
 | `RB004` | `rb-hash-merge-in-loop` (**removed**, tombstone) |
 
 ## rustperf
 
 | Old | Slug |
 |-----|------|
-| `RS001` | `rs-alloc-in-loop` |
+| `RS001` | `rs-alloc-hot` |
 | `RS002` | `rs-string-plus-in-loop` |
-| `RS003` | `rs-println-in-loop` |
-| `RS004` | `rs-format-rebind-in-loop` |
+| `RS003` | `rs-println-hot` |
+| `RS004` | `rs-format-rebind-hot` |
 | `RS005` | `rs-vec-no-capacity` |
-| `RS006` | `rs-collect-vec-in-loop` |
+| `RS006` | `rs-collect-vec-hot` |
 
 ## swiftperf
 
@@ -207,7 +207,7 @@ Removed (tombstone only):
 |-----|------|
 | `SP001` | `sp-force-unwrap-in-loop` |
 | `SP002` | `sp-string-plus-in-loop` |
-| `SP003` | `sp-print-in-loop` |
+| `SP003` | `sp-print-hot` |
 | `SP004` | `sp-array-no-reserve` |
 | `SP005` | `sp-map-joined-chain` |
 
@@ -215,12 +215,12 @@ Removed (tombstone only):
 
 | Old | Slug |
 |-----|------|
-| `ZP001` | `zp-alloc-in-loop` |
+| `ZP001` | `zp-alloc-hot` |
 | `ZP002` | `zp-append-without-reserve` |
 | `ZP003` | `zp-page-allocator-small` |
 | `ZP004` | `zp-debug-allocator` |
 | `ZP005` | `zp-large-struct-by-value` |
-| `ZP006` | `zp-print-in-loop` |
+| `ZP006` | `zp-print-hot` |
 | `ZP007` | `zp-unbuffered-io` |
 | `ZP008` | `zp-missing-free` |
 | `ZP009` | `zp-extern-struct-padding` |
@@ -233,7 +233,7 @@ Removed (tombstone only):
 | `ZP016` | `zp-optional-scalar-field` |
 | `ZP017` | `zp-bool-array` |
 | `ZP018` | `zp-static-string-map` |
-| `ZP019` | `zp-runtime-div-in-loop` |
+| `ZP019` | `zp-runtime-div-hot` |
 | `ZP020` | `zp-queue-ordered-remove` |
 | `ZP021` | `zp-shift-on-read` |
 | `ZP022` | `zp-per-packet-alloc` |
@@ -241,5 +241,12 @@ Removed (tombstone only):
 | `ZP024` | `zp-map-put-without-ensure` |
 | `ZP025` | `zp-catch-unreachable-io` |
 | `ZP026` | `zp-arena-reset-free-all` |
-| `ZP027` | `zp-create-destroy-in-loop` |
-| `ZP028` | `zp-fixed-size-alloc-in-loop` |
+| `ZP027` | `zp-create-destroy-hot` |
+| `ZP028` | `zp-fixed-size-alloc-hot` |
+
+
+## 2026-10-27 scope rename (`*-in-loop` → `*-hot`)
+
+Default matching is now **`--scope all`** (report outside loops too). Slugs that contained `in-loop` were **renamed** so names do not imply loop-only scope. Old slugs are tombstoned under each kit's `evidence/_removed/*.REMOVED.md` and **must never be reused**. Active ids are listed in each kit's `docs/rule-ids.md`. Opt in to `--scope loop` for the former in-loop-only match where the kit supports it.
+
+The numeric → slug rows above remain the **historical** 2026-10-22 mapping (many targets were later renamed again on 2026-10-27).

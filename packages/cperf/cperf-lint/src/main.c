@@ -51,8 +51,8 @@ static void apply_preset(RuleSev *rs, const char *name) {
         rs->cp012 = SEV_ERROR;
         return;
     }
-    /* evidence-gated: cp-alloc-in-loop/cp-realloc-grow-one error; cp-printf-in-loop off (G3);
-     * cp-strlen-in-cond hint; cp-strcat-in-loop off (G3 almost-all OK-idiom).
+    /* evidence-gated: cp-alloc-hot/cp-realloc-grow-one error; cp-printf-hot off (G3);
+     * cp-strlen-in-cond hint; cp-strcat-hot off (G3 almost-all OK-idiom).
      * Later hints stay hint and are not corpus-triaged. */
     rs->cp001 = SEV_ERROR;
     rs->cp002 = SEV_ERROR;
@@ -79,7 +79,7 @@ static int apply_severity_override(RuleSev *rs, const char *spec) {
     Sev s = parse_sev(eq + 1);
     if ((int)s < 0) return -1;
 
-    if (strcmp(buf, "cp-alloc-in-loop") == 0) {
+    if (strcmp(buf, "cp-alloc-hot") == 0) {
         rs->cp001 = s;
         return 0;
     }
@@ -87,7 +87,7 @@ static int apply_severity_override(RuleSev *rs, const char *spec) {
         rs->cp002 = s;
         return 0;
     }
-    if (strcmp(buf, "cp-printf-in-loop") == 0) {
+    if (strcmp(buf, "cp-printf-hot") == 0) {
         rs->cp003 = s;
         return 0;
     }
@@ -95,19 +95,19 @@ static int apply_severity_override(RuleSev *rs, const char *spec) {
         rs->cp004 = s;
         return 0;
     }
-    if (strcmp(buf, "cp-strcat-in-loop") == 0) {
+    if (strcmp(buf, "cp-strcat-hot") == 0) {
         rs->cp005 = s;
         return 0;
     }
-    if (strcmp(buf, "cp-sprintf-in-loop") == 0) {
+    if (strcmp(buf, "cp-sprintf-hot") == 0) {
         rs->cp006 = s;
         return 0;
     }
-    if (strcmp(buf, "cp-fopen-in-loop") == 0) {
+    if (strcmp(buf, "cp-fopen-hot") == 0) {
         rs->cp007 = s;
         return 0;
     }
-    if (strcmp(buf, "cp-gettime-in-loop") == 0) {
+    if (strcmp(buf, "cp-gettime-hot") == 0) {
         rs->cp008 = s;
         return 0;
     }
@@ -115,11 +115,11 @@ static int apply_severity_override(RuleSev *rs, const char *spec) {
         rs->cp009 = s;
         return 0;
     }
-    if (strcmp(buf, "cp-regex-in-loop") == 0) {
+    if (strcmp(buf, "cp-regex-hot") == 0) {
         rs->cp010 = s;
         return 0;
     }
-    if (strcmp(buf, "cp-alloca-in-loop") == 0) {
+    if (strcmp(buf, "cp-alloca-hot") == 0) {
         rs->cp011 = s;
         return 0;
     }
@@ -131,17 +131,17 @@ static int apply_severity_override(RuleSev *rs, const char *spec) {
 }
 
 static Sev severity_of(const RuleSev *rs, const char *rule) {
-    if (strcmp(rule, "cp-alloc-in-loop") == 0) return rs->cp001;
+    if (strcmp(rule, "cp-alloc-hot") == 0) return rs->cp001;
     if (strcmp(rule, "cp-realloc-grow-one") == 0) return rs->cp002;
-    if (strcmp(rule, "cp-printf-in-loop") == 0) return rs->cp003;
+    if (strcmp(rule, "cp-printf-hot") == 0) return rs->cp003;
     if (strcmp(rule, "cp-strlen-in-cond") == 0) return rs->cp004;
-    if (strcmp(rule, "cp-strcat-in-loop") == 0) return rs->cp005;
-    if (strcmp(rule, "cp-sprintf-in-loop") == 0) return rs->cp006;
-    if (strcmp(rule, "cp-fopen-in-loop") == 0) return rs->cp007;
-    if (strcmp(rule, "cp-gettime-in-loop") == 0) return rs->cp008;
+    if (strcmp(rule, "cp-strcat-hot") == 0) return rs->cp005;
+    if (strcmp(rule, "cp-sprintf-hot") == 0) return rs->cp006;
+    if (strcmp(rule, "cp-fopen-hot") == 0) return rs->cp007;
+    if (strcmp(rule, "cp-gettime-hot") == 0) return rs->cp008;
     if (strcmp(rule, "cp-wide-bool-flags") == 0) return rs->cp009;
-    if (strcmp(rule, "cp-regex-in-loop") == 0) return rs->cp010;
-    if (strcmp(rule, "cp-alloca-in-loop") == 0) return rs->cp011;
+    if (strcmp(rule, "cp-regex-hot") == 0) return rs->cp010;
+    if (strcmp(rule, "cp-alloca-hot") == 0) return rs->cp011;
     if (strcmp(rule, "cp-struct-by-value") == 0) return rs->cp012;
     return SEV_HINT; /* unknown stays hint, never error */
 }
@@ -152,6 +152,7 @@ static void usage(int code) {
             "  --format text|json\n"
             "  --preset app|engine|all   (default: app)\n"
             "  --severity RULE=error|hint|off   (repeatable; overrides preset)\n"
+            "  --scope all|loop          (default: all; loop = former in-loop-only)\n"
             "  --strict-hints            hints also fail the exit code\n"
             "  --no-fail                 always exit 0 on findings\n"
             "Heuristic C/C++ performance lint (C11).\n"
@@ -196,7 +197,7 @@ static void print_json(const FindingList *fl, const RuleSev *rs) {
     printf("]\n");
 }
 
-/* Named dump_* so cp-printf-in-loop self-lint stays quiet on report emission. */
+/* Named dump_* so cp-printf-hot self-lint stays quiet on report emission. */
 static void dump_text_findings(const FindingList *fl, const RuleSev *rs,
                                size_t *out_errors, size_t *out_hints) {
     size_t shown = 0;
@@ -248,9 +249,10 @@ int main(int argc, char **argv) {
 
     const char *format = "text";
     int no_fail = 0;
+    const char *scope = "all";
     int strict_hints = 0;
     const char *preset = "app";
-    /* Pre-size override list to argc (no realloc in parse loop — cp-alloc-in-loop). */
+    /* Pre-size override list to argc (no realloc in parse loop — cp-alloc-hot). */
     char **sev_overrides = NULL;
     size_t n_overrides = 0;
     char **paths = NULL;
@@ -306,6 +308,17 @@ int main(int argc, char **argv) {
             sev_overrides[n_overrides++] = argv[i];
             continue;
         }
+        if (strcmp(argv[i], "--scope") == 0) {
+            if (++i >= argc) usage(2);
+            scope = argv[i];
+            if (strcmp(scope, "all") != 0 && strcmp(scope, "loop") != 0) usage(2);
+            continue;
+        }
+        if (strncmp(argv[i], "--scope=", 8) == 0) {
+            scope = argv[i] + 8;
+            if (strcmp(scope, "all") != 0 && strcmp(scope, "loop") != 0) usage(2);
+            continue;
+        }
         if (strcmp(argv[i], "--no-fail") == 0) {
             no_fail = 1;
             continue;
@@ -345,7 +358,7 @@ int main(int argc, char **argv) {
     finding_list_init(&fl);
     int io_errors = 0;
     for (size_t i = 0; i < npaths; i++) {
-        if (scan_path(paths[i], &fl) != 0) {
+        if (scan_path(paths[i], &fl, scope) != 0) {
             fprintf(stderr, "error: %s: I/O or walk failure\n", paths[i]);
             io_errors++;
         }

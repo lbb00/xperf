@@ -1,4 +1,4 @@
-//! Evidence for rs-println-in-loop / rs-vec-no-capacity / rs-collect-vec-in-loop
+//! Evidence for rs-println-hot / rs-vec-no-capacity / rs-collect-vec-hot
 //! rustc -C opt-level=3 evidence_rs003_rs005_rs006.rs -o /tmp/evidence_rs_rest && /tmp/evidence_rs_rest
 
 use std::env;
@@ -106,9 +106,9 @@ fn main() {
         lines.push((rule.to_string(), obj));
     };
 
-    // rs-println-in-loop: println in loop vs quiet (stdout discarded)
+    // rs-println-hot: println in loop vs quiet (stdout discarded)
     let n3 = env_usize("RS003_N", 20000);
-    eprintln!("rs-println-in-loop println-loop n={n3}");
+    eprintln!("rs-println-hot println-loop n={n3}");
     let med3a = time_many(|| {
         let mut s = 0usize;
         for i in 0..n3 {
@@ -139,9 +139,9 @@ fn main() {
             }
             n3
         });
-        emit("rs-println-in-loop", "buffer_then_write", "after", med_after, n3, 1.0);
+        emit("rs-println-hot", "buffer_then_write", "after", med_after, n3, 1.0);
         emit(
-            "rs-println-in-loop",
+            "rs-println-hot",
             "writeln_each_iter",
             "before",
             med_before,
@@ -149,9 +149,9 @@ fn main() {
             med_before / med_after.max(1e-9),
         );
         // also quiet compute baseline vs writeln each (I/O cost)
-        emit("rs-println-in-loop", "quiet_compute", "after", med3a, n3, 1.0);
+        emit("rs-println-hot", "quiet_compute", "after", med3a, n3, 1.0);
         emit(
-            "rs-println-in-loop",
+            "rs-println-hot",
             "writeln_vs_quiet",
             "before",
             med_before,
@@ -226,11 +226,11 @@ fn main() {
         med5sb / med5sa.max(1e-9),
     );
 
-    // rs-collect-vec-in-loop: collect in loop vs count
+    // rs-collect-vec-hot: collect in loop vs count
     let n6 = env_usize("RS006_CHUNKS", 5000);
     let chunk = "lorem ipsum dolor sit amet consectetur adipiscing elit sed do eiusmod";
     let chunks: Vec<&str> = vec![chunk; n6];
-    eprintln!("rs-collect-vec-in-loop collect-in-loop chunks={n6}");
+    eprintln!("rs-collect-vec-hot collect-in-loop chunks={n6}");
     let med6a = time_many(|| {
         let mut n = 0usize;
         for c in &chunks {
@@ -246,9 +246,9 @@ fn main() {
         }
         n
     });
-    emit("rs-collect-vec-in-loop", "count_no_collect", "after", med6a, n6, 1.0);
+    emit("rs-collect-vec-hot", "count_no_collect", "after", med6a, n6, 1.0);
     emit(
-        "rs-collect-vec-in-loop",
+        "rs-collect-vec-hot",
         "collect_in_loop",
         "before",
         med6b,
@@ -278,9 +278,9 @@ fn main() {
         }
         n
     });
-    emit("rs-collect-vec-in-loop", "small_count", "after", med6sa, n6s, 1.0);
+    emit("rs-collect-vec-hot", "small_count", "after", med6sa, n6s, 1.0);
     emit(
-        "rs-collect-vec-in-loop",
+        "rs-collect-vec-hot",
         "small_collect",
         "before",
         med6sb,
@@ -288,7 +288,7 @@ fn main() {
         med6sb / med6sa.max(1e-9),
     );
 
-    for rule in ["rs-println-in-loop", "rs-vec-no-capacity", "rs-collect-vec-in-loop"] {
+    for rule in ["rs-println-hot", "rs-vec-no-capacity", "rs-collect-vec-hot"] {
         let path = format!("{out_dir}/{rule}.jsonl");
         let body: String = lines
             .iter()

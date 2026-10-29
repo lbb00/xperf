@@ -1,2 +1,0 @@
-{"rule":"zp-fixed-size-alloc-in-loop","case":"fixed_alloc_free_loop","role":"before","zig":"0.17.0","optimize":"fast","median_ms":2.000953,"ops":100000,"ratio":8.480088,"ts":"2026-10-21T11:24:26Z"}
-{"rule":"zp-fixed-size-alloc-in-loop","case":"buffer_pool_hit","role":"after","zig":"0.17.0","optimize":"fast","median_ms":0.235959,"ops":100000,"ratio":1.0,"ts":"2026-10-21T11:24:26Z"}

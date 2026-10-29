@@ -4,12 +4,12 @@
 
 Kotlin performance notes, small examples, and `kotlinperf-lint`.
 
-Part of [XPerf](../../README.md). Shared docs: [docs/README.md](../../docs/README.md). **Corpus-ready**. kt-list-add-in-loop–kt-println-in-loop **off**. One rule removed (tombstone, never got a slug). Guide v0.
+Part of [XPerf](../../README.md). Shared docs: [docs/README.md](../../docs/README.md). **Corpus-ready**. kt-list-add-hot–kt-println-hot **off**. One rule removed (tombstone, never got a slug). Guide v0.
 
 ## Contents
 
 - [English guide (v0)](docs/kotlin-performance-guide.md) — from `docs/guide-src/`
-- [`kotlinperf-lint`](kotlinperf-lint/README.md) — kt-list-add-in-loop / kt-string-plus-in-loop / kt-println-in-loop
+- [`kotlinperf-lint`](kotlinperf-lint/README.md) — kt-list-add-hot / kt-string-plus-hot / kt-println-hot
 - [Corpus pins](docs/corpus.md)
 
 ## Focus

@@ -4,12 +4,23 @@ Canonical ids are **slugs only**. Numerics from the old map are historical and *
 
 | Slug |
 |------|
-| `cx-regex-ctor-in-loop` |
-| `cx-endl-in-loop` |
-| `cx-clock-in-loop` |
-| `cx-ifstream-in-loop` |
+| `cx-regex-ctor-hot` |
+| `cx-endl-hot` |
+| `cx-clock-hot` |
+| `cx-ifstream-hot` |
 | `cx-const-by-value` |
 | `cx-vector-bool` |
+
+## Renamed 2026-10-27 (tombstone old; never reuse)
+
+Default **`--scope all`** (or kit-equivalent). Old `*-in-loop` ids misled tools/models; they are tombstoned under `evidence/_removed/`.
+
+| Old slug | New slug |
+|----------|----------|
+| `cx-clock-in-loop` | `cx-clock-hot` |
+| `cx-endl-in-loop` | `cx-endl-hot` |
+| `cx-ifstream-in-loop` | `cx-ifstream-hot` |
+| `cx-regex-ctor-in-loop` | `cx-regex-ctor-hot` |
 
 ## Removed
 

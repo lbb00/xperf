@@ -3,14 +3,14 @@
 
 defmodule BeamperfLint do
   @msg %{
-    "be-list-concat-reduce" => "list ++ in loop; prefer cons + reverse / accumulator",
+    "be-list-concat-reduce" => "list ++; prefer cons + reverse / accumulator — cost adds up even off a hot path",
     # BE002 removed 2026-10-22 — see evidence/_removed/
-    "be-io-puts-in-loop" => "IO.puts / io:format in loop; gate or buffer",
-    "be-map-merge-in-loop" => "Map/Keyword.merge in a loop; use Map.put, or merge outside only when the other map stays the same",
+    "be-io-puts-hot" => "IO.puts / io:format; gate or buffer — cost adds up even off a hot path",
+    "be-map-merge-hot" => "Map/Keyword.merge; use Map.put, or merge outside only when the other map stays the same — cost adds up even off a hot path",
     "be-enum-map-filter-chain" => "chained Enum.map/filter allocates an intermediate; cost grows with length. One pass was faster on the measured chain; a short list is a different cost"
   }
 
-  @rules ["be-list-concat-reduce", "be-io-puts-in-loop", "be-map-merge-in-loop", "be-enum-map-filter-chain"]
+  @rules ["be-list-concat-reduce", "be-io-puts-hot", "be-map-merge-hot", "be-enum-map-filter-chain"]
 
 
   def main(argv) do
@@ -20,6 +20,7 @@ defmodule BeamperfLint do
           help: :boolean,
           format: :string,
           severity: :keep,
+          scope: :string,
           strict_hints: :boolean,
           no_fail: :boolean
         ],
@@ -48,7 +49,9 @@ defmodule BeamperfLint do
       end)
 
     format = opts[:format] || "text"
-    findings = Enum.flat_map(paths, &scan_path/1)
+    scope = opts[:scope] || "all"
+    if scope not in ["all", "loop"], do: usage(2)
+    findings = Enum.flat_map(paths, fn path -> scan_path(path, scope) end)
     {nerr, nhint} = emit(findings, sev, format)
 
     cond do
@@ -58,13 +61,13 @@ defmodule BeamperfLint do
     end
   end
 
-  # G3 redesign 2026-10-22: BE002/be-io-puts-in-loop → off; be-map-merge-in-loop/be-enum-map-filter-chain corpus-mined hint; be-list-concat-reduce keeps hint (+ Erlang Acc++)
+  # G3 redesign 2026-10-22: BE002/be-io-puts-hot → off; be-map-merge-hot/be-enum-map-filter-chain corpus-mined hint; be-list-concat-reduce keeps hint (+ Erlang Acc++)
   defp default_sev,
     do: %{
       "be-list-concat-reduce" => "hint",
       # BE002 removed
-      "be-io-puts-in-loop" => "off",
-      "be-map-merge-in-loop" => "hint",
+      "be-io-puts-hot" => "off",
+      "be-map-merge-hot" => "hint",
       "be-enum-map-filter-chain" => "hint"
     }
 
@@ -73,6 +76,7 @@ defmodule BeamperfLint do
     Usage: beamperf_lint.exs PATH... [options]
       --format text|json
       --severity RULE=error|hint|off
+      --scope all|loop     (default: all; loop = former in-loop-only)
       --strict-hints
       --no-fail
     Scans .ex .exs .erl
@@ -108,10 +112,10 @@ defmodule BeamperfLint do
         "integration_test"
       ]
 
-  def scan_path(root) do
+  def scan_path(root, scope \\ "all") do
     cond do
       File.regular?(root) ->
-        if beam_ext?(root), do: scan_file(root), else: []
+        if beam_ext?(root), do: scan_file(root, scope), else: []
 
       File.dir?(root) ->
         root
@@ -121,16 +125,16 @@ defmodule BeamperfLint do
           rel = Path.relative_to(p, root)
           Enum.any?(Path.split(rel), &skip_dir?/1)
         end)
-        |> Enum.flat_map(&scan_file/1)
+        |> Enum.flat_map(fn p -> scan_file(p, scope) end)
 
       true ->
         []
     end
   end
 
-  def scan_file(path) do
+  def scan_file(path, scope \\ "all") do
     case File.read(path) do
-      {:ok, text} -> do_scan(path, text)
+      {:ok, text} -> do_scan(path, text, scope)
       _ -> []
     end
   end
@@ -163,7 +167,7 @@ defmodule BeamperfLint do
   defp strip_chars([c | rest], false, _, acc, erl?),
     do: strip_chars(rest, false, nil, [c | acc], erl?)
 
-  defp do_scan(path, text) do
+  defp do_scan(path, text, scope \\ "all") do
     lines = String.split(text, ~r/\r\n|\n|\r/)
     erl? = Path.extname(path) == ".erl"
 
@@ -189,11 +193,14 @@ defmodule BeamperfLint do
 
         erl_acc = erl? and not in_doc and erl_acc_append?(code)
 
+        match_here =
+          scope == "all" or
+            (in_loop2 > 0 and depth >= in_loop2) or (in_fn2 and in_loop2 > 0) or
+            (loop_here and smell_line?(code))
+
         active =
           not in_doc and
-            (erl_acc or
-               (in_loop2 > 0 and depth >= in_loop2) or (in_fn2 and in_loop2 > 0) or
-               (loop_here and smell_line?(code)))
+            (erl_acc or match_here)
 
         out2 =
           if not in_doc do
@@ -289,7 +296,7 @@ defmodule BeamperfLint do
     if Regex.match?(~r/\bIO\.(puts|write|inspect)\b/, code) or
          Regex.match?(~r/\bio:format\b/, code) or
          Regex.match?(~r/:io\.format\b/, code) do
-      [%{rule: "be-io-puts-in-loop", path: path, line: line, message: @msg["be-io-puts-in-loop"]} | out]
+      [%{rule: "be-io-puts-hot", path: path, line: line, message: @msg["be-io-puts-hot"]} | out]
     else
       out
     end
@@ -301,7 +308,7 @@ defmodule BeamperfLint do
         out
 
       Regex.match?(~r/\b(Map|Keyword)\.merge\(/, code) or Regex.match?(~r/\bmaps:merge\(/, code) ->
-        [%{rule: "be-map-merge-in-loop", path: path, line: line, message: @msg["be-map-merge-in-loop"]} | out]
+        [%{rule: "be-map-merge-hot", path: path, line: line, message: @msg["be-map-merge-hot"]} | out]
 
       true ->
         out

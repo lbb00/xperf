@@ -4,7 +4,7 @@ Part of [XPerf](../../README.md). Shared docs: [docs/README.md](../../docs/READM
 
 Zig performance guide, runnable examples, and the `zperf-lint` static checker.
 
-**corpus-ready: yes**. G3/r4 triage demoted OK-idiom-mass rules; the default map keeps nine rules on: zp-page-allocator-small, zp-broad-runtime-safety, zp-static-string-map, zp-queue-ordered-remove, zp-shift-on-read, zp-invariant-float-div, zp-arena-reset-free-all, zp-create-destroy-in-loop and zp-fixed-size-alloc-in-loop. See [docs/corpus.md](docs/corpus.md).
+**corpus-ready: yes**. G3/r4 triage demoted OK-idiom-mass rules; the default map keeps nine rules on: zp-page-allocator-small, zp-broad-runtime-safety, zp-static-string-map, zp-queue-ordered-remove, zp-shift-on-read, zp-invariant-float-div, zp-arena-reset-free-all, zp-create-destroy-hot and zp-fixed-size-alloc-hot. See [docs/corpus.md](docs/corpus.md).
 
 Licensed under the [MIT License](../../LICENSE).
 

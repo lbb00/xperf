@@ -1,0 +1,2 @@
+{"rule":"sp-print-hot","case":"buffer_lines","role":"after","swift":"Apple Swift 6.3.2","opt":"-O","median_ms":0.148,"ops":4000,"ratio":1,"ts":"2026-10-23T10:00:20Z"}
+{"rule":"sp-print-hot","case":"print_devnull","role":"before","swift":"Apple Swift 6.3.2","opt":"-O","median_ms":1.475,"ops":4000,"ratio":9.952,"ts":"2026-10-23T10:00:20Z"}

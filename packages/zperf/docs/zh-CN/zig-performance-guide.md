@@ -2088,7 +2088,7 @@ test "Allocating writer" {
 }
 ```
 
-**反模式**：`file.writer(io, &.{})`（空缓冲，每次写都可能是系统调用）；热循环里 `std.debug.print`（锁 stderr，仅 64 字节缓冲，见 `lib/std/debug.zig`）。zperf-lint zp-unbuffered-io、zp-print-in-loop 会报。
+**反模式**：`file.writer(io, &.{})`（空缓冲，每次写都可能是系统调用）；热循环里 `std.debug.print`（锁 stderr，仅 64 字节缓冲，见 `lib/std/debug.zig`）。zperf-lint zp-unbuffered-io、zp-print-hot 会报。
 
 **证据包（L = 本地，U = 上游）：**
 
@@ -2315,19 +2315,19 @@ TigerBeetle 的 `perf_event` 包装草案（[PR #3859](https://github.com/tigerb
 cd zperf-lint
 zig build -Doptimize=fast          # 产物: zig-out/bin/zperf-lint
 zig build test                     # 单元测试 + 夹具测试（每条规则 bad 必中、good 必不中）
-./zig-out/bin/zperf-lint src/ my_file.zig --format json --disable zp-runtime-div-in-loop
+./zig-out/bin/zperf-lint src/ my_file.zig --format json --disable zp-runtime-div-hot
 ```
 
 规则一览（详见 `zperf-lint/README.md`，或运行 `zperf-lint --list-rules`）：
 
 | ID | 名称 | 级别 | 检查内容 |
 |---|---|---|---|
-| zp-alloc-in-loop | `alloc-in-loop` | warning | 循环体内进行堆分配 |
+| zp-alloc-hot | `alloc-in-loop` | warning | 循环体内进行堆分配 |
 | zp-append-without-reserve | `append-without-reserve` | info | for/while 循环中 append，循环前没有预留容量 |
 | zp-page-allocator-small | `page-allocator-small` | warning | 直接用 page_allocator 做小块/容器分配 |
 | zp-debug-allocator | `debug-allocator` | warning | 使用 GeneralPurposeAllocator/DebugAllocator，且文件中看不到按 builtin.mode 切换 |
 | zp-large-struct-by-value | `large-struct-by-value` | info | 按值传递较大的结构体 |
-| zp-print-in-loop | `print-in-loop` | warning | 循环内 `std.debug.print`；`std.log.*` 仅在 `--strict-log-in-loop` |
+| zp-print-hot | `print-in-loop` | warning | 循环内 `std.debug.print`；`std.log.*` 仅在 `--strict-log-in-loop` |
 | zp-unbuffered-io | `unbuffered-io` | warning | 空缓冲 reader/writer；跳过测试、`readVec`/`writeVec`、一次性写等 |
 | zp-missing-free | `missing-free` | warning | 分配/初始化后在函数内找不到 deinit/free/destroy 或所有权转移 |
 | zp-extern-struct-padding | `extern-struct-padding` | warning | extern struct 字段顺序导致多余 padding |
@@ -2340,7 +2340,7 @@ zig build test                     # 单元测试 + 夹具测试（每条规则 
 | zp-optional-scalar-field | `optional-scalar-field` | info | 结构体字段是可选标量（?u32 等），额外 flag 会被对齐放大 |
 | zp-bool-array | `bool-array` | info | 用 bool 数组/切片存位标志 |
 | zp-static-string-map | `static-string-map` | info | StringHashMap 只用字面量键填充 |
-| zp-runtime-div-in-loop | `runtime-div-in-loop` | hint | 循环内除以/取模运行时变量 |
+| zp-runtime-div-hot | `runtime-div-in-loop` | hint | 循环内除以/取模运行时变量 |
 | zp-queue-ordered-remove | `queue-ordered-remove` | warning | 把 ArrayList 当队列：orderedRemove(0) / 循环内 orderedRemove |
 | zp-shift-on-read | `shift-on-read` | warning | 读走前缀后把剩余数据整体搬回开头 |
 | zp-per-packet-alloc | `per-packet-alloc` | info | 逐包/逐帧热路径中进行堆分配 |
@@ -2348,14 +2348,14 @@ zig build test                     # 单元测试 + 夹具测试（每条规则 
 | zp-map-put-without-ensure | `map-put-without-ensure` | info | 循环内 HashMap `put`/`getOrPut` 且未见 `ensure*` |
 | zp-catch-unreachable-io | `catch-unreachable-io` | warning | 易失败 I/O 上 `catch unreachable`（非 close/eventfd/kevent） |
 | zp-arena-reset-free-all | `arena-reset-free-all` | warning | 循环内 `ArenaAllocator.reset(.free_all)` 或 arena deinit+重建；优先 retain |
-| zp-create-destroy-in-loop | `create-destroy-in-loop` | info | 同一循环内 `create(T)` 配 `destroy`；优先 `MemoryPool(T)` |
-| zp-fixed-size-alloc-in-loop | `fixed-size-alloc-in-loop` | info | 循环内 `alloc(u8, comptime_int)`（≥16）；优先 size-class 缓冲池 |
+| zp-create-destroy-hot | `create-destroy-in-loop` | info | 同一循环内 `create(T)` 配 `destroy`；优先 `MemoryPool(T)` |
+| zp-fixed-size-alloc-hot | `fixed-size-alloc-in-loop` | info | 循环内 `alloc(u8, comptime_int)`（≥16）；优先 size-class 缓冲池 |
 
 在夹具上运行的输出示例（节选）：
 
 ```text
-$ zperf-lint fixtures/bad/zp-alloc-in-loop.zig fixtures/bad/zp-extern-struct-padding.zig ...
-fixtures/bad/zp-alloc-in-loop.zig:5:34: warning[zp-alloc-in-loop alloc-in-loop] 循环体内进行堆分配 / heap allocation inside a loop body: gpa.alloc(...)
+$ zperf-lint fixtures/bad/zp-alloc-hot.zig fixtures/bad/zp-extern-struct-padding.zig ...
+fixtures/bad/zp-alloc-hot.zig:5:34: warning[zp-alloc-hot alloc-in-loop] 循环体内进行堆分配 / heap allocation inside a loop body: gpa.alloc(...)
     建议: 把分配提到循环外并复用缓冲区；或改用 ArenaAllocator + reset(.retain_capacity) / MemoryPool
 fixtures/bad/zp-extern-struct-padding.zig:1:27: warning[zp-extern-struct-padding extern-struct-padding] extern struct 字段顺序导致多余 padding / extern struct field order wastes bytes on padding: 当前 24 字节，按对齐降序重排后 16 字节
     建议: 按对齐从大到小重排字段（若 ABI 允许）；普通 struct 编译器会自动重排
@@ -2377,7 +2377,7 @@ $ echo $?
 1
 ```
 
-行内忽略：`// zperf-lint: ignore zp-alloc-in-loop`（作用于本行和下一行），文件级：`// zperf-lint: ignore-file zp-packable-bools`。本文 `examples/` 中几个故意写成反例的地方就用了这种注释，`zperf-lint examples/` 结果为 0 处。
+行内忽略：`// zperf-lint: ignore zp-alloc-hot`（作用于本行和下一行），文件级：`// zperf-lint: ignore-file zp-packable-bools`。本文 `examples/` 中几个故意写成反例的地方就用了这种注释，`zperf-lint examples/` 结果为 0 处。
 
 **v0.3 新增**：
 - zp-queue-ordered-remove 把 `ArrayList` 当队列（`orderedRemove(0)`，或在循环里 `orderedRemove`）；

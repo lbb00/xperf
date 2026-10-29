@@ -138,7 +138,8 @@ static bool marker_arg_uses(const std::string& code, const char* marker, const s
   return false;
 }
 
-std::vector<Finding> scan_file(const std::string& path) {
+std::vector<Finding> scan_file(const std::string& path, const std::string& scope) {
+  const std::string scope_mode = (scope == "loop") ? "loop" : "all";
   std::ifstream in(path);
   if (!in) return {};
   std::vector<std::string> lines;
@@ -170,23 +171,24 @@ std::vector<Finding> scan_file(const std::string& path) {
       loop_names.insert(loop_names.end(), more.begin(), more.end());
     }
 
-    if (in_loop > 0 && depth >= in_loop) {
+    const bool match_here = (scope_mode == "all") || (in_loop > 0 && depth >= in_loop);
+    if (match_here) {
       // CX001/CX003/CX004 removed 2026-10-22 — ids tombstoned, do not reuse.
       if (std::regex_search(code, re_std_regex_ctor) && !marker_arg_uses(code, "regex", loop_names)) {
-        out.push_back({"cx-regex-ctor-in-loop", path, line_no,
-                       "regex object constructed in a loop; compile outside only when this pattern stays the same"});
+        out.push_back({"cx-regex-ctor-hot", path, line_no,
+                       "regex object constructed; compile outside only when this pattern stays the same — cost adds up even off a hot path"});
       }
       if (std::regex_search(code, re_endl)) {
-        out.push_back({"cx-endl-in-loop", path, line_no,
-                       "stream flush manipulator in a loop; write a newline and flush once"});
+        out.push_back({"cx-endl-hot", path, line_no,
+                       "stream flush manipulator; write a newline and flush once — cost adds up even off a hot path"});
       }
       if (std::regex_search(code, re_clock)) {
-        out.push_back({"cx-clock-in-loop", path, line_no,
+        out.push_back({"cx-clock-hot", path, line_no,
                        "clock sample in a tight loop; hoist only when this iteration does not need a fresh time"});
       }
       if (std::regex_search(code, re_ifstream) && !marker_arg_uses(code, "ifstream", loop_names)) {
-        out.push_back({"cx-ifstream-in-loop", path, line_no,
-                       "file stream opened in a loop; open once when the path stays the same"});
+        out.push_back({"cx-ifstream-hot", path, line_no,
+                       "file stream opened; open once when the path stays the same — cost adds up even off a hot path"});
       }
       // CX003, CX004 removed 2026-10-22 — ids tombstoned.
     }
@@ -231,13 +233,13 @@ static bool skip_dir(const std::string& name) {
   return false;
 }
 
-std::vector<Finding> scan_path(const std::string& root) {
+std::vector<Finding> scan_path(const std::string& root, const std::string& scope) {
   fs::path r(root);
   std::vector<Finding> all;
   all.reserve(128);
   std::error_code ec;
   if (fs::is_regular_file(r, ec)) {
-    if (is_cpp(r)) return scan_file(r.string());
+    if (is_cpp(r)) return scan_file(r.string(), scope);
     return {};
   }
   // Collect file list first so walk itself is not a push_back hot loop of findings.
@@ -254,7 +256,7 @@ std::vector<Finding> scan_path(const std::string& root) {
     }
   }
   for (const auto& fp : files) {
-    auto fs_findings = scan_file(fp.string());
+    auto fs_findings = scan_file(fp.string(), scope);
     all.insert(all.end(), fs_findings.begin(), fs_findings.end());
   }
   return all;

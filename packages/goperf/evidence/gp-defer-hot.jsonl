@@ -1,0 +1,4 @@
+{"rule":"gp-defer-hot","case":"close_each","role":"after","go":"go1.27.3","median_ms":0.038000,"ops":20000,"ratio":1.000000,"ts":"2026-10-23T12:18:37Z"}
+{"rule":"gp-defer-hot","case":"defer_in_loop","role":"before","go":"go1.27.3","median_ms":1.748917,"ops":20000,"ratio":46.024132,"ts":"2026-10-23T12:18:37Z"}
+{"rule":"gp-defer-hot","case":"small_close_each","role":"after","go":"go1.27.3","median_ms":0.000084,"ops":100,"ratio":1.000000,"ts":"2026-10-23T12:18:37Z"}
+{"rule":"gp-defer-hot","case":"small_defer_in_loop","role":"before","go":"go1.27.3","median_ms":0.002209,"ops":100,"ratio":26.297619,"ts":"2026-10-23T12:18:37Z"}

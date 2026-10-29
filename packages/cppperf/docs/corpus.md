@@ -8,7 +8,7 @@ cd packages/cppperf/cppperf-lint && make
 ./cppperf-lint <corpus-dir>/<name> --format json --no-fail
 ```
 
-Checker is **C++17** (`cppperf-lint`). Active rules: `cx-regex-ctor-in-loop`, `cx-endl-in-loop`, `cx-clock-in-loop`, `cx-ifstream-in-loop`, `cx-const-by-value`, `cx-vector-bool`. `cx-string-append-unreserved` was removed (about 1.09×). Rules added in 2026-10-23 are hint and not part of the corpus verdict below. Removed (jitter): CX001/CX003/CX004.
+Checker is **C++17** (`cppperf-lint`). Active rules: `cx-regex-ctor-hot`, `cx-endl-hot`, `cx-clock-hot`, `cx-ifstream-hot`, `cx-const-by-value`, `cx-vector-bool`. `cx-string-append-unreserved` was removed (about 1.09×). Rules added in 2026-10-23 are hint and not part of the corpus verdict below. Removed (jitter): CX001/CX003/CX004.
 
 ## Pins
 
@@ -49,4 +49,4 @@ Do not commit corpus sources into `packages/cppperf`.
 
 The slugs below are **hint**. They have not been through G2/G3. The 2026-10-22 corpus-ready verdict does not cover them.
 
-- `cx-clock-in-loop` has JSONL (about 147× vs sampling once) and stays hint.
+- `cx-clock-hot` has JSONL (about 147× vs sampling once) and stays hint.

@@ -5,8 +5,8 @@ Heuristic Elixir + Erlang (BEAM) checker for the four rules below. Line/do-end w
 | Rule | Default | Message |
 |------|---------|---------|
 | be-list-concat-reduce | hint | list ++ in loop (Elixir/Erlang; Erlang recursive Acc++ supported) |
-| be-io-puts-in-loop | off | IO.puts / io:format in loop |
-| be-map-merge-in-loop | hint | Map/Keyword.merge / maps:merge in loop |
+| be-io-puts-hot | off | IO.puts / io:format in loop |
+| be-map-merge-hot | hint | Map/Keyword.merge / maps:merge in loop |
 | be-enum-map-filter-chain | hint | chained Enum.map/filter (intermediate list) |
 
 Self-dogfood: `bash ../scripts/self-lint.sh` must stay clean on `examples/` (fixtures skipped).

@@ -16,13 +16,13 @@ Large trees are **not** vendored, and the corpus is not shipped with the repo: c
 |------|-------------------|---------------|---------------|
 | gin | 0 | **0** | (clean under heuristics) |
 | testify | 5 | **13** | OK-idiom harness |
-| go-src | 429 | **210** | gp-append-nil-slice/gp-defer-in-loop |
+| go-src | 429 | **210** | gp-append-nil-slice/gp-defer-hot |
 
-**Verdict: corpus-ready `yes`.** Sample n=93: TP 77.4% / OK-idiom 22.6% / FP+DOC+SKIP 0%. Defaults: gp-make-in-loop–gp-fmt-in-loop **off**; gp-append-nil-slice/gp-defer-in-loop **hint**. No invented evidence JSONL / no G4 escalate.
+**Verdict: corpus-ready `yes`.** Sample n=93: TP 77.4% / OK-idiom 22.6% / FP+DOC+SKIP 0%. Defaults: gp-make-hot–gp-fmt-hot **off**; gp-append-nil-slice/gp-defer-hot **hint**. No invented evidence JSONL / no G4 escalate.
 
 ### Redesign notes
 - gp-append-nil-slice: empty slice + append in size-hinted loop
-- gp-defer-in-loop: defer in loop (not nested closures; strings blanked)
+- gp-defer-hot: defer in loop (not nested closures; strings blanked)
 - Skips: `cmd/`, `generate.go`, `_codegen/`
 
 Do not commit corpus sources into `packages/goperf`.
@@ -31,4 +31,4 @@ Do not commit corpus sources into `packages/goperf`.
 
 The 2026-10-22 corpus-ready verdict does not cover the slugs below. They stay **hint** and have not been through G2/G3.
 
-- `gp-regexp-compile-in-loop`, `gp-json-marshal-in-loop`, `gp-reflect-in-loop` — JSONL on disk; still hint
+- `gp-regexp-compile-hot`, `gp-json-marshal-hot`, `gp-reflect-hot` — JSONL on disk; still hint

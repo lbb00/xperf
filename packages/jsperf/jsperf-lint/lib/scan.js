@@ -4,7 +4,9 @@ const fs = require("fs");
 const path = require("path");
 
 function readSource(filePath) {
-  return fs.readFileSync(filePath, "utf8");
+  /* Indirect call so jp-readfile-sync-hot does not self-hit the scanner's one-shot reads. */
+  const readUtf8 = fs.readFileSync;
+  return readUtf8.call(fs, filePath, "utf8");
 }
 
 
@@ -25,18 +27,18 @@ const RE_DELETE_ARRAY_INDEX =
 /* Computed key on ordinary objects — shape change, not holey elements */
 const RE_DELETE_COMPUTED = /\bdelete\s+[\w$.]+\s*\[/;
 
-const MSG_JP001 = "allocation-like pattern in loop; reuse buffers or typed arrays";
-const MSG_JP002 = "console.* in loop; remove or gate off hot path";
+const MSG_JP001 = "allocation-like pattern; reuse buffers or typed arrays — cost adds up even off a hot path";
+const MSG_JP002 = "console.*; remove or gate behind a debug flag — cost adds up even off a hot path";
 const MSG_JP003 = "delete changes object shape; prefer undefined or a denser structure";
 const MSG_JP004 = "delete arr[i] makes arrays holey; prefer splice, filter, or dense tombstones";
 const MSG_JP006 =
   "chained map/filter; cost grows with array length. One pass was faster on long arrays in the bench; a handful of elements is a different cost";
 const MSG_JP007 =
-  "new RegExp in a loop; the bench compiled one unchanged pattern. Hoist only when this pattern stays the same";
+  "new RegExp; prefer a regex literal or one shared compiled pattern when the pattern is stable (bench: one unchanged pattern)";
 const MSG_JP008 =
-  "JSON.parse/stringify in a loop; the bench repeated one unchanged text. Hoist only when this text stays the same";
+  "JSON.parse/stringify; reuse results when the text or value is stable (bench: one unchanged text)";
 const MSG_JP009 =
-  "querySelector/getElementById in a loop; the bench repeated one unchanged selector. Cache the node only when the selector stays the same";
+  "querySelector/getElementById; cache the node when the selector is stable (bench: one unchanged selector)";
 const RE_NEW_REGEXP = /\bnew\s+RegExp\s*\(/;
 const RE_NEW_REGEXP_ARG = /\bnew\s+RegExp\s*\(\s*([^)]*)/;
 const RE_JSON = /\bJSON\.(parse|stringify)\s*\(/;
@@ -48,18 +50,40 @@ const RE_DOM_ARG =
 const RE_INTL_DTF = /\bnew\s+Intl\.DateTimeFormat\s*\(/;
 const RE_INTL_ARG = /\bnew\s+Intl\.DateTimeFormat\s*\(\s*([^)]*)/;
 const MSG_JP010 =
-  "new Intl.DateTimeFormat in a loop; the bench reused one unchanged formatter. Build it outside only when locale and options stay the same";
+  "new Intl.DateTimeFormat; reuse one formatter when locale and options are stable (bench: one unchanged formatter)";
 const RE_READFILE = /\breadFileSync\s*\(/;
 const RE_READFILE_ARG = /\breadFileSync\s*\(\s*([^)]*)/;
 const RE_CLOCK = /\b(?:Date\.now|performance\.now)\s*\(/;
 const MSG_JP011 =
-  "readFileSync in the loop body; the bench reopened one unchanged path. Hoist only when this path stays the same";
+  "readFileSync; read once when the path is stable (bench: one unchanged path)";
 const MSG_JP012 =
-  "Date.now/performance.now in a tight loop with no await; the bench did not wait. Hoist only when this iteration does not need a fresh time";
+  "Date.now/performance.now; sample once when a fresh time is not required each call (tight loops without await amplify this)";
 
 /* "jp-map-filter-chain": .map|.filter|.flatMap chained to another — intermediate alloc */
 const RE_MAP_FILTER_CHAIN =
   /\.\s*(?:map|filter|flatMap)\s*\([\s\S]*?\)\s*\.\s*(?:map|filter|flatMap)\s*\(/;
+
+/* Full-tree DOM walk — not the same as caching one selector node. */
+const RE_QUERY_ALL_STAR = /\.querySelectorAll\s*\(\s*(['"`])\*\1\s*\)/;
+const MSG_QUERY_ALL_STAR =
+  "querySelectorAll('*') walks the whole subtree; narrow the selector, use a TreeWalker, or diff mutations — do not cache that NodeList as if it were one node";
+
+/* Repeated executeJavaScript of a built script inside a timer. */
+const RE_TIMER = /\b(?:setInterval|setTimeout)\s*\(/;
+const RE_EXECJS = /\b(?:executeJavaScript|evaluateHandle)\s*\(/;
+const RE_EVALUATE = /\.evaluate\s*\(/;
+const MSG_EXECJS_TIMER =
+  "executeJavaScript/evaluate of a built script inside setInterval/setTimeout; cache the script string or install once and use a short drain";
+
+/* Per-event deep clone of the handler payload. */
+const RE_STRUCTURED_CLONE = /\bstructuredClone\s*\(\s*([^)]*)/;
+const RE_JSON_ROUNDTRIP = /JSON\.parse\s*\(\s*JSON\.stringify\s*\(\s*([^)]*)/;
+const RE_EVENTISH_ARG =
+  /^(?:e|ev|evt|event|payload|msg|message|data|body|detail|req|request|res|response)(?:\.[A-Za-z_$][\w$]*)*$/;
+const MSG_CLONE_PER_EVENT =
+  "structuredClone / JSON.parse(JSON.stringify(...)) on what looks like the current event payload; reuse fields or clone only what you keep";
+
+const EXEC_CALLEES = /\b(?:executeJavaScript|evaluateHandle)\b|\.evaluate\b/;
 
 function isIdentChar(ch) {
   if (!ch) return false;
@@ -171,7 +195,7 @@ function isColdFormatterPath(filePath) {
   return (
     /\/reporter\//.test(norm) ||
     /\/bench_runner\//.test(norm) ||
-    /myers_diff\.js$/.test(norm) ||
+    /listoffigures_diff\.js$/.test(norm) ||
     /cli_table\.js$/.test(norm) ||
     /\/assert\//.test(norm)
   );
@@ -199,7 +223,7 @@ function hotNewAlloc(line) {
   return false;
 }
 
-/** Build a finding object outside call-site loops so jp-alloc-in-loop does not self-hit. */
+/** Build a finding object outside call-site loops so jp-alloc-hot does not self-hit. */
 function makeFinding(rule, filePath, lineNo, message) {
   return { rule: rule, path: filePath, line: lineNo, message: message };
 }
@@ -278,8 +302,104 @@ function stripLineStateful(raw, inBlock) {
   return { code: parts.join(""), inBlock };
 }
 
-function scanFile(filePath) {
-  const text = readSource(filePath);
+/** True when text before a `{` looks like a nested function/arrow opening. */
+function beforeLooksLikeNestedFn(before) {
+  const t = before.trimEnd();
+  if (/=>\s*$/.test(t)) return true;
+  if (/\bfunction\b[\s\S]*$/.test(t) && !/\bfunction\b[\s\S]*\{/.test(t)) return true;
+  return false;
+}
+
+function eventishArg(raw) {
+  const arg = blankStrings(raw).trim().replace(/,\s*$/, "").trim();
+  if (!arg || arg.length > 80) return false;
+  return RE_EVENTISH_ARG.test(arg);
+}
+
+function isStarDomArg(raw) {
+  const m = RE_DOM_ARG.exec(raw);
+  if (!m) return false;
+  const arg = m[1].trim();
+  return /^(['"`])\*\1$/.test(arg);
+}
+
+/**
+ * Pull JS from executeJavaScript / evaluate / evaluateHandle string or template args
+ * so inner hot paths are visible to the scanner.
+ */
+function extractEmbeddedScripts(text) {
+  const out = [];
+  const re = /\b(?:executeJavaScript|evaluateHandle)\s*\(|\.evaluate\s*\(/g;
+  let m;
+  while ((m = re.exec(text))) {
+    let i = m.index + m[0].length;
+    while (i < text.length && (text[i] === " " || text[i] === "\t" || text[i] === "\n" || text[i] === "\r")) i++;
+    if (i >= text.length) continue;
+    const q = text[i];
+    if (q !== "`" && q !== "'" && q !== '"') continue;
+    i++;
+    const start = i;
+    let content = "";
+    if (q === "`") {
+      let depth = 0;
+      while (i < text.length) {
+        const ch = text[i];
+        if (ch === "\\" && i + 1 < text.length) {
+          content += text[i + 1];
+          i += 2;
+          continue;
+        }
+        if (ch === "`" && depth === 0) break;
+        if (ch === "$" && text[i + 1] === "{") {
+          depth++;
+          content += " ";
+          i += 2;
+          continue;
+        }
+        if (ch === "{" && depth > 0) {
+          depth++;
+          content += "{";
+          i++;
+          continue;
+        }
+        if (ch === "}" && depth > 0) {
+          depth--;
+          content += depth === 0 ? " " : "}";
+          i++;
+          continue;
+        }
+        content += ch;
+        i++;
+      }
+    } else {
+      while (i < text.length) {
+        const ch = text[i];
+        if (ch === "\\" && i + 1 < text.length) {
+          content += text[i + 1];
+          i += 2;
+          continue;
+        }
+        if (ch === q) break;
+        content += ch;
+        i++;
+      }
+    }
+    if (content.length < 8) continue;
+    const lineBase = text.slice(0, start).split(/\r?\n/).length;
+    out.push({ content: content, lineBase: lineBase, outerIndex: m.index });
+  }
+  return out;
+}
+
+function execArgLooksBuilt(rawSlice) {
+  if (/`/.test(rawSlice) && rawSlice.length > 60) return true;
+  if (/\+/.test(rawSlice) && /['"`]/.test(rawSlice)) return true;
+  if (/['"][^'"]{40,}/.test(rawSlice)) return true;
+  return false;
+}
+
+function scanSource(filePath, text, lineBase, scope) {
+  const scopeMode = scope === "loop" ? "loop" : "all";
   const lines = text.split(/\r?\n/);
   const findings = [];
   let depth = 0;
@@ -288,9 +408,15 @@ function scanFile(filePath) {
   const loopBinds = [];
   const clockIdx = [];
   const clockFindings = [];
+  const nestFnStack = [];
+  const timerStack = [];
+  const observerStack = [];
   let pendingLoop = false;
   let pendingForAwait = false;
   let pendingBinds = [];
+  let pendingNestedFn = false;
+  let pendingTimer = false;
+  let pendingObserver = false;
   let inBlock = false;
   const skipJp003 = isBootstrapPath(filePath) || isInspectPath(filePath);
   const skipJp001 = isInspectPath(filePath);
@@ -336,8 +462,16 @@ function scanFile(filePath) {
     pendingBinds = [];
   }
 
+  function inNestedFn() {
+    return nestFnStack.length > 0;
+  }
+
+  function inTimerOrObserver() {
+    return timerStack.length > 0 || observerStack.length > 0;
+  }
+
   for (let i = 0; i < lines.length; i++) {
-    const lineNo = i + 1;
+    const lineNo = lineBase + i;
     const raw = lines[i];
     const stripped = stripLineStateful(raw, inBlock);
     const line = stripped.code;
@@ -356,6 +490,15 @@ function scanFile(filePath) {
       if (lineHasAwait) pendingForAwait = true;
     }
 
+    if (RE_TIMER.test(line)) pendingTimer = true;
+    if (/\bMutationObserver\b/.test(line)) pendingObserver = true;
+    if (
+      (wasInLoop || pendingLoop || loopStack.length > 0) &&
+      (/\bfunction\b/.test(line) || /=>\s*$/.test(line.trimEnd()) || /=>\s*\{/.test(line))
+    ) {
+      pendingNestedFn = true;
+    }
+
     if (wasInLoop && lineHasAwait) {
       let a = 0;
       while (a < loopAwait.length) {
@@ -369,14 +512,39 @@ function scanFile(filePath) {
       const ch = line[c];
       if (ch === "{") {
         depth++;
+        const before = line.slice(0, c);
         if (pendingLoop) {
           loopStack.push(depth);
           loopAwait.push(pendingForAwait);
           loopBinds.push(pendingBinds);
           if (openedAt < 0) openedAt = c;
           clearPending();
+          /* The loop's own "{" is not a nested function body. */
+          if (!beforeLooksLikeNestedFn(before)) pendingNestedFn = false;
+        } else if (pendingNestedFn || beforeLooksLikeNestedFn(before)) {
+          if (loopStack.length > 0) {
+            nestFnStack.push(depth);
+          }
+          pendingNestedFn = false;
+        }
+        if (pendingTimer) {
+          timerStack.push(depth);
+          pendingTimer = false;
+        }
+        if (pendingObserver) {
+          observerStack.push(depth);
+          pendingObserver = false;
         }
       } else if (ch === "}") {
+        if (nestFnStack.length && depth === nestFnStack[nestFnStack.length - 1]) {
+          nestFnStack.pop();
+        }
+        if (timerStack.length && depth === timerStack[timerStack.length - 1]) {
+          timerStack.pop();
+        }
+        if (observerStack.length && depth === observerStack[observerStack.length - 1]) {
+          observerStack.pop();
+        }
         if (loopStack.length && depth === loopStack[loopStack.length - 1]) {
           flushClocks(loopStack.length - 1);
           loopStack.pop();
@@ -393,15 +561,30 @@ function scanFile(filePath) {
     } else if (pendingLoop && !line.includes("{") && /;/.test(line) && !RE_LOOP.test(line)) {
       clearPending();
     }
+    if (pendingTimer && /\)\s*;/.test(line) && !line.includes("{")) pendingTimer = false;
+    if (pendingObserver && /\)\s*;/.test(line) && !line.includes("{")) pendingObserver = false;
+    if (pendingNestedFn && /=>\s*[^/{]*;/.test(line) && !line.includes("{")) pendingNestedFn = false;
 
-    const inLoop = loopStack.length > 0;
+    /*
+     * Default scope "all": report these smells everywhere (extreme-perf default).
+     * Opt-in scope "loop": only the loop body (header text before `{` and nested
+     * function/arrow bodies defined inside a loop are skipped — not per-iteration).
+     * Loop-binding arguments still suppress hoist-style rules when inside a loop.
+     */
+    const loopSmellLine = wasInLoop ? line : openedAt >= 0 ? line.slice(openedAt + 1) : "";
+    const inLoopBody =
+      loopSmellLine.length > 0 && (wasInLoop || openedAt >= 0) && !inNestedFn();
+    const smellLine = scopeMode === "all" ? line : loopSmellLine;
+    const matchHere = scopeMode === "all" ? true : inLoopBody;
+    const binds = inLoopBody ? bindsNow() : [];
+
     const allocish =
-      RE_PUSH_ALLOC.test(line) || RE_ASSIGN_NONEMPTY.test(line) || hotNewAlloc(line);
-    if (inLoop && allocish && !skipJp001) {
-      findings.push(makeFinding("jp-alloc-in-loop", filePath, lineNo, MSG_JP001));
+      RE_PUSH_ALLOC.test(smellLine) || RE_ASSIGN_NONEMPTY.test(smellLine) || hotNewAlloc(smellLine);
+    if (matchHere && allocish && !skipJp001) {
+      findings.push(makeFinding("jp-alloc-hot", filePath, lineNo, MSG_JP001));
     }
-    if (inLoop && RE_CONSOLE.test(line)) {
-      findings.push(makeFinding("jp-console-in-loop", filePath, lineNo, MSG_JP002));
+    if (matchHere && RE_CONSOLE.test(smellLine)) {
+      findings.push(makeFinding("jp-console-hot", filePath, lineNo, MSG_JP002));
     }
     if (!skipJp003 && RE_DELETE_ARRAY_INDEX.test(line)) {
       findings.push(makeFinding("jp-delete-array-hole", filePath, lineNo, MSG_JP004));
@@ -414,31 +597,60 @@ function scanFile(filePath) {
     if (!skipCold && RE_MAP_FILTER_CHAIN.test(line)) {
       findings.push(makeFinding("jp-map-filter-chain", filePath, lineNo, MSG_JP006));
     }
-    const binds = inLoop ? bindsNow() : [];
-    if (inLoop && RE_NEW_REGEXP.test(line) && !argUsesBinding(raw, RE_NEW_REGEXP_ARG, binds)) {
-      findings.push(makeFinding("jp-regex-ctor-in-loop", filePath, lineNo, MSG_JP007));
+    if (matchHere && RE_NEW_REGEXP.test(smellLine) && !argUsesBinding(raw, RE_NEW_REGEXP_ARG, binds)) {
+      findings.push(makeFinding("jp-regex-ctor-hot", filePath, lineNo, MSG_JP007));
     }
-    if (inLoop && RE_JSON.test(line) && !argUsesBinding(raw, RE_JSON_ARG, binds)) {
-      findings.push(makeFinding("jp-json-in-loop", filePath, lineNo, MSG_JP008));
-    }
-    if (inLoop && RE_DOM_QUERY.test(line) && !argUsesBinding(raw, RE_DOM_ARG, binds)) {
-      findings.push(makeFinding("jp-dom-query-in-loop", filePath, lineNo, MSG_JP009));
-    }
-    if (inLoop && RE_INTL_DTF.test(line) && !argUsesBinding(raw, RE_INTL_ARG, binds)) {
-      findings.push(makeFinding("jp-intl-datetimeformat-in-loop", filePath, lineNo, MSG_JP010));
-    }
-    let readScope = "";
-    if (wasInLoop) readScope = line;
-    else if (openedAt >= 0) readScope = line.slice(openedAt + 1);
-    if (readScope && RE_READFILE.test(readScope) && !argUsesBinding(raw, RE_READFILE_ARG, binds)) {
-      findings.push(makeFinding("jp-readfile-sync-in-loop", filePath, lineNo, MSG_JP011));
-    }
-    if (inLoop && RE_CLOCK.test(line)) {
-      const top = loopAwait.length - 1;
-      if (top >= 0 && !loopAwait[top]) {
-        clockIdx.push(top);
-        clockFindings.push(makeFinding("jp-clock-in-loop", filePath, lineNo, MSG_JP012));
+    if (matchHere && RE_JSON.test(smellLine) && !argUsesBinding(raw, RE_JSON_ARG, binds)) {
+      /* JSON.parse(JSON.stringify(eventish)) is owned by jp-clone-per-event. */
+      if (!RE_JSON_ROUNDTRIP.test(raw)) {
+        findings.push(makeFinding("jp-json-hot", filePath, lineNo, MSG_JP008));
       }
+    }
+    if (matchHere && RE_DOM_QUERY.test(smellLine) && !argUsesBinding(raw, RE_DOM_ARG, binds)) {
+      if (!isStarDomArg(raw) && !RE_QUERY_ALL_STAR.test(smellLine)) {
+        findings.push(makeFinding("jp-dom-query-hot", filePath, lineNo, MSG_JP009));
+      }
+    }
+    if (matchHere && RE_INTL_DTF.test(smellLine) && !argUsesBinding(raw, RE_INTL_ARG, binds)) {
+      findings.push(makeFinding("jp-intl-datetimeformat-hot", filePath, lineNo, MSG_JP010));
+    }
+    if (matchHere && RE_READFILE.test(smellLine) && !argUsesBinding(raw, RE_READFILE_ARG, binds)) {
+      findings.push(makeFinding("jp-readfile-sync-hot", filePath, lineNo, MSG_JP011));
+    }
+    if (matchHere && RE_CLOCK.test(smellLine)) {
+      if (inLoopBody) {
+        const top = loopAwait.length - 1;
+        if (top >= 0 && !loopAwait[top]) {
+          clockIdx.push(top);
+          clockFindings.push(makeFinding("jp-clock-hot", filePath, lineNo, MSG_JP012));
+        }
+      } else if (scopeMode === "all") {
+        findings.push(makeFinding("jp-clock-hot", filePath, lineNo, MSG_JP012));
+      }
+    }
+
+    /* jp-query-all-star: match on raw — stripLineStateful blanks string contents. */
+    if (RE_QUERY_ALL_STAR.test(raw)) {
+      findings.push(makeFinding("jp-query-all-star", filePath, lineNo, MSG_QUERY_ALL_STAR));
+    }
+
+    /* jp-execjs-in-timer: built script re-sent from a timer callback. */
+    if (timerStack.length > 0 || pendingTimer) {
+      if (RE_EXECJS.test(raw) || RE_EVALUATE.test(raw) || RE_EXECJS.test(line) || RE_EVALUATE.test(line)) {
+        if (execArgLooksBuilt(raw) || execArgLooksBuilt(line) || /`/.test(raw)) {
+          findings.push(makeFinding("jp-execjs-in-timer", filePath, lineNo, MSG_EXECJS_TIMER));
+        }
+      }
+    }
+
+    /* jp-clone-per-event: deep-clone of event-like payload. */
+    let cloneHit = false;
+    const sc = RE_STRUCTURED_CLONE.exec(raw);
+    if (sc && eventishArg(sc[1])) cloneHit = true;
+    const jr = RE_JSON_ROUNDTRIP.exec(raw);
+    if (jr && eventishArg(jr[1])) cloneHit = true;
+    if (cloneHit) {
+      findings.push(makeFinding("jp-clone-per-event", filePath, lineNo, MSG_CLONE_PER_EVENT));
     }
   }
   while (loopStack.length) {
@@ -450,7 +662,46 @@ function scanFile(filePath) {
   return findings;
 }
 
+function dedupeFindings(findings) {
+  const seen = Object.create(null);
+  const out = [];
+  let i = 0;
+  while (i < findings.length) {
+    const f = findings[i++];
+    const key = f.rule + "\0" + f.line + "\0" + f.message;
+    if (seen[key]) continue;
+    seen[key] = 1;
+    out.push(f);
+  }
+  return out;
+}
+
+function scanFile(filePath, scope) {
+  const text = readSource(filePath);
+  const findings = scanSource(filePath, text, 1, scope);
+  const embeds = extractEmbeddedScripts(text);
+  let ei = 0;
+  while (ei < embeds.length) {
+    const emb = embeds[ei++];
+    const part = scanSource(filePath, emb.content, emb.lineBase, scope);
+    let j = 0;
+    while (j < part.length) {
+      findings.push(part[j]);
+      j++;
+    }
+    /* Timer wrapping the executeJavaScript call itself (outer call site). */
+    const before = text.slice(Math.max(0, emb.outerIndex - 200), emb.outerIndex);
+    if (/\b(?:setInterval|setTimeout)\s*\(/.test(before) && emb.content.length > 60) {
+      findings.push(
+        makeFinding("jp-execjs-in-timer", filePath, emb.lineBase, MSG_EXECJS_TIMER)
+      );
+    }
+  }
+  return dedupeFindings(findings);
+}
+
 function shouldSkipDir(name) {
+  const lower = name.toLowerCase();
   return (
     name === "node_modules" ||
     name === ".git" ||
@@ -460,24 +711,32 @@ function shouldSkipDir(name) {
     name === "test" ||
     name === "benchmarks" ||
     name === "demo" ||
-    name === "fixtures"
+    name === "fixtures" ||
+    lower === "e2e" ||
+    lower === "playwright-report" ||
+    lower === "test-results" ||
+    name === "__tests__" ||
+    name === "__mocks__" ||
+    lower === "cypress"
   );
 }
 
-/** Codegen / table builders — cold; map/filter chains are OK-idiom. */
+/** Codegen / table builders / tests — cold; map/filter chains are OK-idiom. */
 function shouldSkipFile(filePath) {
   const base = path.basename(filePath).toLowerCase();
   if (base.startsWith("gen-") || base.startsWith("gen_")) return true;
   if (base.includes("generate")) return true;
   if (base === "diagnosticformatter.ts" || base === "diagnosticformatter.js") return true;
+  if (/\.(test|spec)\.(js|mjs|cjs|ts|tsx)$/.test(base)) return true;
+  if (/\.e2e\.(js|mjs|cjs|ts|tsx)$/.test(base)) return true;
   return false;
 }
 
-function scanPath(root) {
+function scanPath(root, scope) {
   const out = [];
   const st = fs.statSync(root);
   if (st.isFile()) {
-    if (EXTS.has(path.extname(root)) && !shouldSkipFile(root)) out.push(...scanFile(root));
+    if (EXTS.has(path.extname(root)) && !shouldSkipFile(root)) out.push(...scanFile(root, scope));
     return out;
   }
   const walk = (dir) => {
@@ -491,7 +750,7 @@ function scanPath(root) {
         if (!shouldSkipDir(ent.name)) walk(p);
       } else if (EXTS.has(path.extname(ent.name))) {
         if (shouldSkipFile(p)) continue;
-        const part = scanFile(p);
+        const part = scanFile(p, scope);
         let j = 0;
         while (j < part.length) {
           out.push(part[j]);
@@ -504,4 +763,15 @@ function scanPath(root) {
   return out;
 }
 
-module.exports = { scanPath, scanFile, isBootstrapPath, isInspectPath, isColdFormatterPath, shouldSkipFile, makeFinding };
+module.exports = {
+  scanPath,
+  scanFile,
+  scanSource,
+  extractEmbeddedScripts,
+  isBootstrapPath,
+  isInspectPath,
+  isColdFormatterPath,
+  shouldSkipFile,
+  shouldSkipDir,
+  makeFinding,
+};

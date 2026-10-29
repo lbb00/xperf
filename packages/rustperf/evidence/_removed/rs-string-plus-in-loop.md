@@ -2,7 +2,7 @@
 
 ## Claim
 
-Plain `s += "…"` / `push_str` on a single growing `String` is **amortized ~1×** vs `String::with_capacity` under rustc `-C opt-level=3` (geometric growth already avoids Lua/`..`-style copies). Tiny builders can show a small capacity win when many fresh `String::new()` starts are repeated. This rule does **not** cover `format!` rebind accumulation — that is **rs-format-rebind-in-loop**.
+Plain `s += "…"` / `push_str` on a single growing `String` is **amortized ~1×** vs `String::with_capacity` under rustc `-C opt-level=3` (geometric growth already avoids Lua/`..`-style copies). Tiny builders can show a small capacity win when many fresh `String::new()` starts are repeated. This rule does **not** cover `format!` rebind accumulation — that is **rs-format-rebind-hot**.
 
 ## How measured
 
@@ -16,7 +16,7 @@ Plain `s += "…"` / `push_str` on a single growing `String` is **amortized ~1×
   - **before:** `push_str(chunk)` without capacity
   - **after:** `with_capacity(N*32)` + `push_str`
 - Pair D (small N=100, ×20000 outer reps for timer floor): expect modest / ~1–2×
-- Raw lines: [`rs-string-plus-in-loop.jsonl`](rs-string-plus-in-loop.jsonl) (format! pair moved to [`rs-format-rebind-in-loop.jsonl`](../rs-format-rebind-in-loop.jsonl))
+- Raw lines: [`rs-string-plus-in-loop.jsonl`](rs-string-plus-in-loop.jsonl) (format! pair moved to [`rs-format-rebind-hot.jsonl`](../rs-format-rebind-hot.jsonl))
 
 ## Runtime (this evidence file)
 
@@ -39,12 +39,12 @@ Direction: fixture-shaped `+=` / `push_str` stays ~1×. Absolute ms and ratios a
 
 ## Lint mapping
 
-`rustperf-lint` **rs-string-plus-in-loop** flags `+=` / `.push_str(` inside a real `for`/`while`/`loop` window (reverse-opt skips tiny seps, help/error formatters, `clap_complete` shells — see G3 triage). Default severity **`hint`**: JSONL exists but the flagged smell is amortized ~1×. Do not CI-error clap-like builders. Hot `format!("{s}…")` / `s = format!(…)` rebind is **rs-format-rebind-in-loop** (separate detector + evidence).
+`rustperf-lint` **rs-string-plus-in-loop** flags `+=` / `.push_str(` inside a real `for`/`while`/`loop` window (reverse-opt skips tiny seps, help/error formatters, `clap_complete` shells — see G3 triage). Default severity **`hint`**: JSONL exists but the flagged smell is amortized ~1×. Do not CI-error clap-like builders. Hot `format!("{s}…")` / `s = format!(…)` rebind is **rs-format-rebind-hot** (separate detector + evidence).
 
 ## Limits
 
 - Microbench; not an app profile.
-- Rust `String` growth is geometric — do **not** equate rs-string-plus-in-loop with Lua `..` / lu-string-concat-in-loop quadratic copies for plain `push_str`.
+- Rust `String` growth is geometric — do **not** equate rs-string-plus-in-loop with Lua `..` / lu-string-concat-hot quadratic copies for plain `push_str`.
 - Pair D multiplies small builders for timer resolution; `ops` is chars per builder (100), not total appends.
 - Does not measure `Write` trait objects, `itoa`, or SSO.
-- Historical note: early G3 was OK-idiom-heavy; kit later flipped **corpus-ready** (see docs/corpus.md). rs-println-in-loop has since been measured (hint).
+- Historical note: early G3 was OK-idiom-heavy; kit later flipped **corpus-ready** (see docs/corpus.md). rs-println-hot has since been measured (hint).

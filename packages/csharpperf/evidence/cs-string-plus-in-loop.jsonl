@@ -1,2 +1,0 @@
-{"rule":"cs-string-plus-in-loop","case":"stringbuilder","role":"after","dotnet":"10.0.13","median_ms":0.0885,"ops":30000,"ratio":1,"ts":"2026-10-23T12:29:29.4631040Z"}
-{"rule":"cs-string-plus-in-loop","case":"string_plus_equals","role":"before","dotnet":"10.0.13","median_ms":226.0176,"ops":30000,"ratio":2553.871186440678,"ts":"2026-10-23T12:29:29.4631040Z"}

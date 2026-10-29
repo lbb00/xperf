@@ -43,16 +43,16 @@ var (
 	reRegexpArg     = regexp.MustCompile(`\bregexp\.(?:MustCompilePOSIX|MustCompile|CompilePOSIX|Compile)\s*\(([^)\n]*)`)
 	reJSONArg       = regexp.MustCompile(`\bjson\.(?:MarshalIndent|Marshal|Unmarshal)\s*\(([^)\n]*)`)
 	reOsOpenArg     = regexp.MustCompile(`\bos\.Open\s*\(([^)\n]*)`)
-	msg001          = "make/new in loop; reuse buffers when profiles show pressure"
-	msg002          = "string += in loop; prefer strings.Builder"
-	msg003          = "fmt.*printf in loop; gate debug or use cheaper writers"
+	msg001          = "make/new; reuse buffers when profiles show pressure — cost adds up even off a hot path"
+	msg002          = "string +=; prefer strings.Builder — cost adds up even off a hot path"
+	msg003          = "fmt.*printf; gate debug or use cheaper writers — cost adds up even off a hot path"
 	msg004          = "empty slice grown with append in size-hinted loop; prefer make([]T, 0, n)"
-	msg005          = "defer in loop; calls accumulate until function returns"
-	msg006          = "regexp.Compile in a loop; compile outside only when this pattern stays the same"
-	msg007          = "json.Marshal/Unmarshal in a loop; hoist only when this value stays the same"
-	msg008          = "reflect name lookup or reflect.New in a loop; resolve it outside"
-	msg009          = "file open in a loop; open once when the path stays the same"
-	msg010          = "clock sample in a tight loop; hoist only when this iteration does not need a fresh time"
+	msg005          = "defer; calls accumulate until function returns — cost adds up even off a hot path"
+	msg006          = "regexp.Compile; compile outside only when this pattern stays the same — cost adds up even off a hot path"
+	msg007          = "json.Marshal/Unmarshal; hoist only when this value stays the same — cost adds up even off a hot path"
+	msg008          = "reflect name lookup or reflect.New; resolve it outside — cost adds up even off a hot path"
+	msg009          = "file open; open once when the path stays the same — cost adds up even off a hot path"
+	msg010          = "clock sample; hoist only when this iteration does not need a fresh time — cost adds up even off a hot path"
 )
 
 func isGo(path string) bool {
@@ -96,7 +96,11 @@ func loopHasSizeHint(code string) bool {
 	return false
 }
 
-func ScanFile(path string) ([]Finding, error) {
+func ScanFile(path string, scope string) ([]Finding, error) {
+	scopeMode := "all"
+	if scope == "loop" {
+		scopeMode = "loop"
+	}
 	f, err := os.Open(path)
 	if err != nil {
 		return nil, err
@@ -150,34 +154,35 @@ func ScanFile(path string) ([]Finding, error) {
 			loopNest = nestedFuncs
 			loopNames = append(loopNames, forBindNames(match)...)
 		}
-		if inLoop > 0 && depth >= inLoop {
+		matchHere := scopeMode == "all" || (inLoop > 0 && depth >= inLoop)
+		if matchHere {
 			if reMake.MatchString(match) && !reMakeChan.MatchString(match) {
-				out = append(out, Finding{Rule: "gp-make-in-loop", Path: path, Line: lineNo, Message: msg001})
+				out = append(out, Finding{Rule: "gp-make-hot", Path: path, Line: lineNo, Message: msg001})
 			}
 			if reStrAdd.MatchString(match) && looksStringPlus(code) && !isTinyStringPlus(code) {
-				out = append(out, Finding{Rule: "gp-string-plus-in-loop", Path: path, Line: lineNo, Message: msg002})
+				out = append(out, Finding{Rule: "gp-string-plus-hot", Path: path, Line: lineNo, Message: msg002})
 			}
 			if reFmt.MatchString(match) {
-				out = append(out, Finding{Rule: "gp-fmt-in-loop", Path: path, Line: lineNo, Message: msg003})
+				out = append(out, Finding{Rule: "gp-fmt-hot", Path: path, Line: lineNo, Message: msg003})
 			}
-			// gp-defer-in-loop: only when defer is in the same function as the loop (not a nested func/closure).
+			// gp-defer-hot: only when defer is in the same function as the loop (not a nested func/closure).
 			if reDefer.MatchString(match) && nestedFuncs == loopNest {
-				out = append(out, Finding{Rule: "gp-defer-in-loop", Path: path, Line: lineNo, Message: msg005})
+				out = append(out, Finding{Rule: "gp-defer-hot", Path: path, Line: lineNo, Message: msg005})
 			}
 			if reRegexpCompile.MatchString(match) && !callArgUses(match, reRegexpArg, loopNames) {
-				out = append(out, Finding{Rule: "gp-regexp-compile-in-loop", Path: path, Line: lineNo, Message: msg006})
+				out = append(out, Finding{Rule: "gp-regexp-compile-hot", Path: path, Line: lineNo, Message: msg006})
 			}
 			if reJSONMarshal.MatchString(match) && !callArgUses(match, reJSONArg, loopNames) {
-				out = append(out, Finding{Rule: "gp-json-marshal-in-loop", Path: path, Line: lineNo, Message: msg007})
+				out = append(out, Finding{Rule: "gp-json-marshal-hot", Path: path, Line: lineNo, Message: msg007})
 			}
 			if reReflect.MatchString(match) {
-				out = append(out, Finding{Rule: "gp-reflect-in-loop", Path: path, Line: lineNo, Message: msg008})
+				out = append(out, Finding{Rule: "gp-reflect-hot", Path: path, Line: lineNo, Message: msg008})
 			}
 			if reOsOpen.MatchString(match) && !callArgUses(match, reOsOpenArg, loopNames) {
-				out = append(out, Finding{Rule: "gp-os-open-in-loop", Path: path, Line: lineNo, Message: msg009})
+				out = append(out, Finding{Rule: "gp-os-open-hot", Path: path, Line: lineNo, Message: msg009})
 			}
 			if reTimeNow.MatchString(match) {
-				out = append(out, Finding{Rule: "gp-time-now-in-loop", Path: path, Line: lineNo, Message: msg010})
+				out = append(out, Finding{Rule: "gp-time-now-hot", Path: path, Line: lineNo, Message: msg010})
 			}
 			if loopHint {
 				if am := reAppend.FindStringSubmatch(match); am != nil && am[1] == am[2] {
@@ -348,14 +353,14 @@ func stripLineComment(s string) string {
 	return s
 }
 
-func ScanPath(root string) ([]Finding, error) {
+func ScanPath(root string, scope string) ([]Finding, error) {
 	info, err := os.Stat(root)
 	if err != nil {
 		return nil, err
 	}
 	if !info.IsDir() {
 		if isGo(root) {
-			return ScanFile(root)
+			return ScanFile(root, scope)
 		}
 		return nil, nil
 	}
@@ -373,7 +378,7 @@ func ScanPath(root string) ([]Finding, error) {
 		if !isGo(path) || skipFile(info.Name()) {
 			return nil
 		}
-		fs, err := ScanFile(path)
+		fs, err := ScanFile(path, scope)
 		if err != nil {
 			return err
 		}
@@ -397,7 +402,7 @@ func forBindNames(match string) []string {
 	} else {
 		return nil
 	}
-	var names []string
+	names := make([]string, 0, 8)
 	for _, part := range strings.Split(left, ",") {
 		part = strings.TrimSpace(part)
 		if part == "" || part == "_" || !identToken(part) {

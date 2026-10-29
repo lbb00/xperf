@@ -65,4 +65,4 @@ Do not commit corpus sources into `packages/dartperf`.
 | dio | 2 | **0** | |
 | http | 2 | **1** | |
 
-**Verdict: corpus-ready `yes`.** Sample n=1: TP 100% / FP+DOC+SKIP 0%. Defaults: dt-list-add-empty–dt-print-in-loop **off**; **dt-growable-add-empty** **hint**. Checker is Dart (`dartperf-lint`).
+**Verdict: corpus-ready `yes`.** Sample n=1: TP 100% / FP+DOC+SKIP 0%. Defaults: dt-list-add-empty–dt-print-hot **off**; **dt-growable-add-empty** **hint**. Checker is Dart (`dartperf-lint`).

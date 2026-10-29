@@ -1,0 +1,2 @@
+{"rule":"pp-json-hot","case":"loads_once","role":"after","python":"CPython 3.15.1","median_ms":0.699000,"ops":20000,"ratio":1.000000,"ts":"2026-10-23T12:14:16Z"}
+{"rule":"pp-json-hot","case":"loads_each_iter","role":"before","python":"CPython 3.15.1","median_ms":20.000584,"ops":20000,"ratio":28.613140,"ts":"2026-10-23T12:14:16Z"}

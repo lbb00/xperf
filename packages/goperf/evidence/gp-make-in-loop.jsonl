@@ -1,4 +1,0 @@
-{"rule":"gp-make-in-loop","case":"reuse_buf","role":"after","go":"go1.27.3","median_ms":0.057417,"ops":200000,"ratio":1.000000,"ts":"2026-10-23T12:18:37Z"}
-{"rule":"gp-make-in-loop","case":"make_each_iter","role":"before","go":"go1.27.3","median_ms":9.201458,"ops":200000,"ratio":160.256684,"ts":"2026-10-23T12:18:37Z"}
-{"rule":"gp-make-in-loop","case":"single_slice_fill","role":"after","go":"go1.27.3","median_ms":0.362708,"ops":50000,"ratio":1.000000,"ts":"2026-10-23T12:18:37Z"}
-{"rule":"gp-make-in-loop","case":"make_append_slices","role":"before","go":"go1.27.3","median_ms":2.214292,"ops":50000,"ratio":6.104889,"ts":"2026-10-23T12:18:37Z"}

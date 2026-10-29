@@ -1,0 +1,4 @@
+{"rule":"pp-str-plus-hot","case":"str_join","role":"after","python":"CPython 3.15.1","median_ms":0.243541,"ops":50000,"ratio":1.000000,"ts":"2026-10-23T12:11:44Z"}
+{"rule":"pp-str-plus-hot","case":"str_plus","role":"before","python":"CPython 3.15.1","median_ms":2.824209,"ops":50000,"ratio":11.596449,"ts":"2026-10-23T12:11:44Z"}
+{"rule":"pp-str-plus-hot","case":"small_join","role":"after","python":"CPython 3.15.1","median_ms":0.003750,"ops":100,"ratio":1.000000,"ts":"2026-10-23T12:11:44Z"}
+{"rule":"pp-str-plus-hot","case":"small_str_plus","role":"before","python":"CPython 3.15.1","median_ms":0.007625,"ops":100,"ratio":2.033404,"ts":"2026-10-23T12:11:44Z"}

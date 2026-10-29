@@ -41,16 +41,16 @@ func sevName(s int) string {
 
 func defaultSev() map[string]int {
 	return map[string]int{
-		"gp-make-in-loop":           sevOff,  // G3: almost-all OK-idiom on go-src
-		"gp-string-plus-in-loop":    sevOff,  // G3: assert/stdlib assemble OK-idiom
-		"gp-fmt-in-loop":            sevOff,  // G3: debug/codegen fmt
+		"gp-make-hot":           sevOff,  // G3: almost-all OK-idiom on go-src
+		"gp-string-plus-hot":    sevOff,  // G3: assert/stdlib assemble OK-idiom
+		"gp-fmt-hot":            sevOff,  // G3: debug/codegen fmt
 		"gp-append-nil-slice":       sevHint, // empty slice + append in size-hinted loop
-		"gp-defer-in-loop":          sevHint, // defer in loop
-		"gp-regexp-compile-in-loop": sevHint, // not corpus-triaged
-		"gp-json-marshal-in-loop":   sevHint,
-		"gp-reflect-in-loop":        sevHint,
-		"gp-os-open-in-loop":        sevHint,
-		"gp-time-now-in-loop":       sevHint,
+		"gp-defer-hot":          sevHint, // defer stacking / hot use
+		"gp-regexp-compile-hot": sevHint, // not corpus-triaged
+		"gp-json-marshal-hot":   sevHint,
+		"gp-reflect-hot":        sevHint,
+		"gp-os-open-hot":        sevHint,
+		"gp-time-now-hot":       sevHint,
 	}
 }
 
@@ -63,6 +63,7 @@ func main() {
 	format := "text"
 	strictHints := false
 	noFail := false
+	scope := "all"
 	paths := make([]string, 0, len(args))
 	for i := 0; i < len(args); i++ {
 		a := args[i]
@@ -90,6 +91,20 @@ func main() {
 			strictHints = true
 		case a == "--no-fail":
 			noFail = true
+		case a == "--scope":
+			i++
+			if i >= len(args) {
+				usage(2)
+			}
+			scope = args[i]
+			if scope != "all" && scope != "loop" {
+				usage(2)
+			}
+		case strings.HasPrefix(a, "--scope="):
+			scope = strings.TrimPrefix(a, "--scope=")
+			if scope != "all" && scope != "loop" {
+				usage(2)
+			}
 		case strings.HasPrefix(a, "-"):
 			usage(2)
 		default:
@@ -101,7 +116,7 @@ func main() {
 	}
 	findings := make([]scan.Finding, 0, len(paths)*4)
 	for _, p := range paths {
-		fs, err := scan.ScanPath(p)
+		fs, err := scan.ScanPath(p, scope)
 		if err != nil {
 			fmt.Fprintln(os.Stderr, err)
 			os.Exit(2)
@@ -160,7 +175,7 @@ func emit(findings []scan.Finding, rs map[string]int, format string) (nerr, nhin
 		if format == "json" {
 			rows = append(rows, row{f.Rule, sevName(s), f.Path, f.Line, f.Message})
 		} else {
-			// Prefer Builder over fmt in this loop so gp-fmt-in-loop self-dogfood stays clean.
+			// Prefer Builder over fmt in this loop so gp-fmt-hot self-dogfood stays clean.
 			var b strings.Builder
 			b.WriteString(f.Path)
 			b.WriteByte(':')

@@ -148,8 +148,8 @@ fn expandChapter(allocator: Allocator, io: Io, source: []const u8, table: []cons
     return output.toOwnedSlice(allocator);
 }
 
-const lintExample = "$ zperf-lint fixtures/bad/zp-alloc-print-in-loop.zig\n" ++
-    "fixtures/bad/zp-alloc-print-in-loop.zig:6:44: hint[zp-alloc-print-in-loop alloc-print-in-loop] allocPrint or Allocator.print of a loop-invariant value\n" ++
+const lintExample = "$ zperf-lint fixtures/bad/zp-alloc-print-hot.zig\n" ++
+    "fixtures/bad/zp-alloc-print-hot.zig:6:44: hint[zp-alloc-print-hot alloc-print-in-loop] allocPrint or Allocator.print of a loop-invariant value\n" ++
     "    suggestion: format once outside the loop when the arguments do not change\n\n" ++
     "Checked 1 file; found 1 issue (0 warnings, 0 info, 1 hint)\n$ echo $?\n1";
 

@@ -1,6 +1,6 @@
 /**
  * An internal abstraction for the built-in modules.
- * Class fields and once-init must not be jp-alloc-in-loop.
+ * Class fields and once-init must not be jp-alloc-hot.
  */
 class Realm {
   static map = new Map();

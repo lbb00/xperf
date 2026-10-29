@@ -4,4 +4,4 @@
 
 `open` of one path inside a loop repeats the open. One measured shape, a one-byte file, was about 409×. A path that changes every iteration cannot be hoisted. `time.perf_counter_ns` was about 2.9× and `getattr` about 1.4×; those were checked and not given a rule.
 
-Companion lint: **pp-json-in-loop**, **pp-deepcopy-in-loop**, **pp-open-in-loop**.
+Companion lint: **pp-json-hot**, **pp-deepcopy-hot**, **pp-open-hot**.

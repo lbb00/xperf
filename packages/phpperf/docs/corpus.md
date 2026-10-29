@@ -19,23 +19,23 @@ php packages/phpperf/phpperf-lint/phpperf-lint.php \
   <corpus-dir>/<name> --format json --no-fail
 ```
 
-Checker is **PHP 8+** (`phpperf-lint`). Rules ph-string-dot-in-loop–ph-echo-in-loop (**ph-string-dot-in-loop default `off`**; **ph-array-merge-rebind default `error`** with G4; ph-echo-in-loop `hint`).
+Checker is **PHP 8+** (`phpperf-lint`). Rules ph-string-dot-hot–ph-echo-hot (**ph-string-dot-hot default `off`**; **ph-array-merge-rebind default `error`** with G4; ph-echo-hot `hint`).
 
 ## Dogfood: G3 r2 and post-G4 r3 (2026-10-21 to 2026-10-22, Asia/Shanghai)
 
 | Tree | baseline → r1 → r2 → **r3** |
 |------|------------------------------|
-| **framework** | 65 → 59 → 48 → **25** (ph-array-merge-rebind:21 ph-echo-in-loop:4) |
-| **symfony** | 796 → 636 → 393 → **47** (ph-array-merge-rebind:34 ph-echo-in-loop:13) |
+| **framework** | 65 → 59 → 48 → **25** (ph-array-merge-rebind:21 ph-echo-hot:4) |
+| **symfony** | 796 → 636 → 393 → **47** (ph-array-merge-rebind:34 ph-echo-hot:13) |
 | **composer** | 107 → 103 → 47 → **17** (ph-array-merge-rebind:17) |
 
-**corpus-ready: yes** — after ph-string-dot-in-loop demotion, r3 n=89: TP 79.8%, FP+DOC+SKIP 0%; honest TP on ph-array-merge-rebind; ph-array-merge-rebind error has G4 (`evidence/ph-array-merge-rebind.md`+`jsonl`).
+**corpus-ready: yes** — after ph-string-dot-hot demotion, r3 n=89: TP 79.8%, FP+DOC+SKIP 0%; honest TP on ph-array-merge-rebind; ph-array-merge-rebind error has G4 (`evidence/ph-array-merge-rebind.md`+`jsonl`).
 
 ### Reverse-opt
 
 - Path skips: `test(s)/` `Tests/` `Fixtures/` `views/` `vendor/` `Tui/` `.github/` + Resources/bin codegen file skips
-- **ph-string-dot-in-loop default `off`** — framework `.=` mostly cold builders/parsers; `--severity ph-string-dot-in-loop=hint` to review
+- **ph-string-dot-hot default `off`** — framework `.=` mostly cold builders/parsers; `--severity ph-string-dot-hot=hint` to review
 - ph-array-merge-rebind: only `$a = array_merge($a, …)` growing rebind
-- ph-echo-in-loop: mask strings; statement-like echo/print
+- ph-echo-hot: mask strings; statement-like echo/print
 
 Do not commit corpus sources into `packages/phpperf`.

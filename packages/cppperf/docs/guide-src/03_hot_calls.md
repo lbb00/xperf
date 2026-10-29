@@ -4,4 +4,4 @@ Constructing `std::regex` inside a loop compiles every iteration. On a short hay
 
 `ifstream` of one path was about 2025× versus opening once. A path that changes every iteration cannot be hoisted. This does not revive the removed CX003 id.
 
-Companion lint: **cx-regex-ctor-in-loop**, **cx-endl-in-loop**, **cx-clock-in-loop**, **cx-ifstream-in-loop**.
+Companion lint: **cx-regex-ctor-hot**, **cx-endl-hot**, **cx-clock-hot**, **cx-ifstream-hot**.

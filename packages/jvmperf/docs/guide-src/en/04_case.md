@@ -302,7 +302,7 @@ import java.util.StringJoiner;
 public class J05_Strings {
     static String joinSlow(List<String> parts) {
         String s = "";
-        // jvmperf-lint: ignore jp-string-concat-in-loop -- Intentional counterexample.
+        // jvmperf-lint: ignore jp-string-concat-hot -- Intentional counterexample.
         for (String p : parts) s += p + ",";          // Creates and copies a new String each iteration: O(n²).
         return s;
     }
@@ -347,7 +347,7 @@ fun render(items: List<Pair<String, Int>>): String =
 
 fun renderSlow(items: List<Pair<String, Int>>): String {
     var s = ""
-    // jvmperf-lint: ignore jp-string-concat-in-loop -- Intentional counterexample.
+    // jvmperf-lint: ignore jp-string-concat-hot -- Intentional counterexample.
     for ((k, v) in items) s += "$k=$v\n"              // Copies the entire string on each iteration.
     return s
 }
@@ -375,7 +375,7 @@ public class J15_Regex {
 
     static int countWordsSlow(String[] lines) {
         int n = 0;
-        // jvmperf-lint: ignore jp-regex-in-loop -- Intentional counterexample.
+        // jvmperf-lint: ignore jp-regex-hot -- Intentional counterexample.
         for (String l : lines) n += l.trim().split("\\s+").length;   // Compiles the regex on each call.
         return n;
     }

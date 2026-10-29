@@ -375,7 +375,7 @@ public class J16_Pool {
         private final int size;
         BufferPool(int size, int prealloc) {
             this.size = size;
-            // jvmperf-lint: ignore jp-expensive-alloc-in-loop -- Pool is preallocated once during construction.
+            // jvmperf-lint: ignore jp-expensive-alloc-hot -- Pool is preallocated once during construction.
             for (int i = 0; i < prealloc; i++) free.push(ByteBuffer.allocateDirect(size));
         }
         ByteBuffer acquire() { ByteBuffer b = free.poll(); return b != null ? b.clear() : ByteBuffer.allocateDirect(size); }

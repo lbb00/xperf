@@ -1,4 +1,4 @@
-// Empty {} / [] binders are not jp-alloc-in-loop (options/ctx bags).
+// Empty {} / [] binders are not jp-alloc-hot (options/ctx bags).
 function good(n) {
   const out = [];
   for (let i = 0; i < n; i++) {

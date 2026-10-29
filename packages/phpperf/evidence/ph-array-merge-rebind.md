@@ -45,4 +45,4 @@ Direction stable across pairs; absolute ms and ratio are N/chunk/machine-sensiti
 - Microbench; not an app profile.
 - Does not measure `array_merge` for *key* overlays / associative remap (rule targets growing list rebind).
 - Pair C absolute times are near timer noise; ratio still favors push.
-- Historical note: ph-string-dot-in-loop later demoted `off`; kit flipped **corpus-ready** post-G4 recheck (see docs/corpus.md).
+- Historical note: ph-string-dot-hot later demoted `off`; kit flipped **corpus-ready** post-G4 recheck (see docs/corpus.md).

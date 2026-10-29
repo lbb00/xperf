@@ -16,7 +16,7 @@ Node’s `lib/internal/bootstrap/**` uses `delete` for module cache and feature 
 
 **jsperf-lint:** skips files under `internal/bootstrap/`, filenames matching `*bootstrap*`, and inspect/debugger/test-runner paths for jp-delete-shape and jp-delete-array-hole.
 
-**Evidence (dogfood):** Node `lib/` jp-delete-shape **27 → 21** after bootstrap skip (r1→r2); held at **21** in r3 while jp-alloc-in-loop moved. Remaining deletes need case-by-case review (CLI teardown, rare maps).
+**Evidence (dogfood):** Node `lib/` jp-delete-shape **27 → 21** after bootstrap skip (r1→r2); held at **21** in r3 while jp-alloc-hot moved. Remaining deletes need case-by-case review (CLI teardown, rare maps).
 
 ### 2.3 Optional future
 

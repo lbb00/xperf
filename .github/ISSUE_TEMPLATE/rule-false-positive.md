@@ -7,7 +7,7 @@ labels: false-positive
 
 ## Kit and rule id
 
-<!-- e.g. cperf cp-alloc-in-loop, jsperf jp-delete-shape, zperf zp-alloc-in-loop, jvmperf jp-format-in-loop -->
+<!-- e.g. cperf cp-alloc-hot, jsperf jp-delete-shape, zperf zp-alloc-hot, jvmperf jp-format-hot -->
 
 ## Snippet
 

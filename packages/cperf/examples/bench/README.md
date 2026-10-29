@@ -16,7 +16,7 @@ bash packages/cperf/scripts/regen-evidence-cp003.sh
 
 | File | Rule |
 |------|------|
-| `cp001_malloc_vs_arena.c` | cp-alloc-in-loop |
+| `cp001_malloc_vs_arena.c` | cp-alloc-hot |
 | `cp002_realloc_growth.c` | cp-realloc-grow-one |
-| `cp003_printf_hot.c` | cp-printf-in-loop |
+| `cp003_printf_hot.c` | cp-printf-hot |
 | `case{1,2,3,4}_*.c` | correlation suite (smell\|clean modes) |

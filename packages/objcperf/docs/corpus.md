@@ -20,14 +20,14 @@ Shallow clones (`--depth 1`). Pure ObjC trees (no Swift-only pods).
 | SDWebImage | **9** (8/0/1) | **1** (1/0/0) |
 | fmdb | **28** (1/1/26) | **10** (1/1/8) |
 
-Rule order: OC001 / oc-nsstring-append-in-loop / oc-nslog-in-loop.
+Rule order: OC001 / oc-nsstring-append-hot / oc-nslog-hot.
 
 ### Reverse-opt (`objcperf-lint`)
 
 1. **`--raw-paths`:** baseline toggle.
 2. **Path skips:** `Tests/` `tests/` `Test/` `Example/` `Examples/` `Demo/` `sample/` `Sample/` `docs/` `Specs/` `benchmarks/` (plus always `.git`/`Pods`/`Carthage`/`vendor`/`fixtures`).
 3. **OC001:** match `addObject:` / `addObject]` only — **not** `addObjectsFromArray` (substring FP).
-4. **oc-nslog-in-loop:** skip `DEBUG`/`NDEBUG` tokens and Debug/Logger path names.
+4. **oc-nslog-hot:** skip `DEBUG`/`NDEBUG` tokens and Debug/Logger path names.
 
 ### Residual
 
@@ -50,7 +50,7 @@ Do not commit corpus sources into `packages/objcperf`.
 
 ### Fixes landed
 - OC001 recognizes `setWithCapacity` / `dictionaryWithCapacity`
-- oc-nslog-in-loop skips nearby `DEBUG` / `_traceExecution`
+- oc-nslog-hot skips nearby `DEBUG` / `_traceExecution`
 - r2 counts: AFNetworking **2**, SDWebImage **1**, fmdb **6**
 
 ## Redesign → corpus-ready (2026-10-22 Asia/Shanghai)
@@ -61,12 +61,12 @@ Do not commit corpus sources into `packages/objcperf`.
 | SDWebImage | 1 | **1** | |
 | fmdb | 6 | **0** | |
 
-**Verdict: corpus-ready `yes`.** Sample n=3: TP 66.7% / OK-idiom 33.3% / FP+DOC+SKIP 0%. Defaults at the time: OC001–oc-nslog-in-loop **off**; **OC004** **hint**. Heuristic path — no Apple SDK required for G0–G3 (OC001 G4 still blocked without `Foundation.h` on this machine).
+**Verdict: corpus-ready `yes`.** Sample n=3: TP 66.7% / OK-idiom 33.3% / FP+DOC+SKIP 0%. Defaults at the time: OC001–oc-nslog-hot **off**; **OC004** **hint**. Heuristic path — no Apple SDK required for G0–G3 (OC001 G4 still blocked without `Foundation.h` on this machine).
 
-OC001 and OC004 were removed afterwards (see [rule-ids.md](rule-ids.md)). At that point the lint shipped only `oc-nsstring-append-in-loop` and `oc-nslog-in-loop`, both default **off**.
+OC001 and OC004 were removed afterwards (see [rule-ids.md](rule-ids.md)). At that point the lint shipped only `oc-nsstring-append-hot` and `oc-nslog-hot`, both default **off**.
 
 ## 2026-10-23 — new hint rules, not triaged
 
 The slugs below are **hint**. Each has a JSONL microbench and has not been through G2/G3. The 2026-10-22 corpus-ready verdict does not cover them.
 
-- `oc-dateformatter-in-loop`, `oc-json-in-loop`, `oc-regex-in-loop`
+- `oc-dateformatter-hot`, `oc-json-hot`, `oc-regex-hot`

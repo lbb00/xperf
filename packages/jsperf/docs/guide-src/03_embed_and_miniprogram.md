@@ -4,9 +4,9 @@
 
 QuickJS, Hermes-like embeds, and 小程序 JS runtimes still pay for:
 
-- Per-iteration object allocation (jp-alloc-in-loop patterns).
+- Per-iteration object allocation (jp-alloc-hot patterns).
 - Shape changes via `delete` or divergent property order.
-- Logging in tight loops (**jp-console-in-loop** — `console.log` / `console.debug`). Evidence: [`jp-console-in-loop`](../evidence/jp-console-in-loop.md) (~**1300×** vs quiet even with discarded stdout) — default **off** (`app`) / **hint** (`engine`), not a CI error.
+- Logging in tight loops (**jp-console-hot** — `console.log` / `console.debug`). Evidence: [`jp-console-hot`](../evidence/jp-console-hot.md) (~**1300×** vs quiet even with discarded stdout) — default **off** (`app`) / **hint** (`engine`), not a CI error.
 
 They often **lack** a browser Performance panel, DOM, or large IC budgets. Advice that starts with “open DevTools → …” does not transfer. Prefer:
 
@@ -18,7 +18,7 @@ They often **lack** a browser Performance panel, DOM, or large IC budgets. Advic
 
 ### 3.2 Shared quickjs tree
 
-cperf dogfoods the **C** engine; jsperf dogfoods the `*.js` beside it (tests and `gen-*` skipped). The current rules report **0** findings there ([corpus.md](corpus.md)); earlier revisions reported 2 jp-alloc-in-loop. Low pressure, but useful as an embed-adjacent sample. Do not expect Preact-level cleanliness on generator scripts.
+cperf dogfoods the **C** engine; jsperf dogfoods the `*.js` beside it (tests and `gen-*` skipped). The current rules report **0** findings there ([corpus.md](corpus.md)); earlier revisions reported 2 jp-alloc-hot. Low pressure, but useful as an embed-adjacent sample. Do not expect Preact-level cleanliness on generator scripts.
 
 ### 3.3 What not to recommend here
 

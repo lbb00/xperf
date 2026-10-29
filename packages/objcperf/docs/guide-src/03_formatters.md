@@ -8,5 +8,5 @@
 
 `valueForKey:` every iteration was about 124× versus reading the field. A name that is not a fixed field cannot be rewritten as a direct read. This is the same family as Go `FieldByName`.
 
-Companion lint: **oc-dateformatter-in-loop**, **oc-json-in-loop**, **oc-regex-in-loop**, **oc-file-read-in-loop**, **oc-clock-in-loop**, **oc-value-for-key-in-loop**.
+Companion lint: **oc-dateformatter-hot**, **oc-json-hot**, **oc-regex-hot**, **oc-file-read-hot**, **oc-clock-hot**, **oc-value-for-key-hot**.
 

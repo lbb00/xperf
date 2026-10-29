@@ -4,7 +4,7 @@
 
 Objective-C performance notes, small examples, and `objcperf-lint`.
 
-Part of [XPerf](../../README.md). Shared docs: [docs/README.md](../../docs/README.md). **Corpus-ready** for the 2026-10-22 rule set. oc-nsstring-append-in-loop / oc-nslog-in-loop **off** (measured, not escalated). Date-formatter, JSON, and regular-expression hints are pending measure and are not part of that verdict. Two rules removed (tombstone, never got a slug). Guide v0.
+Part of [XPerf](../../README.md). Shared docs: [docs/README.md](../../docs/README.md). **Corpus-ready** for the 2026-10-22 rule set. oc-nsstring-append-hot / oc-nslog-hot **off** (measured, not escalated). Date-formatter, JSON, and regular-expression hints are pending measure and are not part of that verdict. Two rules removed (tombstone, never got a slug). Guide v0.
 
 ## Contents
 

@@ -1,5 +1,5 @@
 #include <stdio.h>
-/* Never called from hot path in the timed binary; still a cp-printf-in-loop-shaped loop. */
+/* Never called from hot path in the timed binary; still a cp-printf-hot-shaped loop. */
 void dump_never_hot(int n) {
     for (int i = 0; i < n; i++) {
         printf("%d\n", i);

@@ -30,10 +30,10 @@ for rule, rs in by.items():
         continue
     rs = sorted(rs, key=lambda r: 0 if r["role"] == "before" else 1)
     (ev / f"{rule}.jsonl").write_text("\n".join(json.dumps(r, separators=(",", ":")) for r in rs) + "\n")
-# zp-per-packet-alloc shares zp-alloc-in-loop
-if "zp-alloc-in-loop" in by:
+# zp-per-packet-alloc shares zp-alloc-hot
+if "zp-alloc-hot" in by:
     shared = []
-    for o in sorted(by["zp-alloc-in-loop"], key=lambda r: 0 if r["role"] == "before" else 1):
+    for o in sorted(by["zp-alloc-hot"], key=lambda r: 0 if r["role"] == "before" else 1):
         x = dict(o)
         x["rule"] = "zp-per-packet-alloc"
         x["case"] = "shared_with_ZP001_" + o["case"]

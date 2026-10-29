@@ -27,9 +27,11 @@ pub const Config = struct { // zperf-lint: ignore zp-packable-bools -- config fl
     hot_fns: []const []const u8 = &.{},
 /// See the English guide for context.
     propagate: bool = true,
-    /// When true, zp-print-in-loop also flags std.log.* / log.debug|info|warn|err in loops.
+    /// When true, zp-print-hot also flags std.log.* / log.debug|info|warn|err in loops.
     /// Default is false: only std.debug.print / debug.print (unbuffered stderr).
     strict_log_in_loop: bool = false,
+    /// When true (default), *-hot rules match outside loops too. --scope loop restores loop-only.
+    scope_all: bool = true,
     /// Optional source path (set by CLI). Used to demote path-local noise (crypto, compiler_rt).
     path: ?[]const u8 = null,
 };
@@ -684,6 +686,10 @@ const Linter = struct {
         return l.tok_loop[tok] != none;
     }
 
+    fn matchHot(l: *Linter, tok: Ast.TokenIndex) bool {
+        return l.cfg.scope_all or l.inLoop(tok);
+    }
+
 /// See the English guide for context.
     fn enclosingFn(l: *Linter, tok: Ast.TokenIndex) ?u32 {
         const i = l.tok_fn[tok];
@@ -877,8 +883,8 @@ const Linter = struct {
             }
         }
 
-        // zp-alloc-in-loop alloc-in-loop — align arena skip with zp-append-without-reserve (receiver + soft-arena args).
-        if (in_loop and isAllocMethod(parts) and !l.skipInTest(.alloc_in_loop, tok)) {
+        // zp-alloc-hot alloc-in-loop — align arena skip with zp-append-without-reserve (receiver + soft-arena args).
+        if (l.matchHot(tok) and isAllocMethod(parts) and !l.skipInTest(.alloc_in_loop, tok)) {
             var arena_like = isArenaLike(parts.receiver) or isArenaLike(lastSegment(parts.receiver));
             if (!arena_like) {
                 if (l.enclosingFn(tok)) |fi| {
@@ -906,12 +912,12 @@ const Linter = struct {
             try l.checkArenaResetFreeAll(n, parts, call.ast.params, tok, fn_src);
         }
 
-        // zp-create-destroy-in-loop create+destroy same loop
+        // zp-create-destroy-hot create+destroy same loop
         if (in_loop and !l.skipInTest(.create_destroy_in_loop, tok)) {
             try l.checkCreateDestroyInLoop(parts, call.ast.params, tok, fn_src);
         }
 
-        // zp-fixed-size-alloc-in-loop fixed-size alloc(u8, N) in loop
+        // zp-fixed-size-alloc-hot fixed-size alloc(u8, N) in loop
         if (in_loop and !l.skipInTest(.fixed_size_alloc_in_loop, tok)) {
             try l.checkFixedSizeAllocInLoop(parts, call.ast.params, tok, fn_src);
         }
@@ -961,17 +967,17 @@ const Linter = struct {
             }
         }
 
-        // zp-open-file-in-loop / zp-clock-in-loop — same-path open and Clock.now
-        if (in_loop and oneOf(parts.method, &.{ "openFile", "openFileAbsolute" }))
+        // zp-open-file-hot / zp-clock-hot — same-path open and Clock.now
+        if (l.matchHot(tok) and oneOf(parts.method, &.{ "openFile", "openFileAbsolute" }))
             try l.report(.open_file_in_loop, tok, "{s}", .{fn_src});
-        if (in_loop and std.mem.eql(u8, parts.method, "now") and std.mem.indexOf(u8, fn_src, "Clock") != null)
+        if (l.matchHot(tok) and std.mem.eql(u8, parts.method, "now") and std.mem.indexOf(u8, fn_src, "Clock") != null)
             try l.report(.clock_in_loop, tok, "{s}", .{fn_src});
-        if (in_loop and oneOf(parts.method, &.{ "parseFromSlice", "parseFromSliceLeaky" }) and std.mem.indexOf(u8, fn_src, "json") != null)
+        if (l.matchHot(tok) and oneOf(parts.method, &.{ "parseFromSlice", "parseFromSliceLeaky" }) and std.mem.indexOf(u8, fn_src, "json") != null)
             try l.report(.json_in_loop, tok, "{s}", .{fn_src});
         if (in_loop) try l.checkAllocPrintInLoop(parts, call.ast.params, tok, fn_src);
 
-        // zp-print-in-loop print-in-loop — default: unbuffered debug.print only; log.* needs --strict-log-in-loop
-        if (in_loop and !l.skipInTest(.print_in_loop, tok) and !l.inDebugLogGate(tok)) {
+        // zp-print-hot print-in-loop — default: unbuffered debug.print only; log.* needs --strict-log-in-loop
+        if (l.matchHot(tok) and !l.skipInTest(.print_in_loop, tok) and !l.inDebugLogGate(tok)) {
             const debug_prints = [_][]const u8{ "std.debug.print", "debug.print" };
             const log_prints = [_][]const u8{ "std.log.info", "std.log.debug", "std.log.warn", "std.log.err", "log.info", "log.debug", "log.warn", "log.err" };
             if (oneOf(fn_src, &debug_prints) or (l.cfg.strict_log_in_loop and oneOf(fn_src, &log_prints)))
@@ -1532,7 +1538,7 @@ const Linter = struct {
             try l.report(.catch_unreachable_io, tok, "{s}(...) catch unreachable", .{l.src(call.ast.fn_expr)});
     }
 
-    /// zp-runtime-div-in-loop
+    /// zp-runtime-div-hot
     fn onDiv(l: *Linter, n: Node.Index) !void {
         const tree = l.tree;
         const tok = tree.nodeMainToken(n);
@@ -1732,7 +1738,7 @@ const Linter = struct {
         }
     }
 
-    /// zp-create-destroy-in-loop: create(Type) with success-path destroy in the same loop; skip pool/arena / errdefer-only.
+    /// zp-create-destroy-hot: create(Type) with success-path destroy in the same loop; skip pool/arena / errdefer-only.
     fn checkCreateDestroyInLoop(l: *Linter, parts: CallParts, params: []const Node.Index, tok: Ast.TokenIndex, fn_src: []const u8) !void {
         if (!std.mem.eql(u8, parts.method, "create") or params.len < 1) return;
         if (isArenaLike(parts.receiver) or isArenaLike(lastSegment(parts.receiver))) return;
@@ -1747,7 +1753,7 @@ const Linter = struct {
         try l.report(.create_destroy_in_loop, tok, "{s}({s}) + 同循环 destroy → MemoryPool({s})", .{ fn_src, type_src, type_src });
     }
 
-    /// zp-fixed-size-alloc-in-loop: alloc(u8, literal>=16) in loop on non-arena allocator.
+    /// zp-fixed-size-alloc-hot: alloc(u8, literal>=16) in loop on non-arena allocator.
     fn checkFixedSizeAllocInLoop(l: *Linter, parts: CallParts, params: []const Node.Index, tok: Ast.TokenIndex, fn_src: []const u8) !void {
         if (!std.mem.eql(u8, parts.method, "alloc") or params.len < 2) return;
         if (isArenaLike(parts.receiver) or isArenaLike(lastSegment(parts.receiver))) return;
@@ -1760,7 +1766,7 @@ const Linter = struct {
         try l.report(.fixed_size_alloc_in_loop, tok, "{s}(u8, {s})：固定 size-class → 缓冲池", .{ fn_src, lit });
     }
 
-    /// zp-alloc-print-in-loop: format once when the format string and args do not change in this loop.
+    /// zp-alloc-print-hot: format once when the format string and args do not change in this loop.
     fn checkAllocPrintInLoop(l: *Linter, parts: CallParts, params: []const Node.Index, tok: Ast.TokenIndex, fn_src: []const u8) !void {
         const is_fmt_alloc = oneOf(parts.method, &.{ "allocPrint", "allocPrintSentinel" });
         const seg = lastSegment(parts.receiver);

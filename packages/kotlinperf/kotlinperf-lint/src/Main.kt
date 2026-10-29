@@ -23,6 +23,7 @@ fun usage(code: Int): Nothing {
         """Usage: kotlinperf-lint PATH... [options]
   --format text|json
   --severity RULE=error|hint|off
+  --scope all|loop     (default: all; loop = former in-loop-only)
   --strict-hints
   --no-fail
   --raw-paths          include test/samples (baseline dumps)"""
@@ -33,15 +34,16 @@ fun usage(code: Int): Nothing {
 fun main(args: Array<String>) {
     if (args.isEmpty()) usage(2)
     val rs = mutableMapOf(
-        "kt-list-add-in-loop" to Sev.Off,
-        "kt-string-plus-in-loop" to Sev.Off,
-        "kt-println-in-loop" to Sev.Off,
+        "kt-list-add-hot" to Sev.Off,
+        "kt-string-plus-hot" to Sev.Off,
+        "kt-println-hot" to Sev.Off,
             // KT004 removed 2026-10-22
     )
     var format = "text"
     var strictHints = false
     var noFail = false
     val paths = mutableListOf<String>()
+    var scope = "all"
     var i = 0
     while (i < args.size) {
         val a = args[i]
@@ -60,13 +62,21 @@ fun main(args: Array<String>) {
             a == "--strict-hints" -> strictHints = true
             a == "--no-fail" -> noFail = true
             a == "--raw-paths" -> enableReverseOpt = false
+            a == "--scope" -> {
+                i++; if (i >= args.size) usage(2); scope = args[i]
+                if (scope != "all" && scope != "loop") usage(2)
+            }
+            a.startsWith("--scope=") -> {
+                scope = a.removePrefix("--scope=")
+                if (scope != "all" && scope != "loop") usage(2)
+            }
             a.startsWith("-") -> usage(2)
             else -> paths.add(a)
         }
         i++
     }
     if (paths.isEmpty()) usage(2)
-    val findings = paths.flatMap { scanPath(it) }
+    val findings = paths.flatMap { scanPath(it, scope) }
     val (nerr, nhint) = emit(findings, rs, format)
     if (noFail) return
     if (nerr > 0 || (strictHints && nhint > 0)) exitProcess(1)

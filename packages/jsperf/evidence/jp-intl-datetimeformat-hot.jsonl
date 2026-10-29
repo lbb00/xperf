@@ -1,0 +1,2 @@
+{"rule":"jp-intl-datetimeformat-hot","case":"format_once","role":"after","node":"v26.12.1","v8":"14.6.202.34-node.40","median_ms":1.999,"ops":2000,"ratio":1,"ts":"2026-10-23T14:15:57.318Z"}
+{"rule":"jp-intl-datetimeformat-hot","case":"format_ctor_each_iter","role":"before","node":"v26.12.1","v8":"14.6.202.34-node.40","median_ms":72.002,"ops":2000,"ratio":36.013,"ts":"2026-10-23T14:15:57.318Z"}

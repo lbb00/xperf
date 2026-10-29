@@ -3,15 +3,16 @@
 declare(strict_types=1);
 
 const MSG = [
-    'ph-string-dot-in-loop' => 'string .= in loop; prefer implode / collector',
-    'ph-array-merge-rebind' => 'array_merge rebinding in loop; prefer $a[] = ...',
-    'ph-echo-in-loop' => 'echo/print in loop; gate or buffer',
+    'ph-string-dot-hot' => 'string .=; prefer implode / collector — cost adds up even off a hot path',
+    'ph-array-merge-rebind' => 'array_merge rebinding; prefer $a[] =  — cost adds up even off a hot path',
+    'ph-echo-hot' => 'echo/print; gate or buffer — cost adds up even off a hot path',
 ];
 
-$sev = ['ph-string-dot-in-loop' => 'off', 'ph-array-merge-rebind' => 'error', 'ph-echo-in-loop' => 'hint'];
+$sev = ['ph-string-dot-hot' => 'off', 'ph-array-merge-rebind' => 'error', 'ph-echo-hot' => 'hint'];
 $format = 'text';
 $strictHints = false;
 $noFail = false;
+$scope = 'all';
 $paths = [];
 
 $argv = array_slice($argv, 1);
@@ -24,6 +25,8 @@ for ($i = 0; $i < count($argv); $i++) {
     if (str_starts_with($a, '--severity=')) { apply_sev($sev, substr($a, 11)); continue; }
     if ($a === '--strict-hints') { $strictHints = true; continue; }
     if ($a === '--no-fail') { $noFail = true; continue; }
+    if ($a === '--scope' && isset($argv[$i + 1])) { $scope = $argv[++$i]; if ($scope !== 'all' && $scope !== 'loop') usage(2); continue; }
+    if (str_starts_with($a, '--scope=')) { $scope = substr($a, 8); if ($scope !== 'all' && $scope !== 'loop') usage(2); continue; }
     if (str_starts_with($a, '-')) { usage(2); }
     $paths[] = $a;
 }
@@ -31,7 +34,7 @@ if (!$paths) usage(2);
 
 $findings = [];
 foreach ($paths as $p) {
-    foreach (scan_path($p) as $f) {
+    foreach (scan_path($p, $scope) as $f) {
         $findings[] = $f;
     }
 }
@@ -75,6 +78,7 @@ function usage(int $code): void {
     fwrite(STDERR, "Usage: phpperf-lint.php PATH... [options]\n"
         . "  --format text|json\n"
         . "  --severity RULE=error|hint|off\n"
+        . "  --scope all|loop   (default: all)\n"
         . "  --strict-hints\n"
         . "  --no-fail\n");
     exit($code);
@@ -102,7 +106,8 @@ function mask_strings(string $code): string {
     return preg_replace('/"(?:\\\\.|[^"\\\\])*"|\'(?:\\\\.|[^\'\\\\])*\'/', '""', $code) ?? $code;
 }
 
-function scan_file(string $path): array {
+function scan_file(string $path, string $scope = "all"): array {
+    $scopeMode = $scope === "loop" ? "loop" : "all";
     $text = @file_get_contents($path);
     if ($text === false) return [];
     $lines = preg_split("/\r\n|\n|\r/", $text);
@@ -121,7 +126,8 @@ function scan_file(string $path): array {
         if (preg_match('/\b(for|foreach|while)\b/', $masked)) {
             $inLoop = $depth + 1;
         }
-        if ($inLoop > 0 && $depth >= $inLoop) {
+        $matchHere = $scopeMode === "all" ? true : ($inLoop > 0 && $depth >= $inLoop);
+        if ($matchHere) {
             if (preg_match('/\.=/', $masked)) {
                 // G3: tiny literal appends / chr codecs / sprintf message fragments — OK-idiom.
                 $skipPh001 = false;
@@ -136,7 +142,7 @@ function scan_file(string $path): array {
                     $skipPh001 = true;
                 }
                 if (!$skipPh001) {
-                    $out[] = ['rule' => 'ph-string-dot-in-loop', 'path' => $path, 'line' => $lineNo, 'message' => MSG['ph-string-dot-in-loop']];
+                    $out[] = ['rule' => 'ph-string-dot-hot', 'path' => $path, 'line' => $lineNo, 'message' => MSG['ph-string-dot-hot']];
                 }
             }
             // G3: require accumulator rebind $a = array_merge($a, ...)
@@ -145,7 +151,7 @@ function scan_file(string $path): array {
             }
             // Statement-like echo/print only (not inside masked strings).
             if (preg_match('/(?:^|[;{])\s*(echo|print)\b/', $masked)) {
-                $out[] = ['rule' => 'ph-echo-in-loop', 'path' => $path, 'line' => $lineNo, 'message' => MSG['ph-echo-in-loop']];
+                $out[] = ['rule' => 'ph-echo-hot', 'path' => $path, 'line' => $lineNo, 'message' => MSG['ph-echo-hot']];
             }
         }
         $depth += $opens - $closes;
@@ -168,9 +174,9 @@ function skip_dir_name(string $name): bool {
     return isset($skip[$name]);
 }
 
-function scan_path(string $root): array {
+function scan_path(string $root, string $scope = "all"): array {
     if (is_file($root)) {
-        return str_ends_with($root, '.php') ? scan_file($root) : [];
+        return str_ends_with($root, '.php') ? scan_file($root, $scope) : [];
     }
     $all = [];
     $it = new RecursiveIteratorIterator(
@@ -204,7 +210,7 @@ function scan_path(string $root): array {
                 || str_contains($pathname, '/Compiler.php') && str_contains($pathname, '/Composer/')) {
                 continue;
             }
-            foreach (scan_file($pathname) as $f) {
+            foreach (scan_file($pathname, $scope) as $f) {
                 $all[] = $f;
             }
         }

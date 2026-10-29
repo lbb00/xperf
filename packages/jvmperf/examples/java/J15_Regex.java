@@ -6,7 +6,7 @@ public class J15_Regex {
 
     static int countWordsSlow(String[] lines) {
         int n = 0;
-        // jvmperf-lint: ignore jp-regex-in-loop -- Intentional counterexample.
+        // jvmperf-lint: ignore jp-regex-hot -- Intentional counterexample.
         for (String l : lines) n += l.trim().split("\\s+").length;   // Compiles the regex on each call.
         return n;
     }

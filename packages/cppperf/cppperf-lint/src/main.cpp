@@ -29,6 +29,7 @@ static void usage(int code) {
   std::cerr << "Usage: cppperf-lint PATH... [options]\n"
                "  --format text|json\n"
                "  --severity RULE=error|hint|off\n"
+               "  --scope all|loop   (default: all)\n"
                "  --strict-hints\n"
                "  --no-fail\n";
   std::exit(code);
@@ -63,15 +64,16 @@ static std::string join_with_sep(const std::vector<std::string>& parts, char sep
 int main(int argc, char** argv) {
   if (argc < 2) usage(2);
   std::map<std::string, Sev> rs{
-      {"cx-regex-ctor-in-loop", Hint},
-      {"cx-endl-in-loop", Hint},
-      {"cx-clock-in-loop", Hint},
-      {"cx-ifstream-in-loop", Hint},
+      {"cx-regex-ctor-hot", Hint},
+      {"cx-endl-hot", Hint},
+      {"cx-clock-hot", Hint},
+      {"cx-ifstream-hot", Hint},
       {"cx-const-by-value", Hint},
       {"cx-vector-bool", Hint}}; // CX001/CX003/CX004 removed 2026-10-22 — no slug
   std::string format = "text";
   bool strict_hints = false;
   bool no_fail = false;
+  std::string scope = "all";
   std::vector<std::string> paths;
   paths.reserve(static_cast<size_t>(argc));
 
@@ -98,6 +100,16 @@ int main(int argc, char** argv) {
       strict_hints = true;
       continue;
     }
+    if (a == "--scope" && i + 1 < argc) {
+      scope = argv[++i];
+      if (scope != "all" && scope != "loop") usage(2);
+      continue;
+    }
+    if (a.rfind("--scope=", 0) == 0) {
+      scope = a.substr(8);
+      if (scope != "all" && scope != "loop") usage(2);
+      continue;
+    }
     if (a == "--no-fail") {
       no_fail = true;
       continue;
@@ -110,7 +122,7 @@ int main(int argc, char** argv) {
   std::vector<Finding> findings;
   findings.reserve(256);
   for (const auto& p : paths) {
-    auto fs = scan_path(p);
+    auto fs = scan_path(p, scope);
     findings.insert(findings.end(), fs.begin(), fs.end());
   }
 

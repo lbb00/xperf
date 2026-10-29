@@ -25,7 +25,7 @@ Foundation collection / string / logging checklists. Distinct from **swiftperf**
 
 `stringByAppendingString:` in a loop allocates many immutable strings. Prefer `NSMutableString`. Keep `NSLog` out of tight loops (gate or use os_log carefully).
 
-Companion lint: **oc-nsstring-append-in-loop**, **oc-nslog-in-loop**.
+Companion lint: **oc-nsstring-append-hot**, **oc-nslog-hot**.
 
 ## 3. Formatters, JSON, and regular expressions
 
@@ -37,19 +37,19 @@ Companion lint: **oc-nsstring-append-in-loop**, **oc-nslog-in-loop**.
 
 `valueForKey:` every iteration was about 124× versus reading the field. A name that is not a fixed field cannot be rewritten as a direct read. This is the same family as Go `FieldByName`.
 
-Companion lint: **oc-dateformatter-in-loop**, **oc-json-in-loop**, **oc-regex-in-loop**, **oc-file-read-in-loop**, **oc-clock-in-loop**, **oc-value-for-key-in-loop**.
+Companion lint: **oc-dateformatter-hot**, **oc-json-hot**, **oc-regex-hot**, **oc-file-read-hot**, **oc-clock-hot**, **oc-value-for-key-hot**.
 
 ## Lint map
 
 | ID | Smell | Default |
 |----|-------|---------|
-| oc-nsstring-append-in-loop | stringByAppendingString in loop | off |
-| oc-nslog-in-loop | NSLog in loop | off |
-| oc-dateformatter-in-loop | date formatter alloc/init or new in a loop | hint (JSONL present; not corpus-triaged) |
-| oc-json-in-loop | JSON parse or encode in a loop | hint (JSONL present; not corpus-triaged) |
-| oc-regex-in-loop | regular expression compiled in a loop | hint (JSONL present; not corpus-triaged) |
+| oc-nsstring-append-hot | stringByAppendingString in loop | off |
+| oc-nslog-hot | NSLog in loop | off |
+| oc-dateformatter-hot | date formatter alloc/init or new in a loop | hint (JSONL present; not corpus-triaged) |
+| oc-json-hot | JSON parse or encode in a loop | hint (JSONL present; not corpus-triaged) |
+| oc-regex-hot | regular expression compiled in a loop | hint (JSONL present; not corpus-triaged) |
 
-Escalate only with `evidence/oc-*.jsonl` — see [evidence-policy.md](evidence-policy.md). The two array-capacity rules (OC001, OC004) were removed; see [rule-ids.md](rule-ids.md). `oc-dateformatter-in-loop`, `oc-json-in-loop`, and `oc-regex-in-loop` have a JSONL microbench and stay hint. They are not part of the 2026-10-22 corpus-ready verdict.
+Escalate only with `evidence/oc-*.jsonl` — see [evidence-policy.md](evidence-policy.md). The two array-capacity rules (OC001, OC004) were removed; see [rule-ids.md](rule-ids.md). `oc-dateformatter-hot`, `oc-json-hot`, and `oc-regex-hot` have a JSONL microbench and stay hint. They are not part of the 2026-10-22 corpus-ready verdict.
 
 ## References
 

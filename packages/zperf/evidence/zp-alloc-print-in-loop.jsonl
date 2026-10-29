@@ -1,6 +1,0 @@
-{"rule":"zp-alloc-print-in-loop","case":"alloc_print_once","role":"after","zig":"0.17.0","optimize":"ReleaseFast","median_ms":0.020375,"ops":20000,"ratio":1,"ts":"2026-10-23T08:18:30Z"}
-{"rule":"zp-alloc-print-in-loop","case":"alloc_print_each_iter","role":"before","zig":"0.17.0","optimize":"ReleaseFast","median_ms":1.016875,"ops":20000,"ratio":49.908,"ts":"2026-10-23T08:18:30Z"}
-{"rule":"zp-alloc-print-in-loop","case":"arena_print_once","role":"after","zig":"0.17.0","optimize":"ReleaseFast","median_ms":0.020333,"ops":20000,"ratio":1,"ts":"2026-10-23T08:18:30Z"}
-{"rule":"zp-alloc-print-in-loop","case":"arena_print_each_iter","role":"before","zig":"0.17.0","optimize":"ReleaseFast","median_ms":0.235416,"ops":20000,"ratio":11.578,"ts":"2026-10-23T08:18:30Z"}
-{"rule":"zp-alloc-print-in-loop","case":"const_print_once","role":"after","zig":"0.17.0","optimize":"ReleaseFast","median_ms":0.025834,"ops":20000,"ratio":1,"ts":"2026-10-23T08:18:30Z"}
-{"rule":"zp-alloc-print-in-loop","case":"const_print_each_iter","role":"before","zig":"0.17.0","optimize":"ReleaseFast","median_ms":0.362958,"ops":20000,"ratio":14.050,"ts":"2026-10-23T08:18:30Z"}

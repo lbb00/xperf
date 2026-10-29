@@ -1,7 +1,7 @@
 #ifndef _POSIX_C_SOURCE
 #define _POSIX_C_SOURCE 200809L
 #endif
-/* cp-alloc-in-loop: malloc-in-loop vs arena bump. cc -O2
+/* cp-alloc-hot: malloc-in-loop vs arena bump. cc -O2
  * Usage: ./case1 smell|clean [N]
  */
 #include <stdint.h>

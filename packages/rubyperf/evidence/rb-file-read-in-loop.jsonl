@@ -1,2 +1,0 @@
-{"rule":"rb-file-read-in-loop","case":"read_once","role":"after","ruby":"Ruby 4.0.8","median_ms":0.076000,"ops":2000,"ratio":1.000000,"ts":"2026-10-23T12:17:42Z"}
-{"rule":"rb-file-read-in-loop","case":"read_each_iter","role":"before","ruby":"Ruby 4.0.8","median_ms":18.897000,"ops":2000,"ratio":248.644370,"ts":"2026-10-23T12:17:42Z"}

@@ -1,7 +1,7 @@
-/* cp-printf-in-loop evidence: unbuffered fprintf loop vs buffered vs silent.
+/* cp-printf-hot evidence: unbuffered fprintf loop vs buffered vs silent.
  *   cc -std=c11 -O2 -o cp003_printf_hot cp003_printf_hot.c
  *   ./cp003_printf_hot [N] [rounds]
- * Prints JSONL to stdout (rule cp-printf-in-loop). Primary before/after is
+ * Prints JSONL to stdout (rule cp-printf-hot). Primary before/after is
  * unbuffered vs _IOFBF (same call sites); silent is a ceiling ref.
  */
 #define _POSIX_C_SOURCE 199309L
@@ -117,23 +117,23 @@ int main(int argc, char **argv) {
 
     /* Primary after = buffered same-call fix; before = unbuffered smell */
     printf(
-        "{\"rule\":\"cp-printf-in-loop\",\"case\":\"buffered_fprintf\",\"role\":\"after\","
+        "{\"rule\":\"cp-printf-hot\",\"case\":\"buffered_fprintf\",\"role\":\"after\","
         "\"node\":null,\"v8\":null,\"cc\":\"%s\",\"median_ms\":%.6f,"
         "\"ops\":%zu,\"ratio\":1,\"ts\":\"%s\"}\n",
         cc, med_b, N, ts);
     printf(
-        "{\"rule\":\"cp-printf-in-loop\",\"case\":\"unbuffered_fprintf\",\"role\":\"before\","
+        "{\"rule\":\"cp-printf-hot\",\"case\":\"unbuffered_fprintf\",\"role\":\"before\","
         "\"node\":null,\"v8\":null,\"cc\":\"%s\",\"median_ms\":%.6f,"
         "\"ops\":%zu,\"ratio\":%.6f,\"ts\":\"%s\"}\n",
         cc, med_u, N, ratio_buf, ts);
     printf(
-        "{\"rule\":\"cp-printf-in-loop\",\"case\":\"silent_compute_ref\",\"role\":\"ref\","
+        "{\"rule\":\"cp-printf-hot\",\"case\":\"silent_compute_ref\",\"role\":\"ref\","
         "\"node\":null,\"v8\":null,\"cc\":\"%s\",\"median_ms\":%.6f,"
         "\"ops\":%zu,\"ratio\":%.6f,\"ts\":\"%s\"}\n",
         cc, med_s, N, ratio_silent, ts);
 
     fprintf(stderr,
-            "cp-printf-in-loop N=%zu unbuf_ms=%.3f buf_ms=%.3f silent_ms=%.3f "
+            "cp-printf-hot N=%zu unbuf_ms=%.3f buf_ms=%.3f silent_ms=%.3f "
             "ratio_unbuf/buf=%.3f ratio_unbuf/silent=%.3f\n",
             N, med_u, med_b, med_s, ratio_buf, ratio_silent);
     fclose(out);

@@ -2,12 +2,12 @@
 
 Ruby performance notes, small examples, and `rubyperf-lint`.
 
-Part of [XPerf](../../README.md). Shared docs: [docs/README.md](../../docs/README.md). The lint is **corpus-ready** (heuristic). Defaults: rb-string-plus-in-loop, rb-array-plus-rebind, rb-puts-in-loop **off**; regexp / JSON / file-read **hint**. `rb-hash-merge-in-loop` was removed. Guide v0.
+Part of [XPerf](../../README.md). Shared docs: [docs/README.md](../../docs/README.md). The lint is **corpus-ready** (heuristic). Defaults: rb-string-plus-hot, rb-array-plus-rebind, rb-puts-hot **off**; regexp / JSON / file-read **hint**. `rb-hash-merge-in-loop` was removed. Guide v0.
 
 ## Contents
 
 - [English guide (v0)](docs/ruby-performance-guide.md) — from `docs/guide-src/`
-- [`rubyperf-lint`](rubyperf-lint/README.md) — rb-string-plus-in-loop–rb-file-read-in-loop
+- [`rubyperf-lint`](rubyperf-lint/README.md) — rb-string-plus-hot–rb-file-read-hot
 - [Corpus pins](docs/corpus.md)
 
 ## Focus

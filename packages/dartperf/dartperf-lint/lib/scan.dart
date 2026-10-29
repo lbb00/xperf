@@ -9,9 +9,9 @@ class Finding {
 }
 
 const msg001 =
-    'List add / grow in loop without capacity cue; prefer List.filled / fixed length';
-const msg002 = 'string + in loop; prefer StringBuffer';
-const msg003 = 'print in loop; gate or buffer';
+    'List add / grow without capacity cue; prefer List.filled / fixed length — cost adds up even off a hot path';
+const msg002 = 'string +; prefer StringBuffer — cost adds up even off a hot path';
+const msg003 = 'print; gate or buffer — cost adds up even off a hot path';
 const msg004 =
     'empty List grown with add in size-hinted loop; prefer List.filled / fixed length';
 
@@ -103,7 +103,8 @@ bool looksStreamAdd(String code) {
   return false;
 }
 
-List<Finding> scanFile(String path) {
+List<Finding> scanFile(String path, {String scope = "all"}) {
+  final scopeMode = scope == "loop" ? "loop" : "all";
   final lines = File(path).readAsLinesSync();
   final out = <Finding>[];
   var depth = 0;
@@ -134,7 +135,8 @@ List<Finding> scanFile(String path) {
               r'for\s*\(\s*(?:var|final|int)?\s*\w+\s*=\s*0\s*;|for\s*\(\s*(?:var|final)?\s*\w+\s+in\s+|<\s*\w*\.?length|\.length\b')
           .hasMatch(code);
     }
-    if (inLoop > 0 && depth >= inLoop) {
+    final matchHere = scopeMode == "all" || (inLoop > 0 && depth >= inLoop);
+    if (matchHere) {
       // avoid matching `??= []` map-of-lists idiom (G3 FP)
       final growAssign = RegExp(r'(?<![?=])=\s*(?:<\w+>)?\s*\[]').hasMatch(code);
       final listAdd = RegExp(r'\.add\s*\(').hasMatch(code) && !looksStreamAdd(code);
@@ -151,10 +153,10 @@ List<Finding> scanFile(String path) {
               !RegExp(r'\+\s*\d').hasMatch(code) &&
               !code.contains('++') &&
               !code.contains('+='))) {
-        out.add(Finding('dt-string-plus-in-loop', path, lineNo, msg002));
+        out.add(Finding('dt-string-plus-hot', path, lineNo, msg002));
       }
       if (RegExp(r'\bprint\s*\(').hasMatch(code)) {
-        out.add(Finding('dt-print-in-loop', path, lineNo, msg003));
+        out.add(Finding('dt-print-hot', path, lineNo, msg003));
       }
       // dt-growable-add-empty: empty bind + .add in size-hinted loop
       if (loopHint) {
@@ -178,10 +180,10 @@ List<Finding> scanFile(String path) {
   return out;
 }
 
-List<Finding> scanPath(String root) {
+List<Finding> scanPath(String root, {String scope = "all"}) {
   final type = FileSystemEntity.typeSync(root);
   if (type == FileSystemEntityType.file) {
-    return isDart(root) ? scanFile(root) : [];
+    return isDart(root) ? scanFile(root, scope: scope) : [];
   }
   if (type != FileSystemEntityType.directory) return [];
   final rootPath = Directory(root).absolute.path;
@@ -200,5 +202,5 @@ List<Finding> scanPath(String root) {
     if (base.endsWith('_test.dart')) continue;
     files.add(ent.path);
   }
-  return files.expand(scanFile).toList();
+  return files.expand((f) => scanFile(f, scope: scope)).toList();
 }

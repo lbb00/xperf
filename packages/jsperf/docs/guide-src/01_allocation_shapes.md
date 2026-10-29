@@ -8,7 +8,7 @@ Engines (V8 and friends) assign a **hidden class** / map based on property addit
 - Avoid `if` branches that add different properties first.
 - See `examples/m01_hidden_class.js` (illustrative; no timing claim).
 
-### 1.2 Allocation in loops (jp-alloc-in-loop)
+### 1.2 Allocation in loops (jp-alloc-hot)
 
 Per-iteration allocation creates garbage and GC pauses when the loop is hot:
 
@@ -22,7 +22,7 @@ Per-iteration allocation creates garbage and GC pauses when the loop is hot:
 
 Prefer typed arrays (`examples/p01_typed_array.js`), object pools, or preallocated structures **when profiles show GC time** — not by default on every `.push`.
 
-**Evidence (this machine):** [`evidence/jp-alloc-in-loop`](../evidence/jp-alloc-in-loop.md) — `new Uint8Array` in-loop vs once **~19×**; `.push({i})` vs prealloc fill **~6.4×** (Node v20.19.2). Mechanism is alloc/GC (STATIC-VS-V8 PARTIAL for deopt). Default severity is **off** (`--preset all` or `--severity jp-alloc-in-loop=hint` enables it) — see [evidence-policy](evidence-policy.md).
+**Evidence (this machine):** [`evidence/jp-alloc-hot`](../evidence/jp-alloc-hot.md) — `new Uint8Array` in-loop vs once **~19×**; `.push({i})` vs prealloc fill **~6.4×** (Node v20.19.2). Mechanism is alloc/GC (STATIC-VS-V8 PARTIAL for deopt). Default severity is **off** (`--preset all` or `--severity jp-alloc-hot=hint` enables it) — see [evidence-policy](evidence-policy.md). Default **`--scope all`** reports these patterns outside loops too; `--scope loop` keeps the former in-loop-only match.
 
 ### 1.3 Corpus dogfood (heuristic)
 
@@ -30,10 +30,10 @@ Counts below come from earlier line-window revisions of the linter (r1–r3) and
 
 | Corpus | r1 → r2 → r3 | Notes |
 |--------|--------------|-------|
-| Node `lib/` | 60 → 179 → **115** (jp-alloc-in-loop **33 → 158 → 94**; jp-delete-shape 27 → 21 → 21) | r2 intentional `new` / non-empty binders raised jp-alloc-in-loop; r3 comment/`for` FP cut it. Residual jp-alloc-in-loop: `inspect.js` `new SafeMap()` (~16), stream `pull.js` / `share.js` / `broadcast.js` `IterResult` / `Uint8Array`, `abort_controller.js` `??= new SafeSet()` inside a real `for` |
+| Node `lib/` | 60 → 179 → **115** (jp-alloc-hot **33 → 158 → 94**; jp-delete-shape 27 → 21 → 21) | r2 intentional `new` / non-empty binders raised jp-alloc-hot; r3 comment/`for` FP cut it. Residual jp-alloc-hot: `inspect.js` `new SafeMap()` (~16), stream `pull.js` / `share.js` / `broadcast.js` `IterResult` / `Uint8Array`, `abort_controller.js` `??= new SafeSet()` inside a real `for` |
 | Preact `src/` | **0 → 0 → 0** | Clean baseline — rules may be narrow for framework cores (little `.push({` / loop `new`) |
-| quickjs `*.js` | 5 → 4 → **2** jp-alloc-in-loop | tests/ skipped; leftover codegen-ish scripts |
-| TypeScript `packages/typescript/src` | — → 47 → **15** jp-alloc-in-loop | Post-Go-migration tip (~50 `.ts`); comment/loop fix helped. Classic `src/compiler` not in this tree |
+| quickjs `*.js` | 5 → 4 → **2** jp-alloc-hot | tests/ skipped; leftover codegen-ish scripts |
+| TypeScript `packages/typescript/src` | — → 47 → **15** jp-alloc-hot | Post-Go-migration tip (~50 `.ts`); comment/loop fix helped. Classic `src/compiler` not in this tree |
 
 **Reading Node residual:** once-init `??= new` inside a real loop is often **true** allocation (severity tier vs `.push({` still open). `inspect.js` SafeMap construction can be loop-adjacent without being per-element hot — review, do not mass-rewrite.
 
@@ -41,7 +41,7 @@ Counts below come from earlier line-window revisions of the linter (r1–r3) and
 
 - Drop empty `{}`/`[]` binders (r2) — killed Node options-bag noise; kept `.push({`.
 - Multi-line block comments + brace-less `for` fix (r3) — JSDoc `for` and `for (…)\n stmt;` no longer open fake loops (Console prototype install, etc.).
-- Fixtures: `good/empty_opts_in_loop.js`, `good/comment_for_not_loop.js`, `good/throw_new_in_loop.js`, `good/jp-alloc-in-loop_reuse_buffer.js`, `bad/jp-alloc-in-loop_new_in_loop.js`, `bad/jp-alloc-in-loop_push_object.js`.
+- Fixtures: `good/empty_opts_in_loop.js`, `good/comment_for_not_loop.js`, `good/throw_new_in_loop.js`, `good/jp-alloc-hot_reuse_buffer.js`, `bad/jp-alloc-hot_new_in_loop.js`, `bad/jp-alloc-hot_push_object.js`.
 
 ### 1.5 String `+=` in a loop (removed)
 

@@ -5,9 +5,9 @@ import java.io.File
 data class Finding(val rule: String, val path: String, val line: Int, val message: String)
 
 private val MSG = mapOf(
-    "kt-list-add-in-loop" to "list alloc / add in loop; prefer capacity or reuse",
-    "kt-string-plus-in-loop" to "string += in loop; prefer buildString / StringBuilder",
-    "kt-println-in-loop" to "println in loop; gate or buffer",
+    "kt-list-add-hot" to "list alloc / add; prefer capacity or reuse — cost adds up even off a hot path",
+    "kt-string-plus-hot" to "string +=; prefer buildString / StringBuilder — cost adds up even off a hot path",
+    "kt-println-hot" to "println; gate or buffer — cost adds up even off a hot path",
     // KT004 removed 2026-10-22 — see evidence/_removed/
 )
 
@@ -88,11 +88,12 @@ private fun kt002StringPlus(code: String): Boolean {
 
 
 
-fun scanFile(path: String): List<Finding> {
+fun scanFile(path: String, scope: String = "all"): List<Finding> {
     if (enableReverseOpt && pathLooksTestish(path)) return emptyList()
     val file = File(path)
     val lines = try { file.readLines() } catch (_: Exception) { return emptyList() }
     val out = ArrayList<Finding>(16)
+    val scopeMode = if (scope == "loop") "loop" else "all"
     var depth = 0
     var inLoop = 0
     for ((idx, raw) in lines.withIndex()) {
@@ -109,7 +110,8 @@ fun scanFile(path: String): List<Finding> {
         if (loopHere) {
             inLoop = depth + 1
         }
-        if (!inDoc && inLoop > 0 && depth >= inLoop) {
+        val matchHere = scopeMode == "all" || (inLoop > 0 && depth >= inLoop)
+        if (!inDoc && matchHere) {
             if (Regex("""\b(mutableListOf|listOf|arrayListOf)\s*(?:<[^>]*>)?\s*\(""").containsMatchIn(code) ||
                 Regex("""\bArrayList\s*\(\s*\)""").containsMatchIn(code)
             ) {
@@ -121,13 +123,13 @@ fun scanFile(path: String): List<Finding> {
                     Regex("""=\s*mutableListOf\s*(?:<[^>]*>)?\s*\(\s*\)""").containsMatchIn(code) &&
                         (code.contains("== null") || code.contains("isEmpty()") || code.contains("if ("))
                 )
-                if (!weak) out.add(Finding("kt-list-add-in-loop", path, lineNo, MSG.getValue("kt-list-add-in-loop")))
+                if (!weak) out.add(Finding("kt-list-add-hot", path, lineNo, MSG.getValue("kt-list-add-hot")))
             }
             if (kt002StringPlus(code)) {
-                out.add(Finding("kt-string-plus-in-loop", path, lineNo, MSG.getValue("kt-string-plus-in-loop")))
+                out.add(Finding("kt-string-plus-hot", path, lineNo, MSG.getValue("kt-string-plus-hot")))
             }
             if (kt003Signal(code, path)) {
-                out.add(Finding("kt-println-in-loop", path, lineNo, MSG.getValue("kt-println-in-loop")))
+                out.add(Finding("kt-println-hot", path, lineNo, MSG.getValue("kt-println-hot")))
             }
             // KT004 removed 2026-10-22 — id tombstoned
         }
@@ -140,14 +142,14 @@ fun scanFile(path: String): List<Finding> {
     return out
 }
 
-fun scanPath(root: String): List<Finding> {
+fun scanPath(root: String, scope: String = "all"): List<Finding> {
     val f = File(root)
-    if (f.isFile) return if (isKt(f)) scanFile(f.path) else emptyList()
+    if (f.isFile) return if (isKt(f)) scanFile(f.path, scope) else emptyList()
     if (!f.isDirectory) return emptyList()
     val files = mutableListOf<File>()
     f.walkTopDown()
         .onEnter { dir -> !skipDir(dir.name) }
         .filter { it.isFile && isKt(it) }
         .forEach { files.add(it) }
-    return files.flatMap { scanFile(it.path) }
+    return files.flatMap { scanFile(it.path, scope) }
 }

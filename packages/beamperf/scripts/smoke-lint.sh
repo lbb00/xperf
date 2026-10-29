@@ -10,11 +10,11 @@ bad_dir = Path.join([Path.dirname(lint), "fixtures", "bad"])
 good_dir = Path.join([Path.dirname(lint), "fixtures", "good"])
 erl = Path.join(bad_dir, "be-list-concat-reduce_list_plus.erl")
 exs = Path.join(bad_dir, "be-list-concat-reduce_list_plus.exs")
-be4 = Path.join(bad_dir, "be-map-merge-in-loop_merge_in_loop.exs")
+be4 = Path.join(bad_dir, "be-map-merge-hot_merge_in_loop.exs")
 be5 = Path.join(bad_dir, "be-enum-map-filter-chain_enum_chain.exs")
 
-sev_all_err = %{"be-list-concat-reduce"=>"error","be-io-puts-in-loop"=>"error","be-map-merge-in-loop"=>"error","be-enum-map-filter-chain"=>"error"}
-sev_def = %{"be-list-concat-reduce"=>"hint","be-io-puts-in-loop"=>"off","be-map-merge-in-loop"=>"hint","be-enum-map-filter-chain"=>"hint"}
+sev_all_err = %{"be-list-concat-reduce"=>"error","be-io-puts-hot"=>"error","be-map-merge-hot"=>"error","be-enum-map-filter-chain"=>"error"}
+sev_def = %{"be-list-concat-reduce"=>"hint","be-io-puts-hot"=>"off","be-map-merge-hot"=>"hint","be-enum-map-filter-chain"=>"hint"}
 
 count = fn finds, sev ->
   Enum.count(finds, fn f -> Map.get(sev, f.rule, "hint") != "off" end)
@@ -36,7 +36,7 @@ cond do
   good_n != 0 -> IO.puts(:stderr, "fail: good dirty #{good_n}"); System.halt(1)
   exs_n < 1 -> IO.puts(:stderr, "fail: be-list-concat-reduce exs"); System.halt(1)
   erl_n < 1 -> IO.puts(:stderr, "fail: be-list-concat-reduce erl hint"); System.halt(1)
-  "be-map-merge-in-loop" not in be4_rules -> IO.puts(:stderr, "fail: be-map-merge-in-loop"); System.halt(1)
+  "be-map-merge-hot" not in be4_rules -> IO.puts(:stderr, "fail: be-map-merge-hot"); System.halt(1)
   "be-enum-map-filter-chain" not in be5_rules -> IO.puts(:stderr, "fail: be-enum-map-filter-chain"); System.halt(1)
   "be-list-concat-reduce" not in erl_err -> IO.puts(:stderr, "fail: be-list-concat-reduce erl error"); System.halt(1)
   true -> IO.puts("beamperf-lint smoke ok")

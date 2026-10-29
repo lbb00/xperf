@@ -1,0 +1,2 @@
+{"rule":"rb-puts-hot","case":"join_once","role":"after","ruby":"Ruby 4.0.8","median_ms":1.149000,"ops":20000,"ratio":1.000000,"ts":"2026-10-23T12:15:20Z"}
+{"rule":"rb-puts-hot","case":"puts_each","role":"before","ruby":"Ruby 4.0.8","median_ms":4.110000,"ops":20000,"ratio":3.577023,"ts":"2026-10-23T12:15:20Z"}

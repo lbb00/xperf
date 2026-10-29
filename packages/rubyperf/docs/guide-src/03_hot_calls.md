@@ -4,4 +4,4 @@
 
 `File.read` of one path was about 346× versus reading once. `File.open` is the same lint. A path that changes every iteration cannot be hoisted. `Process.clock_gettime` was about 2.3× and `send` about 1.9×; those were checked and not given a rule.
 
-Companion lint: **rb-regexp-new-in-loop**, **rb-json-in-loop**, **rb-file-read-in-loop**.
+Companion lint: **rb-regexp-new-hot**, **rb-json-hot**, **rb-file-read-hot**.

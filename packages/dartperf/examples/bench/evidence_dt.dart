@@ -94,7 +94,7 @@ void main() {
     {'case': 'add_loop_empty', 'role': 'before', 'median_ms': before1, 'ops': n1},
   ]);
 
-  // dt-string-plus-in-loop string + vs StringBuffer
+  // dt-string-plus-hot string + vs StringBuffer
   final n2 = int.parse(Platform.environment['DT002_N'] ?? '30000');
   final before2 = timeMany(() {
     var s = '';
@@ -106,12 +106,12 @@ void main() {
     for (var i = 0; i < n2; i++) buf.write(i);
     return buf.length;
   });
-  emit(dir, 'dt-string-plus-in-loop', [
+  emit(dir, 'dt-string-plus-hot', [
     {'case': 'string_buffer', 'role': 'after', 'median_ms': after2, 'ops': n2},
     {'case': 'string_plus', 'role': 'before', 'median_ms': before2, 'ops': n2},
   ]);
 
-  // dt-print-in-loop print in loop vs once (discard)
+  // dt-print-hot print in loop vs once (discard)
   final n3 = int.parse(Platform.environment['DT003_N'] ?? '10000');
   final sink = File('/dev/null').openSync(mode: FileMode.write);
   final before3 = timeMany(() {
@@ -129,7 +129,7 @@ void main() {
     return s;
   });
   sink.closeSync();
-  emit(dir, 'dt-print-in-loop', [
+  emit(dir, 'dt-print-hot', [
     {'case': 'print_once', 'role': 'after', 'median_ms': after3, 'ops': n3},
     {'case': 'print_in_loop', 'role': 'before', 'median_ms': before3, 'ops': n3},
   ]);

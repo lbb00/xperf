@@ -4,4 +4,4 @@
 
 `os.Open` of one path was about 2300× versus opening once. `time.Now` was about 104× versus one sample. That clock rule is not the removed `time.Parse` rule. A changing path cannot be hoisted, and a loop that needs a fresh timestamp has nothing to hoist.
 
-Companion lint: **gp-regexp-compile-in-loop**, **gp-json-marshal-in-loop**, **gp-reflect-in-loop**, **gp-os-open-in-loop**, **gp-time-now-in-loop**.
+Companion lint: **gp-regexp-compile-hot**, **gp-json-marshal-hot**, **gp-reflect-hot**, **gp-os-open-hot**, **gp-time-now-hot**.

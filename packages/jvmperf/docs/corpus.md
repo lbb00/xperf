@@ -14,7 +14,7 @@ $LINT --no-fail -f json -j 4 <path-to-clone>
 
 Checker is **Java** (`jvmperf-lint`). No Python in this kit.
 
-Default severities follow `Rule.java`: **error** jp-string-concat-in-loop, jp-boxed-stream, jp-enum-key-hash-collection, jp-data-copy-in-loop, jp-baos-tobytearray-copy, jp-hot-payload-copy, jp-client-factory-recreate, jp-string-intern-in-loop (G4 JSONL); **hint** jp-value-class-boxing, jp-android-sparse-array, jp-finalize, jp-hot-system-call, jp-bitmap-decode-no-reuse, jp-hot-post-lambda, jp-ui-text-append, jp-non-static-field-updater; every other rule is **off** (select with `--enable`).
+Default severities follow `Rule.java`: **error** jp-string-concat-hot, jp-boxed-stream, jp-enum-key-hash-collection, jp-data-copy-hot, jp-baos-tobytearray-copy, jp-hot-payload-copy, jp-client-factory-recreate, jp-string-intern-hot (G4 JSONL); **hint** jp-value-class-boxing, jp-android-sparse-array, jp-finalize, jp-hot-system-call, jp-bitmap-decode-no-reuse, jp-hot-post-lambda, jp-ui-text-append, jp-non-static-field-updater; every other rule is **off** (select with `--enable`).
 
 ### Inventory
 
@@ -31,7 +31,7 @@ Do not commit corpus sources into `packages/jvmperf`.
 
 | Tree | Scope | after4 → r5 → **r6** |
 |------|-------|---------------------:|
-| **okhttp** | whole | 48 → 9 → **6** (jp-data-copy-in-loop) |
+| **okhttp** | whole | 48 → 9 → **6** (jp-data-copy-hot) |
 | **retrofit** | whole | 6 → 0 → **0** |
 | **kotlinx.coroutines** | whole | 4 → 0 → **0** |
 | **guava** | `guava/src` only | 30 → 3 → **1** |
@@ -43,10 +43,10 @@ Do not commit corpus sources into `packages/jvmperf`.
 
 **G3 triage:** run locally; triage notes are not shipped.
 
-**corpus-ready: yes** — r6 n=26 full: TP 50%, FP+DOC+SKIP 0%; honest TP on jp-data-copy-in-loop/jp-hot-payload-copy/jp-finalize; every default **error** has G4 (`evidence/*.md`+`jsonl`).
+**corpus-ready: yes** — r6 n=26 full: TP 50%, FP+DOC+SKIP 0%; honest TP on jp-data-copy-hot/jp-hot-payload-copy/jp-finalize; every default **error** has G4 (`evidence/*.md`+`jsonl`).
 
 ### Reverse-opt
 
 - Path: `samples?/examples?/recipes?/demos?/snippets?` → `source_group=test` (plus prior benchmark/KMP test skips)
 - Demote almost-all OK-idiom / no-G4 hot heuristics to **off** (for example jp-unpresized-collection, jp-hot-heavy-alloc, jp-hot-format-log)
-- Keep measured usefulness backbone as **error** (for example jp-string-concat-in-loop, jp-data-copy-in-loop, jp-hot-payload-copy)
+- Keep measured usefulness backbone as **error** (for example jp-string-concat-hot, jp-data-copy-hot, jp-hot-payload-copy)

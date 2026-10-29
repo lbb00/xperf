@@ -2,12 +2,12 @@
 
 C# performance notes, small examples, and `csharpperf-lint`.
 
-Part of [XPerf](../../README.md). Shared docs: [docs/README.md](../../docs/README.md). **Corpus-ready**; cs-regex-in-loop=hint; cs-list-add-no-capacity–cs-console-in-loop **off** (heuristic; escalation needs evidence JSONL plus a policy decision). Guide v0.
+Part of [XPerf](../../README.md). Shared docs: [docs/README.md](../../docs/README.md). **Corpus-ready**; cs-regex-hot=hint; cs-list-add-no-capacity–cs-console-hot **off** (heuristic; escalation needs evidence JSONL plus a policy decision). Guide v0.
 
 ## Contents
 
 - [English guide (v0)](docs/csharp-performance-guide.md) — from `docs/guide-src/`
-- [`csharpperf-lint`](csharpperf-lint/README.md) — cs-list-add-no-capacity–cs-regex-in-loop
+- [`csharpperf-lint`](csharpperf-lint/README.md) — cs-list-add-no-capacity–cs-regex-hot
 - [Corpus pins](docs/corpus.md)
 
 ## Focus

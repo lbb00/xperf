@@ -14,4 +14,4 @@
 
 ## Scaffold
 
-- Initial ph-string-dot-in-loop–ph-echo-in-loop heuristic checker.
+- Initial ph-string-dot-hot–ph-echo-hot heuristic checker.

@@ -1,2 +1,0 @@
-{"rule":"pp-open-in-loop","case":"open_once","role":"after","python":"CPython 3.15.1","median_ms":0.047792,"ops":2000,"ratio":1.000000,"ts":"2026-10-23T12:14:16Z"}
-{"rule":"pp-open-in-loop","case":"open_each_iter","role":"before","python":"CPython 3.15.1","median_ms":31.169750,"ops":2000,"ratio":652.193047,"ts":"2026-10-23T12:14:16Z"}

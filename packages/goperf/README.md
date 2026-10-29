@@ -2,12 +2,12 @@
 
 Go performance notes, small examples, and `goperf-lint` written in **Go**.
 
-Part of [XPerf](../../README.md). Shared docs: [docs/README.md](../../docs/README.md). **Corpus-ready** (G3 2026-10-22). Defaults: gp-make-in-loop–gp-fmt-in-loop **off**, gp-append-nil-slice/gp-defer-in-loop **hint**. No invented JSONL.
+Part of [XPerf](../../README.md). Shared docs: [docs/README.md](../../docs/README.md). **Corpus-ready** (G3 2026-10-22). Defaults: gp-make-hot–gp-fmt-hot **off**, gp-append-nil-slice/gp-defer-hot **hint**. No invented JSONL.
 
 ## Contents
 
 - [English guide (v0)](docs/go-performance-guide.md) — from `docs/guide-src/`
-- [`goperf-lint`](goperf-lint/README.md) — gp-make-in-loop–gp-defer-in-loop
+- [`goperf-lint`](goperf-lint/README.md) — gp-make-hot–gp-defer-hot
 - [Corpus pins](docs/corpus.md)
 
 ## Focus

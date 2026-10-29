@@ -1,14 +1,14 @@
 ## nimperf-lint — heuristic Nim performance checker (line-based).
-## Rules: nm-seq-add-in-loop and nm-echo-in-loop demoted; nm-seq-no-capacity empty seq + .add in size-hinted loop. nm-string-amp-in-loop removed.
+## Rules: nm-seq-add-hot and nm-echo-hot demoted; nm-seq-no-capacity empty seq + .add in size-hinted loop. nm-string-amp-in-loop removed.
 import std/[os, strutils, strformat, parseopt, json, tables]
 
 const MSG = {
-  "nm-seq-add-in-loop": "seq .add / grow in loop; prefer newSeqOfCap / setLen when length known",
-  "nm-echo-in-loop": "echo in loop; gate or buffer",
+  "nm-seq-add-hot": "seq .add / grow; prefer newSeqOfCap / setLen when length known — cost adds up even off a hot path",
+  "nm-echo-hot": "echo; gate or buffer — cost adds up even off a hot path",
   "nm-seq-no-capacity": "empty seq grown with .add in size-hinted loop; prefer newSeqOfCap"
 }.toTable
 
-var sev = {"nm-seq-add-in-loop": "off", "nm-echo-in-loop": "off", "nm-seq-no-capacity": "hint"}.toTable
+var sev = {"nm-seq-add-hot": "off", "nm-echo-hot": "off", "nm-seq-no-capacity": "hint"}.toTable
 
 const ALWAYS_SKIP = [".git", "nimblecache", "nimcache", "node_modules", "vendor"]
 const NOISE_SKIP = ["test", "tests", "testament", "fixtures", "examples", "example",
@@ -25,6 +25,7 @@ var enableReverseOpt = true
 var formatOut = "text"
 var strictHints = false
 var noFail = false
+var scopeMode = "all"
 
 proc pushFinding(dst: var seq[Finding]; f: Finding) =
   let n = dst.len
@@ -45,6 +46,7 @@ proc usage(code: int) =
   stderr.write("""Usage: nimperf-lint PATH... [options]
   --format text|json
   --severity RULE=error|hint|off
+  --scope all|loop     (default: all; loop = former in-loop-only)
   --strict-hints
   --no-fail
   --raw-paths          include test/docs (baseline dumps)
@@ -224,17 +226,17 @@ proc scanFile(path: string): seq[Finding] =
       pushStr(loopHeads, stripped)
       fired004 = @[]
       continue
-    if loopIndents.len == 0:
-      continue
-    if ind <= loopIndents[^1]:
+    let inLoopBody = loopIndents.len > 0 and ind > loopIndents[^1]
+    let matchHere = scopeMode == "all" or inLoopBody
+    if not matchHere:
       continue
     if looksSeqAdd(stripped):
-      pushFinding(result, Finding(rule: "nm-seq-add-in-loop", path: path, line: lineNo, message: MSG["nm-seq-add-in-loop"]))
+      pushFinding(result, Finding(rule: "nm-seq-add-hot", path: path, line: lineNo, message: MSG["nm-seq-add-hot"]))
     if looksEcho(stripped):
-      pushFinding(result, Finding(rule: "nm-echo-in-loop", path: path, line: lineNo, message: MSG["nm-echo-in-loop"]))
-    # nm-seq-no-capacity: empty seq + .add in size-hinted loop
+      pushFinding(result, Finding(rule: "nm-echo-hot", path: path, line: lineNo, message: MSG["nm-echo-hot"]))
+    # nm-seq-no-capacity: empty seq + .add in size-hinted loop (still needs a loop head)
     let head = if loopHeads.len > 0: loopHeads[^1] else: ""
-    if loopHasSizeHint(head) and looksSeqAdd(stripped) and "newSeqOfCap" notin stripped:
+    if inLoopBody and loopHasSizeHint(head) and looksSeqAdd(stripped) and "newSeqOfCap" notin stripped:
       # extract receiver of .add
       let dot = stripped.find(".add")
       if dot > 0:
@@ -323,6 +325,10 @@ proc main() =
         noFail = true
       of "raw-paths":
         enableReverseOpt = false
+      of "scope":
+        let s = if p.val.len > 0: p.val else: nextArg(p)
+        if s notin ["all", "loop"]: usage(2)
+        scopeMode = s
       else:
         usage(2)
     of cmdArgument:
@@ -367,7 +373,7 @@ proc main() =
 
   if formatOut == "json":
     var rows = newJArray()
-    # assign elems without .add token in a for-loop body matching nm-seq-add-in-loop
+    # assign elems without .add token in a for-loop body matching nm-seq-add-hot
     rows.elems = rowNodes
     stdout.writeLine $rows
   else:
