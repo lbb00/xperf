@@ -1,4 +1,4 @@
-/** Shared SEO / social metadata for the docs site (GitHub Pages under /xperf). */
+/** Shared SEO / GEO / social metadata for the docs site (GitHub Pages under /xperf). */
 
 export const SITE_URL = 'https://lbb00.github.io/xperf';
 
@@ -14,6 +14,39 @@ export const SITE_DESCRIPTION_ZH =
 export const OG_IMAGE_PATH = '/og.png';
 
 export const OG_IMAGE_ALT = 'XPerf — measured performance guides and heuristic linters';
+
+export const REPO_URL = 'https://github.com/lbb00/xperf';
+
+/** JSON-LD for generative engines and rich results (GEO + classic SEO). */
+export function siteJsonLd(): Record<string, unknown>[] {
+  return [
+    {
+      '@context': 'https://schema.org',
+      '@type': 'WebSite',
+      name: SITE_NAME,
+      url: SITE_URL,
+      description: SITE_DESCRIPTION,
+      inLanguage: ['en', 'zh-CN'],
+    },
+    {
+      '@context': 'https://schema.org',
+      '@type': 'SoftwareApplication',
+      name: SITE_NAME,
+      applicationCategory: 'DeveloperApplication',
+      operatingSystem: 'Cross-platform',
+      url: SITE_URL,
+      downloadUrl: REPO_URL,
+      description: SITE_DESCRIPTION,
+      license: 'https://opensource.org/licenses/MIT',
+      codeRepository: REPO_URL,
+      offers: {
+        '@type': 'Offer',
+        price: '0',
+        priceCurrency: 'USD',
+      },
+    },
+  ];
+}
 
 export function pagePath(slugs: string[] | undefined, locale: 'en' | 'zh'): string {
   const parts = slugs?.filter(Boolean) ?? [];

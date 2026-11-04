@@ -8,7 +8,7 @@ Versions apply to the whole repository and are git tags (see [docs/release.md](d
 Kits are not released separately and carry no version of their own.
 
 ## [Unreleased]
-- **Docs SEO:** site metadata now includes description, Open Graph, Twitter Card, canonical and en/zh alternates; static export forces blocking metadata into HTML (`htmlLimitedBots`); added `sitemap.xml`, `robots.txt`, `llms.txt`, and a 1200×630 `og.png` social card (copied from `site-app/seo-static/` during assemble). README opens with a clear value-prop hook (EN + 中文一句话).
+- **Docs SEO / GEO:** site metadata now includes description, Open Graph, Twitter Card, canonical and en/zh alternates; static export forces blocking metadata into HTML (`htmlLimitedBots`); added `sitemap.xml`, `robots.txt`, `llms.txt`, and a 1200×630 `og.png` social card (copied from `site-app/seo-static/` during assemble). README opens with a clear English value-prop hook. GEO: `llms.txt`, JSON-LD SoftwareApplication/WebSite, and explicit AI-crawler allow rules in `robots.txt`.
 
 - **Docs site:** page links no longer keep a trailing `.md` (that 404s on GitHub Pages). Assemble rewrites them to trailing-slash directory URLs relative to the page directory, fails the build if any `.md` hrefs remain, emits static files as root-absolute paths so the `/zh/` locale works, and publishes `LICENSE` / `NOTICE` as directories so `trailingSlash` can open them.
 
