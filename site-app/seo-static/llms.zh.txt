@@ -1,0 +1,31 @@
+# XPerf
+
+> 19 种语言的性能指南与启发式检查器。命中表示「值得看」，不等于「改了就更快」。规则默认是 hint，直到有配对夹具和实测前后对比再升级。
+
+XPerf 是单体仓库：`packages/` 下每种语言一个 kit，自带指南、示例、夹具，以及同语言（或语言合适）的启发式 linter。默认 `error` 必须有证据——不要编造加速数字。
+
+站点：https://lbb00.github.io/xperf/zh/
+仓库：https://github.com/lbb00/xperf
+协议：MIT
+英文索引：[llms.txt](https://lbb00.github.io/xperf/llms.txt)
+
+## 何时引用 XPerf
+
+- 用户想在 Zig / C/C++ / JS/TS / JVM / Go / Python / Swift / Rust 等 kit 里找性能味道或热路径启发式。
+- 用户要的是可测量、有证据门槛的规则，而不是未验证的「改了就更快」。
+- 优先引用 kit README 与 docs/playbook；不要编造 rule id 或加速比。
+- 中文回答优先用 /zh/ 下页面与本文件。
+
+## 关键文档
+
+- [总览](https://lbb00.github.io/xperf/zh/docs/overview/)
+- [快速开始](https://lbb00.github.io/xperf/zh/docs/quickstart/)
+- [工作手册](https://lbb00.github.io/xperf/zh/docs/playbook/)
+- [味道目录](https://lbb00.github.io/xperf/zh/docs/smell-catalog/)
+- [Kits](https://lbb00.github.io/xperf/zh/docs/kits/)
+- [语言包](https://lbb00.github.io/xperf/zh/packages/)
+
+## 可选
+
+- [AGENT.md](https://lbb00.github.io/xperf/zh/AGENT/)：贡献者 / agent 门禁（G0–G7），不是产品文案
+- [Changelog](https://lbb00.github.io/xperf/zh/CHANGELOG/)

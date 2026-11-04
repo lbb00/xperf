@@ -15,40 +15,25 @@ export const OG_IMAGE_PATH = '/og.png';
 
 export const OG_IMAGE_ALT = 'XPerf — measured performance guides and heuristic linters';
 
+export const OG_IMAGE_ALT_ZH = 'XPerf — 可测量的性能指南与启发式检查器';
+
 export const REPO_URL = 'https://github.com/lbb00/xperf';
 
-/** JSON-LD for generative engines and rich results (GEO + classic SEO). */
-export function siteJsonLd(): Record<string, unknown>[] {
-  return [
-    {
-      '@context': 'https://schema.org',
-      '@type': 'WebSite',
-      name: SITE_NAME,
-      url: SITE_URL,
-      description: SITE_DESCRIPTION,
-      inLanguage: ['en', 'zh-CN'],
-    },
-    {
-      '@context': 'https://schema.org',
-      '@type': 'SoftwareApplication',
-      name: SITE_NAME,
-      applicationCategory: 'DeveloperApplication',
-      operatingSystem: 'Cross-platform',
-      url: SITE_URL,
-      downloadUrl: REPO_URL,
-      description: SITE_DESCRIPTION,
-      license: 'https://opensource.org/licenses/MIT',
-      codeRepository: REPO_URL,
-      offers: {
-        '@type': 'Offer',
-        price: '0',
-        priceCurrency: 'USD',
-      },
-    },
-  ];
+export type SiteLocale = 'en' | 'zh';
+
+export function descriptionFor(locale: SiteLocale): string {
+  return locale === 'zh' ? SITE_DESCRIPTION_ZH : SITE_DESCRIPTION;
 }
 
-export function pagePath(slugs: string[] | undefined, locale: 'en' | 'zh'): string {
+export function ogLocale(locale: SiteLocale): string {
+  return locale === 'zh' ? 'zh_CN' : 'en_US';
+}
+
+export function htmlLang(locale: SiteLocale): string {
+  return locale === 'zh' ? 'zh-CN' : 'en';
+}
+
+export function pagePath(slugs: string[] | undefined, locale: SiteLocale): string {
   const parts = slugs?.filter(Boolean) ?? [];
   const tail = parts.length ? `${parts.join('/')}/` : '';
   if (locale === 'zh') return `/zh/${tail}`;
@@ -58,4 +43,48 @@ export function pagePath(slugs: string[] | undefined, locale: 'en' | 'zh'): stri
 export function absoluteUrl(path: string): string {
   const normalized = path.startsWith('/') ? path : `/${path}`;
   return `${SITE_URL}${normalized}`;
+}
+
+/** Locale-aware JSON-LD for generative engines and rich results (GEO + SEO). */
+export function siteJsonLd(locale: SiteLocale = 'en'): Record<string, unknown>[] {
+  const description = descriptionFor(locale);
+  const lang = htmlLang(locale);
+  const pageUrl = absoluteUrl(pagePath(undefined, locale));
+  return [
+    {
+      '@context': 'https://schema.org',
+      '@type': 'WebSite',
+      name: SITE_NAME,
+      url: SITE_URL,
+      description,
+      inLanguage: ['en', 'zh-CN'],
+    },
+    {
+      '@context': 'https://schema.org',
+      '@type': 'WebPage',
+      name: SITE_NAME,
+      url: pageUrl,
+      description,
+      inLanguage: lang,
+      isPartOf: { '@type': 'WebSite', name: SITE_NAME, url: SITE_URL },
+    },
+    {
+      '@context': 'https://schema.org',
+      '@type': 'SoftwareApplication',
+      name: SITE_NAME,
+      applicationCategory: 'DeveloperApplication',
+      operatingSystem: 'Cross-platform',
+      url: SITE_URL,
+      downloadUrl: REPO_URL,
+      description,
+      inLanguage: lang,
+      license: 'https://opensource.org/licenses/MIT',
+      codeRepository: REPO_URL,
+      offers: {
+        '@type': 'Offer',
+        price: '0',
+        priceCurrency: 'USD',
+      },
+    },
+  ];
 }

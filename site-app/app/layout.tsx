@@ -6,7 +6,6 @@ import {
   SITE_DESCRIPTION,
   SITE_NAME,
   SITE_URL,
-  siteJsonLd,
 } from '@/lib/site-meta';
 import './global.css';
 
@@ -35,6 +34,7 @@ export const metadata: Metadata = {
   openGraph: {
     type: 'website',
     locale: 'en_US',
+    alternateLocale: ['zh_CN'],
     url: SITE_URL,
     siteName: SITE_NAME,
     title: SITE_NAME,
@@ -69,16 +69,10 @@ export const metadata: Metadata = {
 };
 
 export default function Layout({ children }: { children: ReactNode }) {
-  const jsonLd = siteJsonLd();
+  // Locale-specific JSON-LD is injected in DocsShell so /zh/ pages get zh copy.
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className="flex min-h-screen flex-col">
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-        />
-        {children}
-      </body>
+      <body className="flex min-h-screen flex-col">{children}</body>
     </html>
   );
 }
