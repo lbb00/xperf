@@ -4,6 +4,14 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { getMDXComponents } from '@/components/mdx';
 import type { Locale } from '@/lib/i18n';
+import {
+  OG_IMAGE_ALT,
+  OG_IMAGE_PATH,
+  SITE_DESCRIPTION,
+  SITE_DESCRIPTION_ZH,
+  SITE_NAME,
+  pagePath,
+} from '@/lib/site-meta';
 import { source } from '@/lib/source';
 
 function load(slugs: string[] | undefined, locale: Locale) {
@@ -38,9 +46,49 @@ export function renderDocsPage(slugs: string[] | undefined, locale: Locale) {
 export function docsMetadata(slugs: string[] | undefined, locale: Locale): Metadata {
   const page = load(slugs, locale);
   const title = page.data.title === 'XPerf' ? { absolute: 'XPerf' } : page.data.title;
+  const fallback = locale === 'zh' ? SITE_DESCRIPTION_ZH : SITE_DESCRIPTION;
+  // Always set a string. Returning `description: undefined` from generateMetadata
+  // clears the root layout description in the static HTML export.
+  const description = page.data.description?.trim() || fallback;
+  const canonical = pagePath(slugs, locale);
+  const enPath = pagePath(slugs, 'en');
+  const zhPath = pagePath(slugs, 'zh');
+  const ogTitle =
+    typeof title === 'string' ? title : title.absolute === 'XPerf' ? SITE_NAME : String(page.data.title);
+
   return {
     title,
-    description: page.data.description,
+    description,
+    alternates: {
+      canonical,
+      languages: {
+        en: enPath,
+        'zh-CN': zhPath,
+        'x-default': enPath,
+      },
+    },
+    openGraph: {
+      type: 'article',
+      locale: locale === 'zh' ? 'zh_CN' : 'en_US',
+      url: canonical,
+      siteName: SITE_NAME,
+      title: ogTitle,
+      description,
+      images: [
+        {
+          url: OG_IMAGE_PATH,
+          width: 1200,
+          height: 630,
+          alt: OG_IMAGE_ALT,
+        },
+      ],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: ogTitle,
+      description,
+      images: [OG_IMAGE_PATH],
+    },
   };
 }
 

@@ -1,6 +1,10 @@
 # XPerf
 
-XPerf is a set of performance guides and heuristic linters, one kit per language under `packages/`. A lint hit means “look here,” not “this will be faster.” A rule stays a hint until paired fixtures and a measured before/after promote it. Rule IDs are semantic slugs (~169 active).
+XPerf helps you find real performance smells across 19 languages — guides plus heuristic linters that stay honest: a hit means “look here,” not “this will be faster,” until paired fixtures and a measured before/after say otherwise.
+
+中文一句话：用可测量的启发式规则，在 19 种语言里定位性能味道；命中只表示「值得看」，不等于「改了就更快」。
+
+Docs site: [lbb00.github.io/xperf](https://lbb00.github.io/xperf/). Rule IDs are semantic slugs (~169 active).
 
 ## Languages
 

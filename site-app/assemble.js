@@ -640,6 +640,15 @@ function assemble() {
   }
   writeSidebar();
   checkNav(copied);
+  const seoStatic = path.join(ROOT, 'site-app', 'seo-static');
+  if (fs.existsSync(seoStatic)) {
+    for (const name of fs.readdirSync(seoStatic)) {
+      if (name.startsWith('.')) continue;
+      const src = path.join(seoStatic, name);
+      if (!fs.statSync(src).isFile()) continue;
+      fs.copyFileSync(src, path.join(PUBLIC, name));
+    }
+  }
   console.log(
     `build-pages: assembled ${mdFiles.length} pages, ${files.length} files, rewrote ${rewritten} links`,
   );

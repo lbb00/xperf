@@ -8,6 +8,8 @@ Versions apply to the whole repository and are git tags (see [docs/release.md](d
 Kits are not released separately and carry no version of their own.
 
 ## [Unreleased]
+- **Docs SEO:** site metadata now includes description, Open Graph, Twitter Card, canonical and en/zh alternates; static export forces blocking metadata into HTML (`htmlLimitedBots`); added `sitemap.xml`, `robots.txt`, `llms.txt`, and a 1200×630 `og.png` social card (copied from `site-app/seo-static/` during assemble). README opens with a clear value-prop hook (EN + 中文一句话).
+
 - **Docs site:** page links no longer keep a trailing `.md` (that 404s on GitHub Pages). Assemble rewrites them to trailing-slash directory URLs relative to the page directory, fails the build if any `.md` hrefs remain, emits static files as root-absolute paths so the `/zh/` locale works, and publishes `LICENSE` / `NOTICE` as directories so `trailingSlash` can open them.
 
 - **All kits:** default matching is **`--scope all`** where the kit CLI supports it (opt in to **`--scope loop`** for the former in-loop-only match). Finding messages no longer imply non-loop sites are out of scope. Rule slugs containing `in-loop` were **renamed** to `*-hot` (including leftover `rs-map-new-in-loop` → `rs-map-new-hot`; see per-kit Renamed tables); old slugs are tombstoned under each kit `evidence/_removed/*.REMOVED.md` and must never be reused. See each kit `docs/rule-ids.md` Renamed table. jsperf also keeps adopter FP cuts + new hints from earlier commits on this branch. No severity escalations.
