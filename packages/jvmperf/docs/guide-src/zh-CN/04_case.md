@@ -44,58 +44,112 @@ Java 版本：
 
 ```java
 import java.util.BitSet;
+import java.util.BitSet;
+import java.util.EnumSet;
 import java.util.EnumSet;
 
+
+/** Flags using bit operations, EnumSet, and BitSet; this is the hybrid-car case study. */
 /** Flags using bit operations, EnumSet, and BitSet; this is the hybrid-car case study. */
 public class J03_Flags {
+public class J03_Flags {
+    enum Fuel { ELECTRIC, BENZINE, DIESEL }
     enum Fuel { ELECTRIC, BENZINE, DIESEL }
 
+
+    // 1) One field per flag: three booleans.
     // 1) One field per flag: three booleans.
     static final class CarBools { boolean electric, benzine, diesel; }
+    static final class CarBools { boolean electric, benzine, diesel; }
+
 
     // 2) Store three flags in one byte; Java requires explicit bit operations.
+    // 2) Store three flags in one byte; Java requires explicit bit operations.
+    static final class CarByte {
     static final class CarByte {
         static final int ELECTRIC = 1, BENZINE = 1 << 1, DIESEL = 1 << 2;
+        static final int ELECTRIC = 1, BENZINE = 1 << 1, DIESEL = 1 << 2;
+        byte flags;
         byte flags;
         boolean has(int f) { return (flags & f) != 0; }
+        boolean has(int f) { return (flags & f) != 0; }
+        void set(int f) { flags = (byte) (flags | f); }
         void set(int f) { flags = (byte) (flags | f); }
         void clear(int f) { flags = (byte) (flags & ~f); }
+        void clear(int f) { flags = (byte) (flags & ~f); }
     }
+    }
+
 
     // 3) Packing saves meaningful memory in arrays: one byte or three bits per car.
+    // 3) Packing saves meaningful memory in arrays: one byte or three bits per car.
+    static final class Fleet {
     static final class Fleet {
         final byte[] flags;               // Primitive array: one byte per car.
+        final byte[] flags;               // Primitive array: one byte per car.
+        Fleet(int n) { flags = new byte[n]; }
         Fleet(int n) { flags = new byte[n]; }
     }
+    }
+    static final class PackedFleet {
     static final class PackedFleet {
         final long[] bits;                // Three densely packed bits per car.
+        final long[] bits;                // Three densely packed bits per car.
+        PackedFleet(int n) { bits = new long[(n * 3 + 63) >>> 6]; }
         PackedFleet(int n) { bits = new long[(n * 3 + 63) >>> 6]; }
         void set(int car, int fuelBit) { int i = car * 3 + fuelBit; bits[i >>> 6] |= 1L << i; } // long shifts use the low six bits of the distance.
+        void set(int car, int fuelBit) { int i = car * 3 + fuelBit; bits[i >>> 6] |= 1L << i; } // long shifts use the low six bits of the distance.
+        boolean has(int car, int fuelBit) { int i = car * 3 + fuelBit; return (bits[i >>> 6] & (1L << i)) != 0; }
         boolean has(int car, int fuelBit) { int i = car * 3 + fuelBit; return (bits[i >>> 6] & (1L << i)) != 0; }
     }
+    }
+
 
     public static void main(String[] args) {
+    public static void main(String[] args) {
+        CarByte hybrid = new CarByte();
         CarByte hybrid = new CarByte();
         hybrid.set(CarByte.ELECTRIC | CarByte.BENZINE);
+        hybrid.set(CarByte.ELECTRIC | CarByte.BENZINE);
+        check(hybrid.has(CarByte.ELECTRIC) && !hybrid.has(CarByte.DIESEL) && hybrid.flags == 0b011, "byte flags");
         check(hybrid.has(CarByte.ELECTRIC) && !hybrid.has(CarByte.DIESEL) && hybrid.flags == 0b011, "byte flags");
 
+
+        EnumSet<Fuel> fuels = EnumSet.of(Fuel.ELECTRIC, Fuel.BENZINE);   // Up to 64 constants fit in one long.
         EnumSet<Fuel> fuels = EnumSet.of(Fuel.ELECTRIC, Fuel.BENZINE);   // Up to 64 constants fit in one long.
         check(fuels.contains(Fuel.BENZINE) && fuels.size() == 2, "EnumSet");
+        check(fuels.contains(Fuel.BENZINE) && fuels.size() == 2, "EnumSet");
+
 
         BitSet bs = new BitSet(3000);
+        BitSet bs = new BitSet(3000);
+        bs.set(5 * 3 + Fuel.BENZINE.ordinal());
         bs.set(5 * 3 + Fuel.BENZINE.ordinal());
         check(bs.get(16) && bs.cardinality() == 1, "BitSet");
+        check(bs.get(16) && bs.cardinality() == 1, "BitSet");
+
 
         PackedFleet pf = new PackedFleet(1000);
+        PackedFleet pf = new PackedFleet(1000);
+        check(pf.bits.length == 47, "47 longs = 376 bytes of data"); // ceil(3000/64)
         check(pf.bits.length == 47, "47 longs = 376 bytes of data"); // ceil(3000/64)
         pf.set(999, 2);
+        pf.set(999, 2);
+        check(pf.has(999, 2) && !pf.has(999, 1), "packed");
         check(pf.has(999, 2) && !pf.has(999, 1), "packed");
         Fleet f = new Fleet(1000);
+        Fleet f = new Fleet(1000);
+        f.flags[0] = CarByte.ELECTRIC | CarByte.BENZINE;
         f.flags[0] = CarByte.ELECTRIC | CarByte.BENZINE;
         check(Integer.bitCount(f.flags[0]) == 2, "fleet");
+        check(Integer.bitCount(f.flags[0]) == 2, "fleet");
+        System.out.println("J03 ok");
         System.out.println("J03 ok");
     }
+    }
     static void check(boolean ok, String what) { if (!ok) throw new AssertionError(what); }
+    static void check(boolean ok, String what) { if (!ok) throw new AssertionError(what); }
+}
 }
 ```
 
@@ -105,42 +159,80 @@ Kotlin 版本（`value class` 给 `Byte` 加上类型与运算符，运行时字
 
 ```kotlin
 // Kotlin version of the flag case study: boolean fields, bit operations, a value class, and arrays.
+// Kotlin version of the flag case study: boolean fields, bit operations, a value class, and arrays.
+package k05
 package k05
 
+
+import java.util.EnumSet
 import java.util.EnumSet
 
+
+enum class Fuel { ELECTRIC, BENZINE, DIESEL }
 enum class Fuel { ELECTRIC, BENZINE, DIESEL }
 
+
+data class HybridBools(val electric: Boolean, val benzine: Boolean, val diesel: Boolean)
 data class HybridBools(val electric: Boolean, val benzine: Boolean, val diesel: Boolean)
 
+
+// The value class adds a type and operations to Byte; the runtime representation remains a byte.
 // The value class adds a type and operations to Byte; the runtime representation remains a byte.
 @JvmInline
+@JvmInline
+value class FuelFlags(val bits: Byte) {
 value class FuelFlags(val bits: Byte) {
     operator fun contains(f: Fuel): Boolean = (bits.toInt() and (1 shl f.ordinal)) != 0
+    operator fun contains(f: Fuel): Boolean = (bits.toInt() and (1 shl f.ordinal)) != 0
+    operator fun plus(f: Fuel): FuelFlags = FuelFlags((bits.toInt() or (1 shl f.ordinal)).toByte())
     operator fun plus(f: Fuel): FuelFlags = FuelFlags((bits.toInt() or (1 shl f.ordinal)).toByte())
     operator fun minus(f: Fuel): FuelFlags = FuelFlags((bits.toInt() and (1 shl f.ordinal).inv()).toByte())
+    operator fun minus(f: Fuel): FuelFlags = FuelFlags((bits.toInt() and (1 shl f.ordinal).inv()).toByte())
+    companion object {
     companion object {
         val NONE = FuelFlags(0)
+        val NONE = FuelFlags(0)
+    }
     }
 }
+}
+
 
 class Car(var fuels: FuelFlags)      // The field is represented as a byte.
+class Car(var fuels: FuelFlags)      // The field is represented as a byte.
+
 
 fun main() {
+fun main() {
+    val hybrid = FuelFlags.NONE + Fuel.ELECTRIC + Fuel.BENZINE
     val hybrid = FuelFlags.NONE + Fuel.ELECTRIC + Fuel.BENZINE
     check(Fuel.ELECTRIC in hybrid && Fuel.DIESEL !in hybrid)
+    check(Fuel.ELECTRIC in hybrid && Fuel.DIESEL !in hybrid)
+    check(hybrid.bits.toInt() == 0b011)
     check(hybrid.bits.toInt() == 0b011)
     check((hybrid - Fuel.BENZINE).bits.toInt() == 0b001)
+    check((hybrid - Fuel.BENZINE).bits.toInt() == 0b001)
+    check(Car::class.java.getDeclaredField("fuels").type == Byte::class.javaPrimitiveType)
     check(Car::class.java.getDeclaredField("fuels").type == Byte::class.javaPrimitiveType)
     // Kotlin uses infix functions for bit operations: shl, shr, ushr, and, or, xor, inv.
+    // Kotlin uses infix functions for bit operations: shl, shr, ushr, and, or, xor, inv.
+    check((1 shl 2) or 1 == 5 && (0b110 and 0b011) == 0b010 && 5.inv() == -6)
     check((1 shl 2) or 1 == 5 && (0b110 and 0b011) == 0b010 && 5.inv() == -6)
     // For 1,000 cars, ByteArray uses one byte each; Array<FuelFlags> and List<FuelFlags> box every value.
+    // For 1,000 cars, ByteArray uses one byte each; Array<FuelFlags> and List<FuelFlags> box every value.
+    val fleet = ByteArray(1000)
     val fleet = ByteArray(1000)
     fleet[7] = hybrid.bits
+    fleet[7] = hybrid.bits
+    check(Fuel.BENZINE in FuelFlags(fleet[7]))
     check(Fuel.BENZINE in FuelFlags(fleet[7]))
     val es: EnumSet<Fuel> = EnumSet.of(Fuel.ELECTRIC, Fuel.BENZINE)
+    val es: EnumSet<Fuel> = EnumSet.of(Fuel.ELECTRIC, Fuel.BENZINE)
+    check(es.size == 2 && HybridBools(true, true, false).electric)
     check(es.size == 2 && HybridBools(true, true, false).electric)
     println("K05 ok")
+    println("K05 ok")
+}
 }
 ```
 
@@ -163,38 +255,72 @@ fun main() {
 
 ```java
 /** Array of Structures vs Structure of Arrays: SoA is contiguous and header-free when scanning one field. */
+/** Array of Structures vs Structure of Arrays: SoA is contiguous and header-free when scanning one field. */
+public class J04_SoA {
 public class J04_SoA {
     static final class Particle { double x, y, vx, vy; boolean alive; }   // AoS: each particle is a separate heap object.
+    static final class Particle { double x, y, vx, vy; boolean alive; }   // AoS: each particle is a separate heap object.
+
 
     static final class Particles {                                       // SoA: one primitive array per field.
+    static final class Particles {                                       // SoA: one primitive array per field.
+        final double[] x, y, vx, vy;
         final double[] x, y, vx, vy;
         final long[] alive;                                              // Store liveness flags out of band in a bitmap.
+        final long[] alive;                                              // Store liveness flags out of band in a bitmap.
+        int size;
         int size;
         Particles(int cap) {
+        Particles(int cap) {
+            x = new double[cap]; y = new double[cap]; vx = new double[cap]; vy = new double[cap];
             x = new double[cap]; y = new double[cap]; vx = new double[cap]; vy = new double[cap];
             alive = new long[(cap + 63) >>> 6];
+            alive = new long[(cap + 63) >>> 6];
+        }
         }
         int add(double px, double py, double pvx, double pvy) {
+        int add(double px, double py, double pvx, double pvy) {
+            int i = size++;
             int i = size++;
             x[i] = px; y[i] = py; vx[i] = pvx; vy[i] = pvy; alive[i >>> 6] |= 1L << i;
+            x[i] = px; y[i] = py; vx[i] = pvx; vy[i] = pvy; alive[i >>> 6] |= 1L << i;
+            return i;
             return i;
         }
+        }
+        void step(double dt) {                                           // The hot loop touches only the needed arrays.
         void step(double dt) {                                           // The hot loop touches only the needed arrays.
             for (int i = 0; i < size; i++) { x[i] += vx[i] * dt; y[i] += vy[i] * dt; }
+            for (int i = 0; i < size; i++) { x[i] += vx[i] * dt; y[i] += vy[i] * dt; }
+        }
         }
     }
+    }
+
 
     public static void main(String[] args) {
+    public static void main(String[] args) {
+        Particles ps = new Particles(1024);
         Particles ps = new Particles(1024);
         for (int i = 0; i < 1000; i++) ps.add(i, 0, 1, 2);
+        for (int i = 0; i < 1000; i++) ps.add(i, 0, 1, 2);
+        ps.step(0.5);
         ps.step(0.5);
         if (ps.x[10] != 10.5 || ps.y[10] != 1.0) throw new AssertionError();
+        if (ps.x[10] != 10.5 || ps.y[10] != 1.0) throw new AssertionError();
+        Particle[] aos = new Particle[1000];
         Particle[] aos = new Particle[1000];
         for (int i = 0; i < aos.length; i++) { aos[i] = new Particle(); aos[i].x = i; aos[i].vx = 1; }
+        for (int i = 0; i < aos.length; i++) { aos[i] = new Particle(); aos[i].x = i; aos[i].vx = 1; }
+        for (Particle p : aos) p.x += p.vx * 0.5;
         for (Particle p : aos) p.x += p.vx * 0.5;
         if (aos[10].x != ps.x[10]) throw new AssertionError();
+        if (aos[10].x != ps.x[10]) throw new AssertionError();
+        System.out.println("J04 ok");
         System.out.println("J04 ok");
     }
+    }
+}
 }
 ```
 
@@ -212,31 +338,58 @@ public class J04_SoA {
 
 ```java
 import java.util.ArrayList;
+import java.util.ArrayList;
+import java.util.EnumMap;
 import java.util.EnumMap;
 import java.util.EnumSet;
+import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.HashSet;
+import java.util.List;
 import java.util.List;
 import java.util.Map;
+import java.util.Map;
+
 
 /** Reserve collection capacity and use EnumMap/EnumSet for enum keys. */
+/** Reserve collection capacity and use EnumMap/EnumSet for enum keys. */
+public class J13_Presize {
 public class J13_Presize {
     enum Color { RED, GREEN, BLUE }
+    enum Color { RED, GREEN, BLUE }
+    public static void main(String[] args) {
     public static void main(String[] args) {
         int n = 10_000;
+        int n = 10_000;
+        List<String> names = new ArrayList<>(n);                  // Avoid repeated growth and array copies.
         List<String> names = new ArrayList<>(n);                  // Avoid repeated growth and array copies.
         // jvmperf-lint: ignore jp-boxed-primitive-collection -- Intentional counterexample.
+        // jvmperf-lint: ignore jp-boxed-primitive-collection -- Intentional counterexample.
+        Map<String, Integer> idx = HashMap.newHashMap(n);           // JDK 19+: reserve by element count, accounting for the load factor.
         Map<String, Integer> idx = HashMap.newHashMap(n);           // JDK 19+: reserve by element count, accounting for the load factor.
         HashSet<String> seen = HashSet.newHashSet(n);               // JDK 19+
+        HashSet<String> seen = HashSet.newHashSet(n);               // JDK 19+
+        for (int i = 0; i < n; i++) { String s = "k" + i; names.add(s); idx.put(s, i); seen.add(s); }
         for (int i = 0; i < n; i++) { String s = "k" + i; names.add(s); idx.put(s, i); seen.add(s); }
         // Note: new HashMap<>(n) takes table capacity; inserting n elements may still resize it.
+        // Note: new HashMap<>(n) takes table capacity; inserting n elements may still resize it.
+        EnumMap<Color, Integer> hits = new EnumMap<>(Color.class);  // Internally an array indexed by ordinal.
         EnumMap<Color, Integer> hits = new EnumMap<>(Color.class);  // Internally an array indexed by ordinal.
         hits.merge(Color.RED, 1, Integer::sum);
+        hits.merge(Color.RED, 1, Integer::sum);
+        EnumSet<Color> warm = EnumSet.of(Color.RED, Color.GREEN);
         EnumSet<Color> warm = EnumSet.of(Color.RED, Color.GREEN);
         if (idx.get("k42") != 42 || !warm.contains(Color.RED) || hits.get(Color.RED) != 1 || seen.size() != n)
+        if (idx.get("k42") != 42 || !warm.contains(Color.RED) || hits.get(Color.RED) != 1 || seen.size() != n)
+            throw new AssertionError();
             throw new AssertionError();
         System.out.println("J13 ok");
+        System.out.println("J13 ok");
     }
+    }
+}
 }
 ```
 
@@ -254,24 +407,44 @@ public class J13_Presize {
 
 ```java
 import java.util.Arrays;
+import java.util.Arrays;
+
 
 /** Immutable values and bulk operations: record arrays vs primitive arrays; Arrays methods use intrinsics. */
+/** Immutable values and bulk operations: record arrays vs primitive arrays; Arrays methods use intrinsics. */
+public class J18_Records {
 public class J18_Records {
     record Sample(long ts, double value) {}
+    record Sample(long ts, double value) {}
+    public static void main(String[] args) {
     public static void main(String[] args) {
         int n = 1000;
+        int n = 1000;
+        long[] ts = new long[n];
         long[] ts = new long[n];
         double[] vs = new double[n];
+        double[] vs = new double[n];
+        Arrays.setAll(ts, i -> 1_000L * i);
         Arrays.setAll(ts, i -> 1_000L * i);
         Arrays.fill(vs, 1.5);
+        Arrays.fill(vs, 1.5);
+        double sum = 0;
         double sum = 0;
         for (double v : vs) sum += v;
+        for (double v : vs) sum += v;
+        long[] copy = Arrays.copyOf(ts, n * 2);                // System.arraycopy intrinsic
         long[] copy = Arrays.copyOf(ts, n * 2);                // System.arraycopy intrinsic
         if (sum != 1500 || copy[999] != 999_000L || Arrays.binarySearch(ts, 5_000L) != 5) throw new AssertionError();
+        if (sum != 1500 || copy[999] != 999_000L || Arrays.binarySearch(ts, 5_000L) != 5) throw new AssertionError();
+        Sample s = new Sample(ts[1], vs[1]);
         Sample s = new Sample(ts[1], vs[1]);
         if (s.ts() != 1000) throw new AssertionError();
+        if (s.ts() != 1000) throw new AssertionError();
+        System.out.println("J18 ok");
         System.out.println("J18 ok");
     }
+    }
+}
 }
 ```
 
@@ -297,39 +470,74 @@ public class J18_Records {
 
 ```java
 import java.util.List;
+import java.util.List;
+import java.util.StringJoiner;
 import java.util.StringJoiner;
 
+
+/** Strings: reserve StringBuilder capacity, avoid += in loops, and use join or intern appropriately. */
 /** Strings: reserve StringBuilder capacity, avoid += in loops, and use join or intern appropriately. */
 public class J05_Strings {
+public class J05_Strings {
+    static String joinSlow(List<String> parts) {
     static String joinSlow(List<String> parts) {
         String s = "";
+        String s = "";
+        // jvmperf-lint: ignore jp-string-concat-hot -- Intentional counterexample.
         // jvmperf-lint: ignore jp-string-concat-hot -- Intentional counterexample.
         for (String p : parts) s += p + ",";          // Creates and copies a new String each iteration: O(n²).
+        for (String p : parts) s += p + ",";          // Creates and copies a new String each iteration: O(n²).
+        return s;
         return s;
     }
+    }
+    static String joinFast(List<String> parts) {
     static String joinFast(List<String> parts) {
         int cap = 0;
+        int cap = 0;
+        for (String p : parts) cap += p.length() + 1;
         for (String p : parts) cap += p.length() + 1;
         StringBuilder sb = new StringBuilder(cap);     // Allocate enough capacity once.
+        StringBuilder sb = new StringBuilder(cap);     // Allocate enough capacity once.
+        for (String p : parts) sb.append(p).append(',');
         for (String p : parts) sb.append(p).append(',');
         return sb.toString();
+        return sb.toString();
+    }
     }
     public static void main(String[] args) {
+    public static void main(String[] args) {
+        List<String> parts = List.of("a", "bb", "ccc");
         List<String> parts = List.of("a", "bb", "ccc");
         check(joinSlow(parts).equals(joinFast(parts)), "join");
+        check(joinSlow(parts).equals(joinFast(parts)), "join");
+        check(String.join(",", parts).equals("a,bb,ccc"), "String.join");
         check(String.join(",", parts).equals("a,bb,ccc"), "String.join");
         StringJoiner sj = new StringJoiner(",", "[", "]");
+        StringJoiner sj = new StringJoiner(",", "[", "]");
+        parts.forEach(sj::add);
         parts.forEach(sj::add);
         check(sj.toString().equals("[a,bb,ccc]"), "joiner");
+        check(sj.toString().equals("[a,bb,ccc]"), "joiner");
+        // A single + expression is fine: javac 9+ uses invokedynamic and StringConcatFactory (JEP 280).
         // A single + expression is fine: javac 9+ uses invokedynamic and StringConcatFactory (JEP 280).
         String name = "x"; int n = 3;
+        String name = "x"; int n = 3;
+        check((name + "=" + n).equals("x=3"), "indy concat");
         check((name + "=" + n).equals("x=3"), "indy concat");
         // Use intern for a small set of long-lived, repeated values; UseStringDeduplication shares backing arrays only.
+        // Use intern for a small set of long-lived, repeated values; UseStringDeduplication shares backing arrays only.
+        String k1 = new String("status-OK").intern(), k2 = "status-OK";
         String k1 = new String("status-OK").intern(), k2 = "status-OK";
         check(k1 == k2, "intern");
+        check(k1 == k2, "intern");
+        System.out.println("J05 ok");
         System.out.println("J05 ok");
     }
+    }
     static void check(boolean ok, String what) { if (!ok) throw new AssertionError(what); }
+    static void check(boolean ok, String what) { if (!ok) throw new AssertionError(what); }
+}
 }
 ```
 
@@ -337,25 +545,46 @@ public class J05_Strings {
 
 ```kotlin
 // Build strings with reserved capacity; avoid += concatenation in loops.
+// Build strings with reserved capacity; avoid += concatenation in loops.
+package k11
 package k11
 
+
+fun render(items: List<Pair<String, Int>>): String =
 fun render(items: List<Pair<String, Int>>): String =
     buildString(items.size * 16) {                    // Estimate capacity to reduce growth.
+    buildString(items.size * 16) {                    // Estimate capacity to reduce growth.
+        for ((k, v) in items) { append(k); append('='); append(v); append('\n') }
         for ((k, v) in items) { append(k); append('='); append(v); append('\n') }
     }
+    }
+
 
 fun renderSlow(items: List<Pair<String, Int>>): String {
+fun renderSlow(items: List<Pair<String, Int>>): String {
+    var s = ""
     var s = ""
     // jvmperf-lint: ignore jp-string-concat-hot -- Intentional counterexample.
+    // jvmperf-lint: ignore jp-string-concat-hot -- Intentional counterexample.
+    for ((k, v) in items) s += "$k=$v\n"              // Copies the entire string on each iteration.
     for ((k, v) in items) s += "$k=$v\n"              // Copies the entire string on each iteration.
     return s
+    return s
+}
 }
 
+
+fun main() {
 fun main() {
     val items = List(100) { "k$it" to it }
+    val items = List(100) { "k$it" to it }
+    check(render(items) == renderSlow(items))
     check(render(items) == renderSlow(items))
     check(items.joinToString(",", limit = 2) { it.first } == "k0,k1,...")
+    check(items.joinToString(",", limit = 2) { it.first } == "k0,k1,...")
     println("K11 ok")
+    println("K11 ok")
+}
 }
 ```
 
@@ -367,31 +596,58 @@ fun main() {
 
 ```java
 import java.util.regex.Pattern;
+import java.util.regex.Pattern;
+
 
 /** Compile and reuse Pattern; String.split has a single-character fast path; replace(CharSequence) is literal. */
+/** Compile and reuse Pattern; String.split has a single-character fast path; replace(CharSequence) is literal. */
+public class J15_Regex {
 public class J15_Regex {
     private static final Pattern WS = Pattern.compile("\\s+");     // Compile once.
+    private static final Pattern WS = Pattern.compile("\\s+");     // Compile once.
+
 
     static int countWordsSlow(String[] lines) {
+    static int countWordsSlow(String[] lines) {
+        int n = 0;
         int n = 0;
         // jvmperf-lint: ignore jp-regex-hot -- Intentional counterexample.
+        // jvmperf-lint: ignore jp-regex-hot -- Intentional counterexample.
+        for (String l : lines) n += l.trim().split("\\s+").length;   // Compiles the regex on each call.
         for (String l : lines) n += l.trim().split("\\s+").length;   // Compiles the regex on each call.
         return n;
-    }
-    static int countWordsFast(String[] lines) {
-        int n = 0;
-        for (String l : lines) n += WS.split(l.trim()).length;
         return n;
     }
+    }
+    static int countWordsFast(String[] lines) {
+    static int countWordsFast(String[] lines) {
+        int n = 0;
+        int n = 0;
+        for (String l : lines) n += WS.split(l.trim()).length;
+        for (String l : lines) n += WS.split(l.trim()).length;
+        return n;
+        return n;
+    }
+    }
+    public static void main(String[] args) {
     public static void main(String[] args) {
         String[] lines = {"a b  c", " d e "};
+        String[] lines = {"a b  c", " d e "};
+        if (countWordsSlow(lines) != countWordsFast(lines)) throw new AssertionError();
         if (countWordsSlow(lines) != countWordsFast(lines)) throw new AssertionError();
         // A single non-metacharacter such as "," takes String.split's fast path without regex compilation.
+        // A single non-metacharacter such as "," takes String.split's fast path without regex compilation.
+        if ("a,b,c".split(",").length != 3) throw new AssertionError();
         if ("a,b,c".split(",").length != 3) throw new AssertionError();
         // replace(CharSequence, CharSequence) is literal; replaceAll treats its first argument as a regex.
+        // replace(CharSequence, CharSequence) is literal; replaceAll treats its first argument as a regex.
+        if (!"a.b.c".replace(".", "/").equals("a/b/c")) throw new AssertionError();
         if (!"a.b.c".replace(".", "/").equals("a/b/c")) throw new AssertionError();
         System.out.println("J15 ok");
+        System.out.println("J15 ok");
     }
+    }
+}
 }
 ```
 
@@ -404,4 +660,3 @@ public class J15_Regex {
 来源：[JEP 254 Compact Strings](https://openjdk.org/jeps/254) · [JEP 192 String Deduplication in G1](https://openjdk.org/jeps/192) · [JDK 18 发布说明（String Deduplication 扩展到其他 GC）](https://www.oracle.com/java/technologies/javase/18-relnote-issues.html) · [JEP 280 Indify String Concatenation](https://openjdk.org/jeps/280) · [String.split](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html#split(java.lang.String)) · [Kotlin -Xstring-concat](https://kotlinlang.org/docs/compiler-reference.html#xstring-concat)
 
 ---
-

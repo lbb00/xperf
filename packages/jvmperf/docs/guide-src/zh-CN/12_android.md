@@ -23,45 +23,86 @@
 
 ```java
 import android.util.ArrayMap;
+import android.util.ArrayMap;
+import android.util.Log;
 import android.util.Log;
 import android.util.LongSparseArray;
+import android.util.LongSparseArray;
+import android.util.SparseArray;
 import android.util.SparseArray;
 import android.util.SparseBooleanArray;
+import android.util.SparseBooleanArray;
+import android.util.SparseIntArray;
 import android.util.SparseIntArray;
 
+
+/**
 /**
  * Android-only collections. Compile against android.jar stubs; this sample cannot run on a desktop JVM.
+ * Android-only collections. Compile against android.jar stubs; this sample cannot run on a desktop JVM.
+ * javac --release 17 -cp $ANDROID_HOME/platforms/android-34/android.jar A01_AndroidCollections.java
  * javac --release 17 -cp $ANDROID_HOME/platforms/android-34/android.jar A01_AndroidCollections.java
  */
+ */
+public class A01_AndroidCollections {
 public class A01_AndroidCollections {
     private static final String TAG = "Perf";
+    private static final String TAG = "Perf";
+
 
     static SparseArray<String> namesById(int[] ids, String[] names) {
+    static SparseArray<String> namesById(int[] ids, String[] names) {
+        SparseArray<String> m = new SparseArray<>(ids.length);   // Replaces HashMap<Integer, String>; no boxing or Entry objects.
         SparseArray<String> m = new SparseArray<>(ids.length);   // Replaces HashMap<Integer, String>; no boxing or Entry objects.
         for (int i = 0; i < ids.length; i++) m.put(ids[i], names[i]);
+        for (int i = 0; i < ids.length; i++) m.put(ids[i], names[i]);
         return m;
+        return m;
+    }
     }
     static SparseIntArray histogram(int[] xs) {                  // Replaces HashMap<Integer, Integer>.
+    static SparseIntArray histogram(int[] xs) {                  // Replaces HashMap<Integer, Integer>.
+        SparseIntArray h = new SparseIntArray();
         SparseIntArray h = new SparseIntArray();
         for (int x : xs) h.put(x, h.get(x, 0) + 1);
+        for (int x : xs) h.put(x, h.get(x, 0) + 1);
+        return h;
         return h;
     }
+    }
+    static ArrayMap<String, String> smallMap() {                 // Saves memory for small maps, but lookup uses binary search.
     static ArrayMap<String, String> smallMap() {                 // Saves memory for small maps, but lookup uses binary search.
         ArrayMap<String, String> m = new ArrayMap<>(4);
+        ArrayMap<String, String> m = new ArrayMap<>(4);
+        m.put("k", "v");
         m.put("k", "v");
         return m;
+        return m;
+    }
     }
     static void process(int[] xs) {
+    static void process(int[] xs) {
+        SparseBooleanArray seen = new SparseBooleanArray();
         SparseBooleanArray seen = new SparseBooleanArray();
         LongSparseArray<Object> byTs = new LongSparseArray<>();
+        LongSparseArray<Object> byTs = new LongSparseArray<>();
+        for (int x : xs) {
         for (int x : xs) {
             seen.put(x, true);
+            seen.put(x, true);
+            byTs.put(x * 1000L, null);
             byTs.put(x * 1000L, null);
             // Check the log level before formatting, or move logging out of the loop.
+            // Check the log level before formatting, or move logging out of the loop.
+            if (Log.isLoggable(TAG, Log.VERBOSE)) Log.v(TAG, "x=" + x);
             if (Log.isLoggable(TAG, Log.VERBOSE)) Log.v(TAG, "x=" + x);
         }
+        }
+        Log.d(TAG, "processed " + xs.length);
         Log.d(TAG, "processed " + xs.length);
     }
+    }
+}
 }
 ```
 
@@ -73,15 +114,26 @@ AGP 8.0 起 R8 默认 full mode：删除未用代码、内联、类合并、优�
 
 ```proguard
 # R8 full mode is the default since AGP 8.0. Keep only classes accessed through reflection or JNI.
+# R8 full mode is the default since AGP 8.0. Keep only classes accessed through reflection or JNI.
+# Avoid -keep class com.example.** { *; }; it prevents removal, inlining, and class merging.
 # Avoid -keep class com.example.** { *; }; it prevents removal, inlining, and class merging.
 -keep class com.example.app.jni.NativeBridge { native <methods>; }
+-keep class com.example.app.jni.NativeBridge { native <methods>; }
+-keepclassmembers class com.example.app.model.** {
 -keepclassmembers class com.example.app.model.** {
     @com.squareup.moshi.Json <fields>;
+    @com.squareup.moshi.Json <fields>;
+}
 }
 # Remove verbose/debug log calls from release builds only when their arguments have no side effects.
+# Remove verbose/debug log calls from release builds only when their arguments have no side effects.
+-assumenosideeffects class android.util.Log {
 -assumenosideeffects class android.util.Log {
     public static int v(...);
+    public static int v(...);
     public static int d(...);
+    public static int d(...);
+}
 }
 ```
 
@@ -93,9 +145,14 @@ AGP 8.0 起 R8 默认 full mode：删除未用代码、内联、类合并、优�
 
 ```text
 # Baseline Profile 规则示例（通常由 Macrobenchmark 的 BaselineProfileRule 自动生成，放在 src/main/baseline-prof.txt）
+# Baseline Profile 规则示例（通常由 Macrobenchmark 的 BaselineProfileRule 自动生成，放在 src/main/baseline-prof.txt）
+# H = 热方法, S = 启动时调用, P = 启动后调用；L 开头的是类描述符
 # H = 热方法, S = 启动时调用, P = 启动后调用；L 开头的是类描述符
 HSPLcom/example/app/MainActivity;->onCreate(Landroid/os/Bundle;)V
+HSPLcom/example/app/MainActivity;->onCreate(Landroid/os/Bundle;)V
 HSPLcom/example/app/feed/FeedRepository;->**(**)**
+HSPLcom/example/app/feed/FeedRepository;->**(**)**
+Lcom/example/app/feed/FeedItem;
 Lcom/example/app/feed/FeedItem;
 ```
 
@@ -138,35 +195,66 @@ JMH 模板（注意 `@Fork`、预热、返回值或 `Blackhole` 防止死代码�
 
 ```java
 import org.openjdk.jmh.annotations.*;
+import org.openjdk.jmh.annotations.*;
+import org.openjdk.jmh.infra.Blackhole;
 import org.openjdk.jmh.infra.Blackhole;
 import java.util.ArrayList;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeUnit;
+
 
 /**
+/**
+ * JMH benchmark template. Compilation needs jmh-core and jmh-generator-annprocess to generate benchmark stubs.
  * JMH benchmark template. Compilation needs jmh-core and jmh-generator-annprocess to generate benchmark stubs.
  * After packaging with Maven or Gradle, run: java -jar benchmarks.jar J19_JmhBench -prof gc
+ * After packaging with Maven or Gradle, run: java -jar benchmarks.jar J19_JmhBench -prof gc
+ */
  */
 @BenchmarkMode(Mode.AverageTime)
+@BenchmarkMode(Mode.AverageTime)
+@OutputTimeUnit(TimeUnit.MICROSECONDS)
 @OutputTimeUnit(TimeUnit.MICROSECONDS)
 @Warmup(iterations = 5, time = 1)
+@Warmup(iterations = 5, time = 1)
+@Measurement(iterations = 5, time = 1)
 @Measurement(iterations = 5, time = 1)
 @Fork(value = 2, jvmArgsAppend = {"-XX:+UseCompactObjectHeaders"})
+@Fork(value = 2, jvmArgsAppend = {"-XX:+UseCompactObjectHeaders"})
+@State(Scope.Benchmark)
 @State(Scope.Benchmark)
 public class J19_JmhBench {
+public class J19_JmhBench {
+    @Param({"1000", "100000"}) int n;
     @Param({"1000", "100000"}) int n;
     int[] prim;
+    int[] prim;
+    // jvmperf-lint: ignore jp-boxed-primitive-collection -- Intentional counterexample.
     // jvmperf-lint: ignore jp-boxed-primitive-collection -- Intentional counterexample.
     List<Integer> boxed;
+    List<Integer> boxed;
+
 
     @Setup public void setup() {
+    @Setup public void setup() {
+        prim = new int[n];
         prim = new int[n];
         boxed = new ArrayList<>(n);
+        boxed = new ArrayList<>(n);
+        for (int i = 0; i < n; i++) { prim[i] = i; boxed.add(i); }
         for (int i = 0; i < n; i++) { prim[i] = i; boxed.add(i); }
     }
+    }
+    @Benchmark public long primitive() { long s = 0; for (int x : prim) s += x; return s; }   // Return the result to prevent dead-code elimination.
     @Benchmark public long primitive() { long s = 0; for (int x : prim) s += x; return s; }   // Return the result to prevent dead-code elimination.
     @Benchmark public long boxedList() { long s = 0; for (Integer x : boxed) s += x; return s; }
+    @Benchmark public long boxedList() { long s = 0; for (Integer x : boxed) s += x; return s; }
     @Benchmark public void consume(Blackhole bh) { for (int x : prim) bh.consume(x); }
+    @Benchmark public void consume(Blackhole bh) { for (int x : prim) bh.consume(x); }
+}
 }
 ```
 
@@ -175,4 +263,3 @@ public class J19_JmhBench {
 来源：[JMH samples](https://github.com/openjdk/jmh/tree/master/jmh-samples/src/main/java/org/openjdk/jmh/samples) · [JEP 328 Flight Recorder](https://openjdk.org/jeps/328) · [JEP 509 JFR CPU-Time Profiling](https://openjdk.org/jeps/509) · [async-profiler](https://github.com/async-profiler/async-profiler) · [JOL](https://github.com/openjdk/jol) · [Jetpack Benchmark](https://developer.android.com/topic/performance/benchmarking/benchmarking-overview)
 
 ---
-

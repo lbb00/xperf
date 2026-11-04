@@ -4,8 +4,12 @@
 
 ```sh
 cd jvmperf-lint
+cd jvmperf-lint
+./gradlew jar
 ./gradlew jar
 bin/jvmperf-lint path/to/src          # 文本输出；有发现时退出码 1
+bin/jvmperf-lint path/to/src          # 文本输出；有发现时退出码 1
+bin/jvmperf-lint -f json --disable jp-finalize,jp-ui-text-append src
 bin/jvmperf-lint -f json --disable jp-finalize,jp-ui-text-append src
 ```
 
@@ -59,12 +63,20 @@ bin/jvmperf-lint -f json --disable jp-finalize,jp-ui-text-append src
 
 ```text
 $ bin/jvmperf-lint fixtures/bad/jp-regex-hot.java fixtures/bad/jp-value-class-boxing.kt
+$ bin/jvmperf-lint fixtures/bad/jp-regex-hot.java fixtures/bad/jp-value-class-boxing.kt
+fixtures/bad/jp-regex-hot.java:6:17: warning[jp-regex-hot regex-in-loop] 循环内编译正则表达式 / regular expression compiled inside a loop: Pattern.compile(...)
 fixtures/bad/jp-regex-hot.java:6:17: warning[jp-regex-hot regex-in-loop] 循环内编译正则表达式 / regular expression compiled inside a loop: Pattern.compile(...)
     建议: 把 Pattern.compile / Regex(...) 提为 static final / companion 常量；String.replaceAll/replaceFirst/matches 每次都会编译正则，字面替换用 replace(CharSequence)
+    建议: 把 Pattern.compile / Regex(...) 提为 static final / companion 常量；String.replaceAll/replaceFirst/matches 每次都会编译正则，字面替换用 replace(CharSequence)
+fixtures/bad/jp-regex-hot.java:7:18: warning[jp-regex-hot regex-in-loop] ...: .split("\\s+")：非单字符快路径，每次编译正则
 fixtures/bad/jp-regex-hot.java:7:18: warning[jp-regex-hot regex-in-loop] ...: .split("\\s+")：非单字符快路径，每次编译正则
 fixtures/bad/jp-regex-hot.java:8:13: warning[jp-regex-hot regex-in-loop] ...: .replaceAll(...)：每次调用都编译正则
+fixtures/bad/jp-regex-hot.java:8:13: warning[jp-regex-hot regex-in-loop] ...: .replaceAll(...)：每次调用都编译正则
+fixtures/bad/jp-value-class-boxing.kt:4:26: info[jp-value-class-boxing value-class-boxing] ...: UserId?：可空的 value class 被装箱
 fixtures/bad/jp-value-class-boxing.kt:4:26: info[jp-value-class-boxing value-class-boxing] ...: UserId?：可空的 value class 被装箱
 fixtures/bad/jp-value-class-boxing.kt:5:14: info[jp-value-class-boxing value-class-boxing] ...: List<UserId>：泛型参数中的 UserId 被装箱
+fixtures/bad/jp-value-class-boxing.kt:5:14: info[jp-value-class-boxing value-class-boxing] ...: List<UserId>：泛型参数中的 UserId 被装箱
+fixtures/bad/jp-value-class-boxing.kt:5:29: info[jp-value-class-boxing value-class-boxing] ...: Array<UserId>：数组元素被装箱
 fixtures/bad/jp-value-class-boxing.kt:5:29: info[jp-value-class-boxing value-class-boxing] ...: Array<UserId>：数组元素被装箱
 ```
 
@@ -158,4 +170,3 @@ good 夹具上 detekt 只报了一处 `EmptyFunctionBlock`（`close() {}`）。�
 交叉验证：`scripts/run-static-vs-hotspot.sh` 的输出写在 `research/benches/`。**静态 lint 不等于 HotSpot 的判断**：不能只看源码就断言 C2 的编译层级或逃逸分析失败，也不要用 PrintCompilation 的行数当作“一致/不一致”的判据。
 
 ---
-

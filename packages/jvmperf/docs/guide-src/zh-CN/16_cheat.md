@@ -26,4 +26,3 @@
 | 自动检查 | jvmperf-lint + PMD/Error Prone + detekt + Android Lint | 静态提示都要用 profiler 确认 |
 
 ---
-

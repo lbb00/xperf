@@ -28,8 +28,12 @@ HotSpot 中每个对象都有对象头：
 
 ```sh
 # JDK 25：正式但默认关闭，可以直接打开
+# JDK 25：正式但默认关闭，可以直接打开
+java -XX:+UseCompactObjectHeaders -jar app.jar
 java -XX:+UseCompactObjectHeaders -jar app.jar
 # JDK 27：默认开启，如需关闭
+# JDK 27：默认开启，如需关闭
+java -XX:-UseCompactObjectHeaders -jar app.jar
 java -XX:-UseCompactObjectHeaders -jar app.jar
 ```
 
@@ -45,15 +49,26 @@ HotSpot 会重排字段：先按大小从大到小排，再用小字段填补头
 
 ```text
 【本机实测】JolSizes$Mixed（默认对象头）
+【本机实测】JolSizes$Mixed（默认对象头）
+OFF  SZ     TYPE DESCRIPTION
 OFF  SZ     TYPE DESCRIPTION
   0   8          (object header: mark)
+  0   8          (object header: mark)
+  8   4          (object header: class)
   8   4          (object header: class)
  12   4      int Mixed.i
+ 12   4      int Mixed.i
+ 16   8     long Mixed.l
  16   8     long Mixed.l
  24   1     byte Mixed.b
+ 24   1     byte Mixed.b
+ 25   1  boolean Mixed.z
  25   1  boolean Mixed.z
  26   2          (alignment/padding gap)
+ 26   2          (alignment/padding gap)
  28   4   Object Mixed.ref
+ 28   4   Object Mixed.ref
+Instance size: 32 bytes
 Instance size: 32 bytes
 ```
 
@@ -65,70 +80,136 @@ Instance size: 32 bytes
 
 ```java
 import org.openjdk.jol.info.ClassLayout;
+import org.openjdk.jol.info.ClassLayout;
+import org.openjdk.jol.info.GraphLayout;
 import org.openjdk.jol.info.GraphLayout;
 import org.openjdk.jol.vm.VM;
+import org.openjdk.jol.vm.VM;
+import java.util.*;
 import java.util.*;
 
+
+/** 用 JOL 实测对象大小。运行：java -cp jol-core.jar:. [-XX:+UseCompactObjectHeaders] JolSizes */
 /** 用 JOL 实测对象大小。运行：java -cp jol-core.jar:. [-XX:+UseCompactObjectHeaders] JolSizes */
 public class JolSizes {
+public class JolSizes {
+    enum Fuel { ELECTRIC, BENZINE, DIESEL }
     enum Fuel { ELECTRIC, BENZINE, DIESEL }
     // 视频里的四步
+    // 视频里的四步
+    static final class HybridTwoInts { int electric; int benzine; }   // C: struct { int; int; } = 8 字节
     static final class HybridTwoInts { int electric; int benzine; }   // C: struct { int; int; } = 8 字节
     static final class FlagsInt { int flags; }                         // C: int flags = 4 字节
+    static final class FlagsInt { int flags; }                         // C: int flags = 4 字节
+    static final class FlagsByte { byte flags; }                       // C: uint8_t 位域 = 1 字节
     static final class FlagsByte { byte flags; }                       // C: uint8_t 位域 = 1 字节
     static final class FlagsBools { boolean electric, benzine, diesel; }
+    static final class FlagsBools { boolean electric, benzine, diesel; }
+    static final class FlagsEnumSet { final EnumSet<Fuel> fuels = EnumSet.noneOf(Fuel.class); }
     static final class FlagsEnumSet { final EnumSet<Fuel> fuels = EnumSet.noneOf(Fuel.class); }
     static final class Point { int x; int y; }
+    static final class Point { int x; int y; }
+    static final class Mixed { byte b; long l; int i; Object ref; boolean z; }
     static final class Mixed { byte b; long l; int i; Object ref; boolean z; }
 
+
+    static void cls(Class<?> c) {
     static void cls(Class<?> c) {
         System.out.printf("%-28s instance=%d%n", c.getSimpleName(), ClassLayout.parseClass(c).instanceSize());
+        System.out.printf("%-28s instance=%d%n", c.getSimpleName(), ClassLayout.parseClass(c).instanceSize());
+    }
     }
     static void graph(String what, Object o) {
+    static void graph(String what, Object o) {
+        System.out.printf("%-40s total=%d bytes, objects=%d%n", what, GraphLayout.parseInstance(o).totalSize(),
         System.out.printf("%-40s total=%d bytes, objects=%d%n", what, GraphLayout.parseInstance(o).totalSize(),
                 GraphLayout.parseInstance(o).totalCount());
+                GraphLayout.parseInstance(o).totalCount());
+    }
     }
 
+
+    public static void main(String[] args) {
     public static void main(String[] args) {
         System.out.println("java.version=" + System.getProperty("java.version"));
+        System.out.println("java.version=" + System.getProperty("java.version"));
+        System.out.println(VM.current().details());
         System.out.println(VM.current().details());
         System.out.println(ClassLayout.parseClass(Mixed.class).toPrintable());
+        System.out.println(ClassLayout.parseClass(Mixed.class).toPrintable());
+        for (Class<?> c : List.of(Object.class, Integer.class, Long.class, Boolean.class, Point.class,
         for (Class<?> c : List.of(Object.class, Integer.class, Long.class, Boolean.class, Point.class,
                 HybridTwoInts.class, FlagsInt.class, FlagsByte.class, FlagsBools.class, FlagsEnumSet.class, Mixed.class)) cls(c);
+                HybridTwoInts.class, FlagsInt.class, FlagsByte.class, FlagsBools.class, FlagsEnumSet.class, Mixed.class)) cls(c);
+        // EnumSet/EnumMap 引用的 Class 对象、枚举常量和 universe 数组是全类型共享的，这里只计每个实例独有的部分
         // EnumSet/EnumMap 引用的 Class 对象、枚举常量和 universe 数组是全类型共享的，这里只计每个实例独有的部分
         EnumSet<Fuel> es = EnumSet.of(Fuel.ELECTRIC, Fuel.BENZINE);
+        EnumSet<Fuel> es = EnumSet.of(Fuel.ELECTRIC, Fuel.BENZINE);
+        long esSize = ClassLayout.parseInstance(es).instanceSize();
         long esSize = ClassLayout.parseInstance(es).instanceSize();
         System.out.printf("%-40s %s=%d bytes (独有部分)%n", "EnumSet.of(ELECTRIC,BENZINE)", es.getClass().getSimpleName(), esSize);
+        System.out.printf("%-40s %s=%d bytes (独有部分)%n", "EnumSet.of(ELECTRIC,BENZINE)", es.getClass().getSimpleName(), esSize);
+        System.out.printf("%-40s total=%d bytes (持有者 + RegularEnumSet)%n", "FlagsEnumSet 对象", ClassLayout.parseClass(FlagsEnumSet.class).instanceSize() + esSize);
         System.out.printf("%-40s total=%d bytes (持有者 + RegularEnumSet)%n", "FlagsEnumSet 对象", ClassLayout.parseClass(FlagsEnumSet.class).instanceSize() + esSize);
         graph("BitSet(3)", new BitSet(3));
+        graph("BitSet(3)", new BitSet(3));
+        graph("20 个 ASCII 字符的 String (Latin1)", new String("abcdefghijklmnopqrst"));
         graph("20 个 ASCII 字符的 String (Latin1)", new String("abcdefghijklmnopqrst"));
         graph("20 个汉字的 String (UTF16)", new String("一二三四五六七八九十一二三四五六七八九十"));
+        graph("20 个汉字的 String (UTF16)", new String("一二三四五六七八九十一二三四五六七八九十"));
+        graph("new int[0]", new int[0]);
         graph("new int[0]", new int[0]);
         graph("new byte[1000]", new byte[1000]);
+        graph("new byte[1000]", new byte[1000]);
+        graph("new int[1000]", new int[1000]);
         graph("new int[1000]", new int[1000]);
         graph("new long[1000]", new long[1000]);
+        graph("new long[1000]", new long[1000]);
+        HybridTwoInts[] cars = new HybridTwoInts[1000];
         HybridTwoInts[] cars = new HybridTwoInts[1000];
         for (int i = 0; i < cars.length; i++) cars[i] = new HybridTwoInts();
+        for (int i = 0; i < cars.length; i++) cars[i] = new HybridTwoInts();
+        graph("HybridTwoInts[1000] + 1000 objects", cars);
         graph("HybridTwoInts[1000] + 1000 objects", cars);
         FlagsByte[] fb = new FlagsByte[1000];
+        FlagsByte[] fb = new FlagsByte[1000];
+        for (int i = 0; i < fb.length; i++) fb[i] = new FlagsByte();
         for (int i = 0; i < fb.length; i++) fb[i] = new FlagsByte();
         graph("FlagsByte[1000] + 1000 objects", fb);
+        graph("FlagsByte[1000] + 1000 objects", fb);
+        graph("BitSet(3000) (1000 辆车 × 3 位)", new BitSet(3000));
         graph("BitSet(3000) (1000 辆车 × 3 位)", new BitSet(3000));
         List<Integer> boxed = new ArrayList<>(1000);
+        List<Integer> boxed = new ArrayList<>(1000);
+        for (int i = 0; i < 1000; i++) boxed.add(i + 1000); // 超出 Integer 缓存，确保都是新对象
         for (int i = 0; i < 1000; i++) boxed.add(i + 1000); // 超出 Integer 缓存，确保都是新对象
         graph("ArrayList<Integer> 1000 个 (>=1000)", boxed);
+        graph("ArrayList<Integer> 1000 个 (>=1000)", boxed);
+        int[] prim = new int[1000];
         int[] prim = new int[1000];
         graph("int[1000]", prim);
+        graph("int[1000]", prim);
+        Map<Integer, Integer> hm = new HashMap<>();
         Map<Integer, Integer> hm = new HashMap<>();
         for (int i = 0; i < 1000; i++) hm.put(i + 1000, i + 1000);
+        for (int i = 0; i < 1000; i++) hm.put(i + 1000, i + 1000);
+        graph("HashMap<Integer,Integer> 1000 项", hm);
         graph("HashMap<Integer,Integer> 1000 项", hm);
         var fu = new it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap();
+        var fu = new it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap();
+        for (int i = 0; i < 1000; i++) fu.put(i + 1000, i + 1000);
         for (int i = 0; i < 1000; i++) fu.put(i + 1000, i + 1000);
         graph("fastutil Int2IntOpenHashMap 1000 项", fu);
+        graph("fastutil Int2IntOpenHashMap 1000 项", fu);
+        EnumMap<Fuel, Integer> em = new EnumMap<>(Fuel.class);
         EnumMap<Fuel, Integer> em = new EnumMap<>(Fuel.class);
         System.out.printf("%-40s total=%d bytes (EnumMap 对象 + 长度 3 的 vals 数组，独有部分)%n", "EnumMap<Fuel,Integer>",
+        System.out.printf("%-40s total=%d bytes (EnumMap 对象 + 长度 3 的 vals 数组，独有部分)%n", "EnumMap<Fuel,Integer>",
+                ClassLayout.parseInstance(em).instanceSize() + ClassLayout.parseInstance(new Object[3]).instanceSize());
                 ClassLayout.parseInstance(em).instanceSize() + ClassLayout.parseInstance(new Object[3]).instanceSize());
     }
+    }
+}
 }
 ```
 
@@ -161,43 +242,82 @@ public class JolSizes {
 
 ```java
 import java.util.ArrayList;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.List;
 import java.util.stream.IntStream;
+import java.util.stream.IntStream;
+
 
 /** Boxing costs and pitfalls: List<Integer> vs int[], the Integer cache, and reference equality. */
+/** Boxing costs and pitfalls: List<Integer> vs int[], the Integer cache, and reference equality. */
+public class J01_Boxing {
 public class J01_Boxing {
     // jvmperf-lint: ignore jp-boxed-primitive-collection -- Intentional counterexample.
+    // jvmperf-lint: ignore jp-boxed-primitive-collection -- Intentional counterexample.
+    static long sumBoxed(List<Integer> xs) {
     static long sumBoxed(List<Integer> xs) {
         long s = 0;
+        long s = 0;
+        for (Integer x : xs) s += x;          // Unboxes each value; throws NPE if x is null.
         for (Integer x : xs) s += x;          // Unboxes each value; throws NPE if x is null.
         return s;
-    }
-    static long sumPrimitive(int[] xs) {
-        long s = 0;
-        for (int x : xs) s += x;              // Contiguous storage, no pointer chasing; C2 may vectorize it.
         return s;
     }
+    }
+    static long sumPrimitive(int[] xs) {
+    static long sumPrimitive(int[] xs) {
+        long s = 0;
+        long s = 0;
+        for (int x : xs) s += x;              // Contiguous storage, no pointer chasing; C2 may vectorize it.
+        for (int x : xs) s += x;              // Contiguous storage, no pointer chasing; C2 may vectorize it.
+        return s;
+        return s;
+    }
+    }
+    public static void main(String[] args) {
     public static void main(String[] args) {
         int n = 10_000;
+        int n = 10_000;
+        // jvmperf-lint: ignore jp-boxed-primitive-collection -- Intentional counterexample.
         // jvmperf-lint: ignore jp-boxed-primitive-collection -- Intentional counterexample.
         List<Integer> boxed = new ArrayList<>(n);
+        List<Integer> boxed = new ArrayList<>(n);
+        int[] prim = new int[n];
         int[] prim = new int[n];
         for (int i = 0; i < n; i++) { boxed.add(i); prim[i] = i; }
+        for (int i = 0; i < n; i++) { boxed.add(i); prim[i] = i; }
+        check(sumBoxed(boxed) == sumPrimitive(prim), "sum");
         check(sumBoxed(boxed) == sumPrimitive(prim), "sum");
 
+
+        // Integer.valueOf caches -128..127; raise the upper bound with -XX:AutoBoxCacheMax.
         // Integer.valueOf caches -128..127; raise the upper bound with -XX:AutoBoxCacheMax.
         Integer a = 127, b = 127, c = 128, d = 128;
+        Integer a = 127, b = 127, c = 128, d = 128;
+        check(a == b, "cached");                   // The same cached object.
         check(a == b, "cached");                   // The same cached object.
         check(c.equals(d), "equals");              // Always use equals for wrapper values.
+        check(c.equals(d), "equals");              // Always use equals for wrapper values.
+        // c == d is false with default settings; do not rely on reference identity.
         // c == d is false with default settings; do not rely on reference identity.
 
+
+        // Streams: mapToInt keeps primitive values; map(...).reduce(Integer::sum) boxes each step.
         // Streams: mapToInt keeps primitive values; map(...).reduce(Integer::sum) boxes each step.
         long s1 = IntStream.range(0, n).asLongStream().sum();
+        long s1 = IntStream.range(0, n).asLongStream().sum();
+        int s2 = boxed.stream().mapToInt(Integer::intValue).sum();
         int s2 = boxed.stream().mapToInt(Integer::intValue).sum();
         check(s1 == sumPrimitive(prim) && s2 == (int) s1, "streams");
+        check(s1 == sumPrimitive(prim) && s2 == (int) s1, "streams");
+        System.out.println("J01 ok");
         System.out.println("J01 ok");
     }
+    }
     static void check(boolean ok, String what) { if (!ok) throw new AssertionError(what); }
+    static void check(boolean ok, String what) { if (!ok) throw new AssertionError(what); }
+}
 }
 ```
 
@@ -219,32 +339,60 @@ public class J01_Boxing {
 
 ```java
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
+import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import org.eclipse.collections.api.list.primitive.MutableIntList;
+import org.eclipse.collections.api.list.primitive.MutableIntList;
+import org.eclipse.collections.impl.factory.primitive.IntLists;
 import org.eclipse.collections.impl.factory.primitive.IntLists;
 import org.eclipse.collections.impl.map.mutable.primitive.IntIntHashMap;
+import org.eclipse.collections.impl.map.mutable.primitive.IntIntHashMap;
+
 
 /** Primitive collections from fastutil and Eclipse Collections avoid boxing and per-entry Node objects. */
+/** Primitive collections from fastutil and Eclipse Collections avoid boxing and per-entry Node objects. */
+public class J02_PrimitiveCollections {
 public class J02_PrimitiveCollections {
     public static void main(String[] args) {
+    public static void main(String[] args) {
+        int n = 1000;
         int n = 1000;
         Int2IntOpenHashMap counts = new Int2IntOpenHashMap(n);   // Reserve capacity.
+        Int2IntOpenHashMap counts = new Int2IntOpenHashMap(n);   // Reserve capacity.
+        counts.defaultReturnValue(0);
         counts.defaultReturnValue(0);
         for (int i = 0; i < n; i++) counts.addTo(i % 10, 1);     // Increment in place without boxing.
+        for (int i = 0; i < n; i++) counts.addTo(i % 10, 1);     // Increment in place without boxing.
+        check(counts.get(3) == 100, "fastutil map");
         check(counts.get(3) == 100, "fastutil map");
 
+
+        IntArrayList list = new IntArrayList(n);
         IntArrayList list = new IntArrayList(n);
         for (int i = 0; i < n; i++) list.add(i);
+        for (int i = 0; i < n; i++) list.add(i);
+        check(list.getInt(999) == 999, "fastutil list");
         check(list.getInt(999) == 999, "fastutil list");
 
+
+        IntIntHashMap ec = new IntIntHashMap(n);
         IntIntHashMap ec = new IntIntHashMap(n);
         for (int i = 0; i < n; i++) ec.addToValue(i % 10, 1);
+        for (int i = 0; i < n; i++) ec.addToValue(i % 10, 1);
+        MutableIntList ecl = IntLists.mutable.withInitialCapacity(n);
         MutableIntList ecl = IntLists.mutable.withInitialCapacity(n);
         for (int i = 0; i < n; i++) ecl.add(i);
+        for (int i = 0; i < n; i++) ecl.add(i);
+        check(ec.get(3) == 100 && ecl.sum() == 499500L, "eclipse collections");
         check(ec.get(3) == 100 && ecl.sum() == 499500L, "eclipse collections");
         System.out.println("J02 ok");
+        System.out.println("J02 ok");
+    }
     }
     static void check(boolean ok, String what) { if (!ok) throw new AssertionError(what); }
+    static void check(boolean ok, String what) { if (!ok) throw new AssertionError(what); }
+}
 }
 ```
 
@@ -253,4 +401,3 @@ public class J02_PrimitiveCollections {
 来源：[Integer.valueOf](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Integer.html#valueOf(int)) · [fastutil](https://fastutil.di.unimi.it/) · [Eclipse Collections](https://eclipse.dev/collections/) · [Koloboke 提交历史](https://github.com/leventov/Koloboke/commits/master/)
 
 ---
-
