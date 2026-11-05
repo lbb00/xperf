@@ -62,7 +62,6 @@
 
 ```sh
 bash packages/zperf/scripts/regen-evidence.sh
-bash packages/zperf/scripts/regen-evidence.sh
 ```
 
 在 Zig 次要升级后重新运行；如果比率发生显著变化，更新匹配的 `.md` 中位数。

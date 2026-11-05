@@ -4,8 +4,6 @@
 
 ```sh
 cd packages/cperf/cperf-lint && make
-cd packages/cperf/cperf-lint && make
-./cperf-lint <corpus-dir>/<name> --format json --no-fail
 ./cperf-lint <corpus-dir>/<name> --format json --no-fail
 ```
 
@@ -51,14 +49,9 @@ cp-alloc-hot/cp-realloc-grow-one 保持 **错误** (G4 JSONL)。 cp-printf-hot/c
 
 ```text
 <corpus-dir>/
-<corpus-dir>/
-  quickjs/
   quickjs/
   lua/
-  lua/
   gcc/            # sparse
-  gcc/            # sparse
-  sqlite/         # sparse src/
   sqlite/         # sparse src/
 ```
 

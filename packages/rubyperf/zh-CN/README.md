@@ -18,12 +18,8 @@ Ruby 性能笔记、小示例，以及 `rubyperf-lint`。
 
 ```sh
 cd packages/rubyperf
-cd packages/rubyperf
-ruby rubyperf-lint/rubyperf-lint.rb path/to/sources
 ruby rubyperf-lint/rubyperf-lint.rb path/to/sources
 bash scripts/smoke-lint.sh
-bash scripts/smoke-lint.sh
-bash scripts/self-lint.sh
 bash scripts/self-lint.sh
 ```
 
@@ -33,15 +29,9 @@ bash scripts/self-lint.sh
 
 ```text
 docs/guide-src/   章节源
-docs/guide-src/   章节源
-docs/             组装后的指南 + corpus.md + evidence-policy.md
 docs/             组装后的指南 + corpus.md + evidence-policy.md
 evidence/         每规则主张 + 实测 JSONL（全部四条规则）
-evidence/         每规则主张 + 实测 JSONL（全部四条规则）
-examples/         小演示
 examples/         小演示
 rubyperf-lint/    检查器 + 夹具
-rubyperf-lint/    检查器 + 夹具
-scripts/          smoke-lint.sh, self-lint.sh
 scripts/          smoke-lint.sh, self-lint.sh
 ```

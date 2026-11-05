@@ -18,12 +18,8 @@ Python 性能笔记和 `pyperf-lint`（不是 PyPI 微基准测试工具）。
 
 ```sh
 export PYTHONPATH=packages/pyperf/pyperf-lint
-export PYTHONPATH=packages/pyperf/pyperf-lint
-python3 -m pyperf_lint path/to/sources
 python3 -m pyperf_lint path/to/sources
 bash packages/pyperf/scripts/smoke-lint.sh
-bash packages/pyperf/scripts/smoke-lint.sh
-bash packages/pyperf/scripts/self-lint.sh
 bash packages/pyperf/scripts/self-lint.sh
 ```
 
@@ -31,15 +27,9 @@ bash packages/pyperf/scripts/self-lint.sh
 
 ```text
 docs/guide-src/   chapter sources
-docs/guide-src/   chapter sources
-docs/             assembled guide + corpus.md + evidence-policy.md
 docs/             assembled guide + corpus.md + evidence-policy.md
 evidence/         pp-str-plus-hot, pp-list-plus-rebind, pp-print-hot measured (not escalated); PP004 tombstone
-evidence/         pp-str-plus-hot, pp-list-plus-rebind, pp-print-hot measured (not escalated); PP004 tombstone
-examples/         tiny demos + evidence bench
 examples/         tiny demos + evidence bench
 pyperf-lint/      checker (pyperf_lint package) + fixtures
-pyperf-lint/      checker (pyperf_lint package) + fixtures
-scripts/          smoke-lint.sh, self-lint.sh
 scripts/          smoke-lint.sh, self-lint.sh
 ```

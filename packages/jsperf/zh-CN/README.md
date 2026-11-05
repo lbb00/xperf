@@ -16,18 +16,12 @@
 
 ```sh
 node jsperf-lint/bin/jsperf-lint.js path/to/sources --preset app   # default
-node jsperf-lint/bin/jsperf-lint.js path/to/sources --preset app   # default
-node jsperf-lint/bin/jsperf-lint.js path/to/sources --preset all
 node jsperf-lint/bin/jsperf-lint.js path/to/sources --preset all
 node jsperf-lint/bin/jsperf-lint.js path/to/sources --scope all|loop   # default all
-node jsperf-lint/bin/jsperf-lint.js path/to/sources --scope all|loop   # default all
-node jsperf-lint/bin/jsperf-lint.js path/to/sources --severity jp-alloc-hot=error
 node jsperf-lint/bin/jsperf-lint.js path/to/sources --severity jp-alloc-hot=error
 npm run self-lint   # dogfood own sources; must exit 0
-npm run self-lint   # dogfood own sources; must exit 0
 npm test            # fixtures + preset smoke
-npm test            # fixtures + preset smoke
-```}
+```
 
 默认 **应用**：jp-delete-array-hole = 错误；jp-map-filter-chain、jp-regex-ctor-hot、jp-json-hot、jp-dom-query-hot、jp-intl-datetimeformat-hot、jp-readfile-sync-hot 和 jp-clock-hot = 提示；jp-alloc-hot、jp-console-hot 和 jp-delete-shape = 关闭。默认 **`--scope all`** 也会报告循环外的这些异味（如需仅匹配循环内，请选择 `--scope loop`）。jp-string-plus-in-loop 已移除。仅对错误等级的发现退出 `1`。
 
@@ -47,15 +41,9 @@ npm test            # fixtures + preset smoke
 
 ```sh
 node examples/m01_hidden_class.js
-node examples/m01_hidden_class.js
-node examples/p01_typed_array.js
 node examples/p01_typed_array.js
 # Prefer Node 22+ for §4 numbers:
-# Prefer Node 22+ for §4 numbers:
-NODE_BIN=$(command -v node) bash scripts/run-v8-benches.sh
 NODE_BIN=$(command -v node) bash scripts/run-v8-benches.sh
 NODE_BIN=$(command -v node) bash scripts/jit-check.sh          # --trace-deopt sample
-NODE_BIN=$(command -v node) bash scripts/jit-check.sh          # --trace-deopt sample
 NODE_BIN=$(command -v node) bash scripts/run-static-vs-v8.sh   # smell vs wall-clock
-NODE_BIN=$(command -v node) bash scripts/run-static-vs-v8.sh   # smell vs wall-clock
-```}
+```

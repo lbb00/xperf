@@ -13,7 +13,6 @@
 
 ---
 
-
 **范围 (2026-10-27):** 默认匹配是 `--scope all`（或相应的套件等效项）跨套件；选择 `--scope loop` 来启用之前仅限循环的行为。以前包含 `in-loop` 的标识符已重命名为 `*-hot` 并被作废；详见每个套件的 `docs/rule-ids.md` 重命名表。
 
 ^ cperf(cp-alloc-hot – cp-printf-hot – cp-strlen-in-cond – cp-strcat-hot) (英语).
@@ -139,10 +138,7 @@ ID 是 **jvmperf** `jp-*` 标识，而不是 jsperf。示例：大多是 `bad/<s
 
 ---
 
-
-
 ---
-
 
 **脚手架证据合同:** 在 JSONL 存在之前，每条脚手架规则必须有一个命名的待处理存根 `packages/<kit>/evidence/<ID>.md`（不仅仅是一个文件夹的 README）。这满足了注册表的一致性，而无需发明比例。
 
@@ -159,7 +155,6 @@ ID 是 **jvmperf** `jp-*` 标识，而不是 jsperf。示例：大多是 `bad/<s
 | gp-json-marshal-hot | `bad/gp-json-marshal-hot_marshal_loop.go` | `good/gp-json-marshal-hot_marshal_once.go` | jsonl | 提示 | 微基准测试在一个形状上大约快 368.4 倍；保留提示；未经过语料库筛选 |
 | gp-reflect-hot | `bad/gp-reflect-hot_reflect_loop.go` | `good/gp-reflect-hot_reflect_once.go` | jsonl | 提示 | 微基准 ~1×，无实际开销；保持提示 |
 
-
 ## pyperf（pp-str-plus-hot–pp-print-hot）——语料库准备就绪
 
 | 规则 | 坏的装置 | 好的装置 | 证据 | 默认 | 备注 |
@@ -170,7 +165,6 @@ ID 是 **jvmperf** `jp-*` 标识，而不是 jsperf。示例：大多是 `bad/<s
 | pp-json-hot | `bad/pp-json-hot_json_loop.py` | `good/pp-json-hot_json_once.py` | jsonl | 提示 | 微基准约81.6×在一个形状上；保持提示；未经过语料库筛选 |
 | pp-deepcopy-hot | `bad/pp-deepcopy-hot_deepcopy_loop.py` | `good/pp-deepcopy-hot_deepcopy_once.py` | jsonl | 提示 | 微基准测试在一个形状上约快 21.8×；保留提示；未按语料库分类 |
 | *(已移除 — 无标识)* 循环中重新临时处理 | `bad/pp004_re_adhoc.py`（已归档） | `good/pp004_re_compiled.py` | **是** | — | 墓碑；G4 ~1.35× / 热启动可能会逆转 |
-
 
 ## swiftperf (sp-force-unwrap-in-loop–sp-map-joined-chain) — 语料库就绪
 
@@ -187,7 +181,6 @@ ID 是 **jvmperf** `jp-*` 标识，而不是 jsperf。示例：大多是 `bad/<s
 
 r4 n=32 TP 65.6% FP+DOC+SKIP 0% → **语料库准备好：是**（文本检查回退；当 Swift 存在时使用 SPM）。G4 2026-10-22：**阻止**（没有假 JSONL）。2026-10-23 的三个提示不在该裁定范围内。
 
-
 ## arktsperf（在 at-alloc-hot–在 at-json-hot）—— 语料库准备就绪
 
 | 编号 | 不良装置 | 良好 | 证据 | 默认 | 注意事项 |
@@ -199,7 +192,6 @@ r4 n=32 TP 65.6% FP+DOC+SKIP 0% → **语料库准备好：是**（文本检查�
 | at-json-hot | json_loop | 是 | **是**（节点代理） | 提示 | G4 ~2.2× 解析 / ~1.7× 字符串化；保持提示 |
 
 r3 n=56 TP 66.1% FP+DOC+SKIP 0% → **语料准备就绪：是**。G4 是 **Node/V8 代理**，不是 ArkTS VM — 不会升级为错误。
-
 
 ## cppperf（`cx-string-append-unreserved`）— 语料库就绪
 
@@ -338,7 +330,6 @@ lu-table-insert-hot 默认 **关闭**（G3 OK-习语）。lu-string-concat-hot �
 
 r3 n=4 TP 75% FP+DOC+SKIP 0% → **语料库准备好：是**。G4 be-list-concat-reduce–be-enum-map-filter-chain 在 OTP 27 / Elixir 1.18（2026-10-22）上；无需升级。
 
-
 ## nimperf (nm-seq-add-hot–nm-seq-no-capacity) — 语料库就绪
 
 | 规则 | 坏设备 | 好设备 | 证据 | 默认 | 备注 |
@@ -347,7 +338,6 @@ r3 n=4 TP 75% FP+DOC+SKIP 0% → **语料库准备好：是**。G4 be-list-conca
 | nm-string-amp-in-loop (**已移除**) | 已存档 | 已存档 | 墓碑 | — | Nim 2.2.12 `join` 比 `&=` 慢 (~0.79×，之前 ~0.69×) |
 | nm-echo-hot | `bad/nm-echo-hot_echo_loop.nim` | 是 | 待定 | **关闭** | G4 阻止（没有 nim 工具链） |
 | nm-seq-no-capacity | `bad/nm-seq-no-capacity_empty_add.nim` | `good/nm-seq-no-capacity_ofcap.nim` | 待处理 | 提示 | G4 阻塞（没有 Nim 工具链） |
-
 
 ## 批次备注
 

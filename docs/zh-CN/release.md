@@ -37,7 +37,6 @@ GitHub Pages 从 `main` 构建指南。工作流：[pages.yml](../../.github/wor
 
 ```sh
 bash scripts/build-pages.sh serve
-bash scripts/build-pages.sh serve
 ```
 
 打开 `http://localhost:3000/`。需要 Node.js 22+。命令会把 Markdown 复制到 `site-app/content`（已 gitignore）并启动文档应用。你打开的第一页会即时编译。

@@ -20,14 +20,10 @@ C++17 性能笔记、小例子，以及 `cppperf-lint`。
 
 ```sh
 cd packages/cppperf/cppperf-lint && make
-cd packages/cppperf/cppperf-lint && make
-./cppperf-lint path/to/sources
 ./cppperf-lint path/to/sources
 bash ../scripts/smoke-lint.sh
-bash ../scripts/smoke-lint.sh
 bash ../scripts/self-lint.sh
-bash ../scripts/self-lint.sh
-```}
+```
 
 仅在 **错误** 严重级别的发现时退出 `1`（提示默认退出 `0`，除非使用 `--strict-hints`）。
 
@@ -35,15 +31,9 @@ bash ../scripts/self-lint.sh
 
 ```text
 docs/guide-src/   chapter sources
-docs/guide-src/   chapter sources
-docs/             assembled guide + corpus.md + evidence-policy.md
 docs/             assembled guide + corpus.md + evidence-policy.md
 evidence/         measured JSONL; _removed/ tombstones including cx-string-append-unreserved
-evidence/         measured JSONL; _removed/ tombstones including cx-string-append-unreserved
-examples/         tiny demos
 examples/         tiny demos
 cppperf-lint/    checker + fixtures
-cppperf-lint/    checker + fixtures
 scripts/          smoke-lint.sh, self-lint.sh
-scripts/          smoke-lint.sh, self-lint.sh
-```}
+```

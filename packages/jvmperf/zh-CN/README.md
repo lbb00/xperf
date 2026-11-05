@@ -27,16 +27,11 @@ JVM（Java / Kotlin）性能笔记、可运行示例、JMH/JOL 基准，以及�
 
 ```sh
 cd packages/jvmperf/jvmperf-lint
-cd packages/jvmperf/jvmperf-lint
-export JAVA_HOME="${JAVA_HOME:-/usr/lib/jvm/java-21-openjdk-amd64}"
 export JAVA_HOME="${JAVA_HOME:-/usr/lib/jvm/java-21-openjdk-amd64}"
 ./gradlew test jar
-./gradlew test jar
-bin/jvmperf-lint ../examples --no-fail
 bin/jvmperf-lint ../examples --no-fail
 bin/jvmperf-lint --list-rules
-bin/jvmperf-lint --list-rules
-```}
+```
 
 当存在发现时退出代码为 `1`（除非使用 `--no-fail`）。在使用/输入输出错误时退出代码为 `2`。
 
@@ -48,42 +43,25 @@ bin/jvmperf-lint --list-rules
 
 ```sh
 # From packages/jvmperf: rebuild guides from docs/guide-src (code samples are inlined in the chapter files)
-# From packages/jvmperf: rebuild guides from docs/guide-src (code samples are inlined in the chapter files)
-bash ../../scripts/build-guides.sh jvmperf
 bash ../../scripts/build-guides.sh jvmperf
 scripts/check_java.sh
-scripts/check_java.sh
-scripts/check_kotlin.sh
 scripts/check_kotlin.sh
 # JMH / JOL / Kotlin alloc (writes JSONL under research/bench-results):
-# JMH / JOL / Kotlin alloc (writes JSONL under research/bench-results):
-# scripts/run_jmh.sh …
 # scripts/run_jmh.sh …
 # scripts/run_jol_maps.sh
-# scripts/run_jol_maps.sh
 # scripts/run_kotlin_alloc.sh
-# scripts/run_kotlin_alloc.sh
-```}
+```
 
 ## 布局
 
 ```text
 docs/guide-src/     chapter sources (en/, zh-CN/)
-docs/guide-src/     chapter sources (en/, zh-CN/)
-docs/               assembled guides + corpus.md
 docs/               assembled guides + corpus.md
 examples/           java + kotlin (+ android fixtures)
-examples/           java + kotlin (+ android fixtures)
-jvmperf-lint/       Java checker (Gradle) + fixtures
 jvmperf-lint/       Java checker (Gradle) + fixtures
 jmh-benches/        JMH sources
-jmh-benches/        JMH sources
-lib/                optional jars (gitignored; fetch-lib.sh)
 lib/                optional jars (gitignored; fetch-lib.sh)
 research/           small in-tree Jol/EA probe sources (no *.log dumps)
-research/           small in-tree Jol/EA probe sources (no *.log dumps)
-scripts/            run_*, check_*, env.sh (build_guide is superseded by the repo-level scripts/build-guides.sh)
 scripts/            run_*, check_*, env.sh (build_guide is superseded by the repo-level scripts/build-guides.sh)
 evidence/           pointers to research JSONL (not full dumps)
-evidence/           pointers to research JSONL (not full dumps)
-```}
+```

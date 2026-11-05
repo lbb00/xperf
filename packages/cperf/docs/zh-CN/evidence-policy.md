@@ -34,14 +34,9 @@
 
 ```sh
 bash packages/cperf/scripts/regen-evidence-cp001.sh
-bash packages/cperf/scripts/regen-evidence-cp001.sh
-bash packages/cperf/scripts/regen-evidence-cp002.sh
 bash packages/cperf/scripts/regen-evidence-cp002.sh
 bash packages/cperf/scripts/regen-evidence-cp003.sh
-bash packages/cperf/scripts/regen-evidence-cp003.sh
 # optional correlation suite → examples/bench/build/static-vs-o2/
-# optional correlation suite → examples/bench/build/static-vs-o2/
-bash packages/cperf/scripts/run-static-vs-o2.sh
 bash packages/cperf/scripts/run-static-vs-o2.sh
 ```
 

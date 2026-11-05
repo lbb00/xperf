@@ -14,12 +14,9 @@ Nim 性能注意事项和同语言的 `nimperf-lint`。
 
 ```sh
 packages/nimperf/nimperf-lint/nimperf-lint path/to/sources
-packages/nimperf/nimperf-lint/nimperf-lint path/to/sources
-bash packages/nimperf/scripts/smoke-lint.sh
 bash packages/nimperf/scripts/smoke-lint.sh
 bash packages/nimperf/scripts/self-lint.sh
-bash packages/nimperf/scripts/self-lint.sh
-```}
+```
 
 ## 布局
 

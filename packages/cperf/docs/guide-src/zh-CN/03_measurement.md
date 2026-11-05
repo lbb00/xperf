@@ -6,8 +6,6 @@
 
 ```sh
 perf stat -e cycles,instructions,cache-misses,branch-misses,task-clock -- ./app
-perf stat -e cycles,instructions,cache-misses,branch-misses,task-clock -- ./app
-perf record -g -- ./app && perf report   # 尽量保留 frame pointers
 perf record -g -- ./app && perf report   # 尽量保留 frame pointers
 ```
 

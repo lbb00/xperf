@@ -8,7 +8,6 @@
 >
 > 配套：`jsperf-lint/` —— jp-* 规则，见 [Lint 对照表](#lint-对照表)（行窗；非完整解析器）。已在 Node `lib/`、Preact `src/`、quickjs `*.js`（跳过测试）以及 TypeScript `packages/typescript/src` 上跑过（2026-10-21 Asia/Shanghai）。见 [corpus.md](corpus.md)。启动与 FS 成本对 jp-* 规则是带外的——见 §5。
 
-
 先做 profile（`node --prof`、`node --cpu-prof` + speedscope、Chrome Performance、clinic）。优先一致的对象 shape 与批量分配，而不是抠单次属性访问。嵌入 / 小程序跳过 DOM 提示，也不要套用 Turbofan/Maglev。在 Node/Chrome 上用 §4 看 elements kind、IC 多态与 deopt。对 CLI、lint/测试跑手与包冷启动用 §5。
 
 ## 目录

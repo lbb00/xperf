@@ -5,10 +5,7 @@
 
 ```sh
 export PATH="$HOME/dart-sdk/bin:$PATH"
-export PATH="$HOME/dart-sdk/bin:$PATH"
 cd packages/dartperf/dartperf-lint && dart pub get
-cd packages/dartperf/dartperf-lint && dart pub get
-dart run bin/dartperf_lint.dart <corpus-dir>/<name> --format json --no-fail
 dart run bin/dartperf_lint.dart <corpus-dir>/<name> --format json --no-fail
 ```
 
@@ -34,12 +31,8 @@ dt-list-add-empty：跳过 StreamController / Sink / `*C.add`（队列/流）模
 
 ```text
 <corpus-dir>/
-<corpus-dir>/
-  bloc/
   bloc/
   dio/
-  dio/
-  http/
   http/
 ```
 

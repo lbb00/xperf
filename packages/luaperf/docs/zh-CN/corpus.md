@@ -16,8 +16,6 @@
 
 ```sh
 lua5.4 packages/luaperf/luaperf-lint/luaperf-lint.lua \
-lua5.4 packages/luaperf/luaperf-lint/luaperf-lint.lua \
-  <corpus-dir>/<name> --format json --no-fail
   <corpus-dir>/<name> --format json --no-fail
 ```
 

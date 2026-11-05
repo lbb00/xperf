@@ -96,48 +96,26 @@ Zig 没有全局隐式分配器；会分配的 API 显式接收 `std.mem.Allocat
 
 ```zig
 const std = @import("std");
-const std = @import("std");
-const builtin = @import("builtin");
 const builtin = @import("builtin");
 
-
-/// 自己选 gpa（不用 Juicy Main 时）：Debug/Safe 用 SafeAllocator 查泄漏，Fast/Small 用 smp_allocator。
 /// 自己选 gpa（不用 Juicy Main 时）：Debug/Safe 用 SafeAllocator 查泄漏，Fast/Small 用 smp_allocator。
 /// 0.17: DebugAllocator 已弃用 -> SafeAllocator；builtin.mode 的 tag 在 0.17 改为 .debug/.safe/.fast/.small
-/// 0.17: DebugAllocator 已弃用 -> SafeAllocator；builtin.mode 的 tag 在 0.17 改为 .debug/.safe/.fast/.small
-var safe_state: std.heap.SafeAllocator = .init(std.heap.page_allocator, .{});
 var safe_state: std.heap.SafeAllocator = .init(std.heap.page_allocator, .{});
 
-
-pub fn main() !void {
 pub fn main() !void {
     const gpa, const is_safe = switch (builtin.mode) {
-    const gpa, const is_safe = switch (builtin.mode) {
-        .debug, .safe => .{ safe_state.allocator(), true },
         .debug, .safe => .{ safe_state.allocator(), true },
         // smp_allocator 断言 !single_threaded；单线程构建时退回 page_allocator（与 start.zig 的选择逻辑类似）
-        // smp_allocator 断言 !single_threaded；单线程构建时退回 page_allocator（与 start.zig 的选择逻辑类似）
-        .fast, .small => .{ if (builtin.link_libc) std.heap.c_allocator else if (!builtin.single_threaded) std.heap.smp_allocator else std.heap.page_allocator, false },
         .fast, .small => .{ if (builtin.link_libc) std.heap.c_allocator else if (!builtin.single_threaded) std.heap.smp_allocator else std.heap.page_allocator, false },
     };
-    };
-    defer if (is_safe) {
     defer if (is_safe) {
         const leaks = safe_state.deinit(); // 报告泄漏并释放后备内存，返回泄漏数
-        const leaks = safe_state.deinit(); // 报告泄漏并释放后备内存，返回泄漏数
-        if (leaks != 0) std.process.exit(1);
         if (leaks != 0) std.process.exit(1);
     };
-    };
-
 
     const xs = try gpa.alloc(u64, 1000);
-    const xs = try gpa.alloc(u64, 1000);
-    defer gpa.free(xs);
     defer gpa.free(xs);
     @memset(xs, 0); // @memset/@memcpy 会降级为优化过的 memset/memcpy
-    @memset(xs, 0); // @memset/@memcpy 会降级为优化过的 memset/memcpy
-}
 }
 ```
 
@@ -167,54 +145,29 @@ pub fn main() !void {
 
 ```zig
 const std = @import("std");
-const std = @import("std");
-
 
 /// 每一帧/每个请求都复用同一个 arena：reset(.retain_capacity) 只把指针拨回去，不归还内存。
-/// 每一帧/每个请求都复用同一个 arena：reset(.retain_capacity) 只把指针拨回去，不归还内存。
-fn handleRequests(gpa: std.mem.Allocator, requests: []const []const u8) !usize {
 fn handleRequests(gpa: std.mem.Allocator, requests: []const []const u8) !usize {
     var arena_state: std.heap.ArenaAllocator = .init(gpa);
-    var arena_state: std.heap.ArenaAllocator = .init(gpa);
-    defer arena_state.deinit();
     defer arena_state.deinit();
 
-
-    var total: usize = 0;
     var total: usize = 0;
     for (requests) |req| {
-    for (requests) |req| {
-        // 每轮结束时一次性"释放"本轮全部临时分配
         // 每轮结束时一次性"释放"本轮全部临时分配
         defer _ = arena_state.reset(.retain_capacity);
-        defer _ = arena_state.reset(.retain_capacity);
-        const arena = arena_state.allocator();
         const arena = arena_state.allocator();
 
-
-        const upper = try arena.alloc(u8, req.len);
         const upper = try arena.alloc(u8, req.len);
         for (upper, req) |*d, s| d.* = std.ascii.toUpper(s);
-        for (upper, req) |*d, s| d.* = std.ascii.toUpper(s);
-        const msg = try arena.print("{s}!", .{upper}); // 0.17: fmt.allocPrint -> Allocator.print
         const msg = try arena.print("{s}!", .{upper}); // 0.17: fmt.allocPrint -> Allocator.print
         total += msg.len;
-        total += msg.len;
-    }
     }
     return total;
-    return total;
-}
 }
 
-
-test "arena retain_capacity" {
 test "arena retain_capacity" {
     const reqs = [_][]const u8{ "get", "post", "delete" };
-    const reqs = [_][]const u8{ "get", "post", "delete" };
     try std.testing.expectEqual(@as(usize, 16), try handleRequests(std.testing.allocator, &reqs));
-    try std.testing.expectEqual(@as(usize, 16), try handleRequests(std.testing.allocator, &reqs));
-}
 }
 ```
 
@@ -222,52 +175,28 @@ test "arena retain_capacity" {
 
 ```zig
 const std = @import("std");
-const std = @import("std");
-
 
 /// keepalive 风格：retain 设字节上限，避免一次超大请求永久钉住峰值 RSS。
-/// keepalive 风格：retain 设字节上限，避免一次超大请求永久钉住峰值 RSS。
-fn handleWithBound(gpa: std.mem.Allocator, bodies: []const []const u8, retain_limit: usize) !usize {
 fn handleWithBound(gpa: std.mem.Allocator, bodies: []const []const u8, retain_limit: usize) !usize {
     var arena_state: std.heap.ArenaAllocator = .init(gpa);
-    var arena_state: std.heap.ArenaAllocator = .init(gpa);
-    defer arena_state.deinit();
     defer arena_state.deinit();
 
-
-    var total: usize = 0;
     var total: usize = 0;
     for (bodies) |body| {
-    for (bodies) |body| {
-        defer _ = arena_state.reset(.{ .retain_with_limit = retain_limit });
         defer _ = arena_state.reset(.{ .retain_with_limit = retain_limit });
         const arena = arena_state.allocator();
-        const arena = arena_state.allocator();
-        const copy = try arena.dupe(u8, body);
         const copy = try arena.dupe(u8, body);
         total += copy.len;
-        total += copy.len;
-    }
     }
     return total;
-    return total;
-}
 }
 
-
-test "arena retain_with_limit" {
 test "arena retain_with_limit" {
     var big: [200]u8 = undefined;
-    var big: [200]u8 = undefined;
-    @memset(&big, 'x');
     @memset(&big, 'x');
     const bodies = [_][]const u8{ "small", &big, "again" };
-    const bodies = [_][]const u8{ "small", &big, "again" };
-    const n = try handleWithBound(std.testing.allocator, &bodies, 64);
     const n = try handleWithBound(std.testing.allocator, &bodies, 64);
     try std.testing.expectEqual(@as(usize, 5 + 200 + 5), n);
-    try std.testing.expectEqual(@as(usize, 5 + 200 + 5), n);
-}
 }
 ```
 
@@ -281,34 +210,19 @@ test "arena retain_with_limit" {
 
 ```zig
 const std = @import("std");
-const std = @import("std");
-
 
 test "FixedBufferAllocator: 零堆分配" {
-test "FixedBufferAllocator: 零堆分配" {
-    var buf: [4096]u8 = undefined;
     var buf: [4096]u8 = undefined;
     var fba: std.heap.FixedBufferAllocator = .init(&buf);
-    var fba: std.heap.FixedBufferAllocator = .init(&buf);
-    const a = fba.allocator();
     const a = fba.allocator();
 
-
-    var list: std.ArrayList(u32) = .empty;
     var list: std.ArrayList(u32) = .empty;
     try list.appendSlice(a, &.{ 1, 2, 3 });
-    try list.appendSlice(a, &.{ 1, 2, 3 });
-    try std.testing.expectEqual(@as(usize, 3), list.items.len);
     try std.testing.expectEqual(@as(usize, 3), list.items.len);
 
-
-    // 超出缓冲区 -> error.OutOfMemory，而不是去碰堆
     // 超出缓冲区 -> error.OutOfMemory，而不是去碰堆
     try std.testing.expectError(error.OutOfMemory, a.alloc(u8, 8192));
-    try std.testing.expectError(error.OutOfMemory, a.alloc(u8, 8192));
     fba.reset(); // O(1) 整体回收
-    fba.reset(); // O(1) 整体回收
-}
 }
 ```
 
@@ -318,38 +232,21 @@ test "FixedBufferAllocator: 零堆分配" {
 
 ```zig
 const std = @import("std");
-const std = @import("std");
-
 
 /// 0.17: StackFallbackAllocator -> BufferFirstAllocator（"小对象优化"：先用栈缓冲，不够再走 gpa）
-/// 0.17: StackFallbackAllocator -> BufferFirstAllocator（"小对象优化"：先用栈缓冲，不够再走 gpa）
-fn joinPath(gpa: std.mem.Allocator, parts: []const []const u8) !usize {
 fn joinPath(gpa: std.mem.Allocator, parts: []const []const u8) !usize {
     var stack_buf: [256]u8 = undefined;
-    var stack_buf: [256]u8 = undefined;
-    var sfa: std.heap.BufferFirstAllocator = .init(&stack_buf, gpa);
     var sfa: std.heap.BufferFirstAllocator = .init(&stack_buf, gpa);
     const a = sfa.allocator();
-    const a = sfa.allocator();
-    const joined = try std.mem.join(a, "/", parts);
     const joined = try std.mem.join(a, "/", parts);
     defer a.free(joined);
-    defer a.free(joined);
-    return joined.len;
     return joined.len;
 }
-}
-
 
 test "BufferFirstAllocator" {
-test "BufferFirstAllocator" {
-    try std.testing.expectEqual(@as(usize, 7), try joinPath(std.testing.allocator, &.{ "usr", "bin" }));
     try std.testing.expectEqual(@as(usize, 7), try joinPath(std.testing.allocator, &.{ "usr", "bin" }));
     const big: [1000]u8 = @splat('x'); // 0.17 移除了 `**`，用 @splat；超过 256 字节时自动回退到 gpa
-    const big: [1000]u8 = @splat('x'); // 0.17 移除了 `**`，用 @splat；超过 256 字节时自动回退到 gpa
     try std.testing.expectEqual(@as(usize, 2001), try joinPath(std.testing.allocator, &.{ &big, &big }));
-    try std.testing.expectEqual(@as(usize, 2001), try joinPath(std.testing.allocator, &.{ &big, &big }));
-}
 }
 ```
 
@@ -371,34 +268,19 @@ test "BufferFirstAllocator" {
 
 ```zig
 const std = @import("std");
-const std = @import("std");
-
 
 const Node = struct { value: u64, next: ?*Node };
-const Node = struct { value: u64, next: ?*Node };
-
 
 test "MemoryPool: 定长对象 O(1) 分配/回收，free list 复用" {
-test "MemoryPool: 定长对象 O(1) 分配/回收，free list 复用" {
-    const gpa = std.testing.allocator;
     const gpa = std.testing.allocator;
     var pool: std.heap.MemoryPool(Node) = try .initCapacity(gpa, 64); // 预热，避免运行中再申请
-    var pool: std.heap.MemoryPool(Node) = try .initCapacity(gpa, 64); // 预热，避免运行中再申请
-    defer pool.deinit(gpa);
     defer pool.deinit(gpa);
 
-
-    const a = try pool.create(gpa);
     const a = try pool.create(gpa);
     a.* = .{ .value = 1, .next = null };
-    a.* = .{ .value = 1, .next = null };
-    pool.destroy(a); // 放回 free list
     pool.destroy(a); // 放回 free list
     const b = try pool.create(gpa); // 复用刚刚释放的槽位
-    const b = try pool.create(gpa); // 复用刚刚释放的槽位
     try std.testing.expect(a == b);
-    try std.testing.expect(a == b);
-}
 }
 ```
 
@@ -418,94 +300,49 @@ test "MemoryPool: 定长对象 O(1) 分配/回收，free list 复用" {
 
 ```zig
 const std = @import("std");
-const std = @import("std");
-
 
 /// 等长缓冲池 + tryAlloc（热路径不分配）。教学 API，形状参考 http.zig Buffer.Pool。
-/// 等长缓冲池 + tryAlloc（热路径不分配）。教学 API，形状参考 http.zig Buffer.Pool。
-const BufferPool = struct {
 const BufferPool = struct {
     buffers: [][]u8,
-    buffers: [][]u8,
-    available: usize,
     available: usize,
     buf_len: usize,
-    buf_len: usize,
-
 
     fn init(gpa: std.mem.Allocator, count: usize, buf_len: usize) !BufferPool {
-    fn init(gpa: std.mem.Allocator, count: usize, buf_len: usize) !BufferPool {
-        const buffers = try gpa.alloc([]u8, count);
         const buffers = try gpa.alloc([]u8, count);
         errdefer gpa.free(buffers);
-        errdefer gpa.free(buffers);
-        for (buffers) |*slot| slot.* = try gpa.alloc(u8, buf_len);
         for (buffers) |*slot| slot.* = try gpa.alloc(u8, buf_len);
         return .{ .buffers = buffers, .available = count, .buf_len = buf_len };
-        return .{ .buffers = buffers, .available = count, .buf_len = buf_len };
     }
-    }
-
 
     fn deinit(self: *BufferPool, gpa: std.mem.Allocator) void {
-    fn deinit(self: *BufferPool, gpa: std.mem.Allocator) void {
-        for (self.buffers) |b| gpa.free(b);
         for (self.buffers) |b| gpa.free(b);
         gpa.free(self.buffers);
-        gpa.free(self.buffers);
-        self.* = undefined;
         self.* = undefined;
     }
-    }
-
 
     fn tryAlloc(self: *BufferPool) ?[]u8 {
-    fn tryAlloc(self: *BufferPool) ?[]u8 {
-        if (self.available == 0) return null;
         if (self.available == 0) return null;
         self.available -= 1;
-        self.available -= 1;
-        return self.buffers[self.available];
         return self.buffers[self.available];
     }
-    }
-
 
     fn release(self: *BufferPool, buf: []u8) void {
-    fn release(self: *BufferPool, buf: []u8) void {
-        std.debug.assert(buf.len == self.buf_len);
         std.debug.assert(buf.len == self.buf_len);
         std.debug.assert(self.available < self.buffers.len);
-        std.debug.assert(self.available < self.buffers.len);
-        self.buffers[self.available] = buf;
         self.buffers[self.available] = buf;
         self.available += 1;
-        self.available += 1;
-    }
     }
 };
-};
-
 
 test "buffer pool tryAlloc / release" {
-test "buffer pool tryAlloc / release" {
-    var pool = try BufferPool.init(std.testing.allocator, 2, 64);
     var pool = try BufferPool.init(std.testing.allocator, 2, 64);
     defer pool.deinit(std.testing.allocator);
-    defer pool.deinit(std.testing.allocator);
-    const a = pool.tryAlloc().?;
     const a = pool.tryAlloc().?;
     const b = pool.tryAlloc().?;
-    const b = pool.tryAlloc().?;
-    try std.testing.expect(pool.tryAlloc() == null);
     try std.testing.expect(pool.tryAlloc() == null);
     pool.release(a);
-    pool.release(a);
-    pool.release(b);
     pool.release(b);
     try std.testing.expect(pool.tryAlloc() != null);
-    try std.testing.expect(pool.tryAlloc() != null);
-}
 }
 ```
 
@@ -519,78 +356,41 @@ TigerBeetle 规则：启动时分配全部内存；初始化之后不再分配�
 
 ```zig
 const std = @import("std");
-const std = @import("std");
-
 
 /// TigerStyle 静态分配：启动时按上限一次性分配全部内存，之后只复用、不再分配。
-/// TigerStyle 静态分配：启动时按上限一次性分配全部内存，之后只复用、不再分配。
-const Server = struct {
 const Server = struct {
     const connections_max = 128;
-    const connections_max = 128;
-    const message_size_max = 4096;
     const message_size_max = 4096;
 
-
-    messages: []align(64) [message_size_max]u8,
     messages: []align(64) [message_size_max]u8,
     free: std.bit_set.Static(connections_max),
-    free: std.bit_set.Static(connections_max),
-
 
     fn init(gpa: std.mem.Allocator) !Server {
-    fn init(gpa: std.mem.Allocator) !Server {
-        const messages = try gpa.alignedAlloc([message_size_max]u8, .@"64", connections_max);
         const messages = try gpa.alignedAlloc([message_size_max]u8, .@"64", connections_max);
         return .{ .messages = messages, .free = .full };
-        return .{ .messages = messages, .free = .full };
-    }
     }
     fn deinit(s: *Server, gpa: std.mem.Allocator) void {
-    fn deinit(s: *Server, gpa: std.mem.Allocator) void {
-        gpa.free(s.messages);
         gpa.free(s.messages);
         s.* = undefined;
-        s.* = undefined;
-    }
     }
     fn acquire(s: *Server) ?u32 {
-    fn acquire(s: *Server) ?u32 {
-        const i = s.free.findFirstSet() orelse return null;
         const i = s.free.findFirstSet() orelse return null;
         s.free.unset(i);
-        s.free.unset(i);
-        return @intCast(i);
         return @intCast(i);
     }
-    }
-    fn release(s: *Server, i: u32) void {
     fn release(s: *Server, i: u32) void {
         std.debug.assert(!s.free.isSet(i));
-        std.debug.assert(!s.free.isSet(i));
-        s.free.set(i);
         s.free.set(i);
     }
-    }
-};
 };
 
-
-test "static allocation" {
 test "static allocation" {
     comptime std.debug.assert(Server.message_size_max % 64 == 0);
-    comptime std.debug.assert(Server.message_size_max % 64 == 0);
-    var s = try Server.init(std.testing.allocator);
     var s = try Server.init(std.testing.allocator);
     defer s.deinit(std.testing.allocator);
-    defer s.deinit(std.testing.allocator);
-    const i = s.acquire().?;
     const i = s.acquire().?;
     s.messages[i][0] = 42;
-    s.messages[i][0] = 42;
     s.release(i);
-    s.release(i);
-}
 }
 ```
 
@@ -608,134 +408,69 @@ TigerBeetle 用 **阶段机**（`StaticAllocator`）包住子分配器：
 
 ```zig
 const std = @import("std");
-const std = @import("std");
-
 
 /// 教学桩：按生命周期阶段断言的分配器（灵感来自 TigerBeetle StaticAllocator）。
-/// 教学桩：按生命周期阶段断言的分配器（灵感来自 TigerBeetle StaticAllocator）。
-const Phase = enum { init, static, deinit };
 const Phase = enum { init, static, deinit };
 
-
-const PhaseAllocator = struct {
 const PhaseAllocator = struct {
     child: std.mem.Allocator,
-    child: std.mem.Allocator,
-    phase: Phase = .init,
     phase: Phase = .init,
 
-
-    fn allocator(self: *PhaseAllocator) std.mem.Allocator {
     fn allocator(self: *PhaseAllocator) std.mem.Allocator {
         return .{
-        return .{
-            .ptr = self,
             .ptr = self,
             .vtable = &.{
-            .vtable = &.{
-                .alloc = alloc,
                 .alloc = alloc,
                 .resize = resize,
-                .resize = resize,
-                .remap = remap,
                 .remap = remap,
                 .free = free,
-                .free = free,
-            },
             },
         };
-        };
     }
-    }
-
 
     fn transitionToStatic(self: *PhaseAllocator) void {
-    fn transitionToStatic(self: *PhaseAllocator) void {
-        std.debug.assert(self.phase == .init);
         std.debug.assert(self.phase == .init);
         self.phase = .static;
-        self.phase = .static;
     }
-    }
-
 
     fn transitionToDeinit(self: *PhaseAllocator) void {
-    fn transitionToDeinit(self: *PhaseAllocator) void {
-        std.debug.assert(self.phase == .static);
         std.debug.assert(self.phase == .static);
         self.phase = .deinit;
-        self.phase = .deinit;
     }
-    }
-
 
     fn alloc(ctx: *anyopaque, len: usize, alignment: std.mem.Alignment, ret_addr: usize) ?[*]u8 {
-    fn alloc(ctx: *anyopaque, len: usize, alignment: std.mem.Alignment, ret_addr: usize) ?[*]u8 {
         const self: *PhaseAllocator = @ptrCast(@alignCast(ctx));
-        const self: *PhaseAllocator = @ptrCast(@alignCast(ctx));
-        std.debug.assert(self.phase == .init);
         std.debug.assert(self.phase == .init);
         return self.child.rawAlloc(len, alignment, ret_addr);
-        return self.child.rawAlloc(len, alignment, ret_addr);
     }
-    }
-
 
     fn resize(ctx: *anyopaque, memory: []u8, alignment: std.mem.Alignment, new_len: usize, ret_addr: usize) bool {
-    fn resize(ctx: *anyopaque, memory: []u8, alignment: std.mem.Alignment, new_len: usize, ret_addr: usize) bool {
         const self: *PhaseAllocator = @ptrCast(@alignCast(ctx));
-        const self: *PhaseAllocator = @ptrCast(@alignCast(ctx));
-        std.debug.assert(self.phase == .init);
         std.debug.assert(self.phase == .init);
         return self.child.rawResize(memory, alignment, new_len, ret_addr);
-        return self.child.rawResize(memory, alignment, new_len, ret_addr);
     }
-    }
-
 
     fn remap(ctx: *anyopaque, memory: []u8, alignment: std.mem.Alignment, new_len: usize, ret_addr: usize) ?[*]u8 {
-    fn remap(ctx: *anyopaque, memory: []u8, alignment: std.mem.Alignment, new_len: usize, ret_addr: usize) ?[*]u8 {
-        const self: *PhaseAllocator = @ptrCast(@alignCast(ctx));
         const self: *PhaseAllocator = @ptrCast(@alignCast(ctx));
         std.debug.assert(self.phase == .init);
-        std.debug.assert(self.phase == .init);
-        return self.child.rawRemap(memory, alignment, new_len, ret_addr);
         return self.child.rawRemap(memory, alignment, new_len, ret_addr);
     }
-    }
-
 
     fn free(ctx: *anyopaque, memory: []u8, alignment: std.mem.Alignment, ret_addr: usize) void {
-    fn free(ctx: *anyopaque, memory: []u8, alignment: std.mem.Alignment, ret_addr: usize) void {
-        const self: *PhaseAllocator = @ptrCast(@alignCast(ctx));
         const self: *PhaseAllocator = @ptrCast(@alignCast(ctx));
         // init（errdefer）与 deinit 可 free；static 禁止
-        // init（errdefer）与 deinit 可 free；static 禁止
-        std.debug.assert(self.phase != .static);
         std.debug.assert(self.phase != .static);
         self.child.rawFree(memory, alignment, ret_addr);
-        self.child.rawFree(memory, alignment, ret_addr);
-    }
     }
 };
-};
-
 
 test "phase allocator: alloc only in init" {
-test "phase allocator: alloc only in init" {
-    var phase: PhaseAllocator = .{ .child = std.testing.allocator };
     var phase: PhaseAllocator = .{ .child = std.testing.allocator };
     const a = phase.allocator();
-    const a = phase.allocator();
-    const buf = try a.alloc(u8, 32);
     const buf = try a.alloc(u8, 32);
     phase.transitionToStatic();
-    phase.transitionToStatic();
-    phase.transitionToDeinit();
     phase.transitionToDeinit();
     a.free(buf);
-    a.free(buf);
-}
 }
 ```
 
@@ -764,50 +499,27 @@ test "phase allocator: alloc only in init" {
 
 ```zig
 const std = @import("std");
-const std = @import("std");
-
 
 /// matklad "Reserve First"：先一次性预留，再走不可失败的路径。
-/// matklad "Reserve First"：先一次性预留，再走不可失败的路径。
-fn appendPair(gpa: std.mem.Allocator, keys: *std.ArrayList(u32), vals: *std.ArrayList(u64), k: u32, v: u64) !void {
 fn appendPair(gpa: std.mem.Allocator, keys: *std.ArrayList(u32), vals: *std.ArrayList(u64), k: u32, v: u64) !void {
     try keys.ensureUnusedCapacity(gpa, 1);
-    try keys.ensureUnusedCapacity(gpa, 1);
-    try vals.ensureUnusedCapacity(gpa, 1);
     try vals.ensureUnusedCapacity(gpa, 1);
     errdefer comptime unreachable; // 编译期保证：从这里往下不可能再返回错误
-    errdefer comptime unreachable; // 编译期保证：从这里往下不可能再返回错误
-    keys.appendAssumeCapacity(k);
     keys.appendAssumeCapacity(k);
     vals.appendAssumeCapacity(v);
-    vals.appendAssumeCapacity(v);
 }
-}
-
 
 test "reserve first" {
-test "reserve first" {
-    const gpa = std.testing.allocator;
     const gpa = std.testing.allocator;
     var keys: std.ArrayList(u32) = .empty;
-    var keys: std.ArrayList(u32) = .empty;
-    defer keys.deinit(gpa);
     defer keys.deinit(gpa);
     var vals: std.ArrayList(u64) = .empty;
-    var vals: std.ArrayList(u64) = .empty;
-    defer vals.deinit(gpa);
     defer vals.deinit(gpa);
 
-
-    try keys.ensureTotalCapacity(gpa, 1000); // 循环前一次扩容到位
     try keys.ensureTotalCapacity(gpa, 1000); // 循环前一次扩容到位
     try vals.ensureTotalCapacity(gpa, 1000);
-    try vals.ensureTotalCapacity(gpa, 1000);
-    for (0..1000) |i| try appendPair(gpa, &keys, &vals, @intCast(i), i * 2);
     for (0..1000) |i| try appendPair(gpa, &keys, &vals, @intCast(i), i * 2);
     try std.testing.expectEqual(@as(u64, 1998), vals.items[999]);
-    try std.testing.expectEqual(@as(u64, 1998), vals.items[999]);
-}
 }
 ```
 
@@ -832,28 +544,16 @@ test "reserve first" {
 
 ```zig
 const std = @import("std");
-const std = @import("std");
-
 
 // 0.15 移除 BoundedArray：改用 ArrayList.initBuffer + *Bounded 系列方法
-// 0.15 移除 BoundedArray：改用 ArrayList.initBuffer + *Bounded 系列方法
-test "栈上有界列表" {
 test "栈上有界列表" {
     var buffer: [8]i32 = undefined;
-    var buffer: [8]i32 = undefined;
-    var stack: std.ArrayList(i32) = .initBuffer(&buffer);
     var stack: std.ArrayList(i32) = .initBuffer(&buffer);
     try stack.appendSliceBounded(&.{ 1, 2, 3 });
-    try stack.appendSliceBounded(&.{ 1, 2, 3 });
-    try stack.appendBounded(4);
     try stack.appendBounded(4);
     try std.testing.expectEqual(@as(usize, 4), stack.items.len);
-    try std.testing.expectEqual(@as(usize, 4), stack.items.len);
-    try stack.appendSliceBounded(&.{ 5, 6, 7, 8 });
     try stack.appendSliceBounded(&.{ 5, 6, 7, 8 });
     try std.testing.expectError(error.OutOfMemory, stack.appendBounded(9)); // 满了也不会偷偷上堆
-    try std.testing.expectError(error.OutOfMemory, stack.appendBounded(9)); // 满了也不会偷偷上堆
-}
 }
 ```
 
@@ -865,58 +565,31 @@ AoS（数组的结构体）里每个元素都要为对齐付 padding；SoA 把�
 
 ```zig
 const std = @import("std");
-const std = @import("std");
-
 
 const Monster = struct {
-const Monster = struct {
-    hp: u32,
     hp: u32,
     pos: [2]f32,
-    pos: [2]f32,
-    kind: enum(u8) { human, orc, elf },
     kind: enum(u8) { human, orc, elf },
 };
-};
-
 
 test "MultiArrayList: SoA 去 padding、按字段遍历" {
-test "MultiArrayList: SoA 去 padding、按字段遍历" {
-    const gpa = std.testing.allocator;
     const gpa = std.testing.allocator;
     var list: std.MultiArrayList(Monster) = .empty;
-    var list: std.MultiArrayList(Monster) = .empty;
-    defer list.deinit(gpa);
     defer list.deinit(gpa);
 
-
-    try list.ensureTotalCapacity(gpa, 3);
     try list.ensureTotalCapacity(gpa, 3);
     list.appendAssumeCapacity(.{ .hp = 10, .pos = .{ 0, 0 }, .kind = .orc });
-    list.appendAssumeCapacity(.{ .hp = 10, .pos = .{ 0, 0 }, .kind = .orc });
-    list.appendAssumeCapacity(.{ .hp = 20, .pos = .{ 1, 1 }, .kind = .elf });
     list.appendAssumeCapacity(.{ .hp = 20, .pos = .{ 1, 1 }, .kind = .elf });
     list.appendAssumeCapacity(.{ .hp = 30, .pos = .{ 2, 2 }, .kind = .orc });
-    list.appendAssumeCapacity(.{ .hp = 30, .pos = .{ 2, 2 }, .kind = .orc });
-
 
     const s = list.slice(); // 一次性算出各字段起始指针，循环外取
-    const s = list.slice(); // 一次性算出各字段起始指针，循环外取
-    var orc_hp: u32 = 0;
     var orc_hp: u32 = 0;
     for (s.items(.kind), s.items(.hp)) |k, hp| {
-    for (s.items(.kind), s.items(.hp)) |k, hp| {
-        if (k == .orc) orc_hp += hp; // 只触碰 kind 与 hp 两条紧凑数组
         if (k == .orc) orc_hp += hp; // 只触碰 kind 与 hp 两条紧凑数组
     }
-    }
-    try std.testing.expectEqual(@as(u32, 40), orc_hp);
     try std.testing.expectEqual(@as(u32, 40), orc_hp);
     // AoS 每个元素 16 字节（含 3 字节 padding）；SoA 每元素 4+8+1 = 13 字节
-    // AoS 每个元素 16 字节（含 3 字节 padding）；SoA 每元素 4+8+1 = 13 字节
     try std.testing.expectEqual(@as(usize, 16), @sizeOf(Monster));
-    try std.testing.expectEqual(@as(usize, 16), @sizeOf(Monster));
-}
 }
 ```
 
@@ -932,83 +605,46 @@ Andrew 演讲里的两个"不改语义只改布局"的技巧：**把 bool 移出
 
 ```zig
 const std = @import("std");
-const std = @import("std");
-
 
 /// Andrew Kelley "Practical DOD"：把 bool 移出结构体 —— 用 "在哪个数组里" 编码它
-/// Andrew Kelley "Practical DOD"：把 bool 移出结构体 —— 用 "在哪个数组里" 编码它
-const Monster = struct { hp: u32, x: u32, y: u32 }; // 12 字节，没有 alive: bool
 const Monster = struct { hp: u32, x: u32, y: u32 }; // 12 字节，没有 alive: bool
 
-
-const World = struct {
 const World = struct {
     alive: std.ArrayList(Monster) = .empty,
-    alive: std.ArrayList(Monster) = .empty,
-    dead: std.ArrayList(Monster) = .empty,
     dead: std.ArrayList(Monster) = .empty,
 
-
-    fn kill(w: *World, gpa: std.mem.Allocator, i: usize) !void {
     fn kill(w: *World, gpa: std.mem.Allocator, i: usize) !void {
         try w.dead.ensureUnusedCapacity(gpa, 1);
-        try w.dead.ensureUnusedCapacity(gpa, 1);
-        w.dead.appendAssumeCapacity(w.alive.swapRemove(i));
         w.dead.appendAssumeCapacity(w.alive.swapRemove(i));
     }
-    }
-    fn tick(w: *World) void {
     fn tick(w: *World) void {
         // zperf-lint: ignore zp-aos-single-field -- 示例
-        // zperf-lint: ignore zp-aos-single-field -- 示例
-        for (w.alive.items) |*m| m.hp -|= 1; // 循环里没有 "if (!alive) continue" 的分支和加载
         for (w.alive.items) |*m| m.hp -|= 1; // 循环里没有 "if (!alive) continue" 的分支和加载
     }
-    }
-};
 };
 
-
-/// 热/冷拆分：每帧都要访问的字段放一起，很少访问的（名字、描述）单独放并用同一索引关联
 /// 热/冷拆分：每帧都要访问的字段放一起，很少访问的（名字、描述）单独放并用同一索引关联
 const Hot = struct { pos: [2]f32, vel: [2]f32 };
-const Hot = struct { pos: [2]f32, vel: [2]f32 };
-const Cold = struct { name: []const u8, created_ms: u64 };
 const Cold = struct { name: []const u8, created_ms: u64 };
 
-
-test "out-of-band bool + hot/cold split" {
 test "out-of-band bool + hot/cold split" {
     const gpa = std.testing.allocator;
-    const gpa = std.testing.allocator;
-    var w: World = .{};
     var w: World = .{};
     defer w.alive.deinit(gpa);
-    defer w.alive.deinit(gpa);
-    defer w.dead.deinit(gpa);
     defer w.dead.deinit(gpa);
     try w.alive.appendSlice(gpa, &.{ .{ .hp = 3, .x = 0, .y = 0 }, .{ .hp = 5, .x = 1, .y = 1 } });
-    try w.alive.appendSlice(gpa, &.{ .{ .hp = 3, .x = 0, .y = 0 }, .{ .hp = 5, .x = 1, .y = 1 } });
-    try w.kill(gpa, 0);
     try w.kill(gpa, 0);
     w.tick();
-    w.tick();
-    try std.testing.expectEqual(@as(usize, 1), w.alive.items.len);
     try std.testing.expectEqual(@as(usize, 1), w.alive.items.len);
     try std.testing.expectEqual(@as(usize, 12), @sizeOf(Monster));
-    try std.testing.expectEqual(@as(usize, 12), @sizeOf(Monster));
-    try std.testing.expectEqual(@as(usize, 16), @sizeOf(Hot));
     try std.testing.expectEqual(@as(usize, 16), @sizeOf(Hot));
     _ = Cold;
-    _ = Cold;
-}
 }
 ```
 
 **不适用**：总是整体读写一个元素（例如逐个序列化完整记录）时，SoA 反而要访问 N 个数组；元素很少时差别可以忽略。
 
 来源：[Practical DOD](https://handmade-seattle.com/media-sub/practical-data-oriented-design) · [演讲文字稿](https://josherich.me/podcast/andrew-kelley-practical-data-oriented-design-dod) · [PR #7920 AST 内存布局重做](https://github.com/ziglang/zig/pull/7920) · [Mitchell Hashimoto: Zig Parser](https://mitchellh.com/zig/parser) · `lib/std/multi_array_list.zig`
-
 
 **证据（本地）：** `examples/p15_soa_bandwidth.zig` — 对 N=4e6 个元素累加一个热 `u32` 字段（4 遍，best-of-7，`-O fast`）：AoS vs `MultiArrayList.items(.hp)` vs 并行 `[]u32`。JSONL：`zig-perf-research/bench-results/p15_soa_bandwidth.jsonl`（引用前请重跑）。
 
@@ -1022,72 +658,38 @@ test "out-of-band bool + hot/cold split" {
 
 ```zig
 const std = @import("std");
-const std = @import("std");
-
 
 const Flags = packed struct(u8) {
-const Flags = packed struct(u8) {
-    visible: bool,
     visible: bool,
     dirty: bool,
-    dirty: bool,
-    selected: bool,
     selected: bool,
     layer: u3, // 任意位宽整数
-    layer: u3, // 任意位宽整数
-    _pad: u2 = 0,
     _pad: u2 = 0,
 };
-};
-
 
 // zperf-lint: ignore zp-packable-bools -- 故意的反例
-// zperf-lint: ignore zp-packable-bools -- 故意的反例
-const Loose = struct { visible: bool, dirty: bool, selected: bool, layer: u8 };
 const Loose = struct { visible: bool, dirty: bool, selected: bool, layer: u8 };
 
-
-test "packed struct 把 4 个字段压进 1 字节" {
 test "packed struct 把 4 个字段压进 1 字节" {
     try std.testing.expectEqual(@as(usize, 1), @sizeOf(Flags));
-    try std.testing.expectEqual(@as(usize, 1), @sizeOf(Flags));
-    try std.testing.expectEqual(@as(usize, 4), @sizeOf(Loose));
     try std.testing.expectEqual(@as(usize, 4), @sizeOf(Loose));
 
-
-    var f: Flags = .{ .visible = true, .dirty = false, .selected = true, .layer = 5 };
     var f: Flags = .{ .visible = true, .dirty = false, .selected = true, .layer = 5 };
     f.dirty = true;
-    f.dirty = true;
-    const raw: u8 = @bitCast(f); // 与 u8 互转，可直接原子操作/比较/哈希
     const raw: u8 = @bitCast(f); // 与 u8 互转，可直接原子操作/比较/哈希
     try std.testing.expectEqual(@as(u8, 0b00_101_111), raw);
-    try std.testing.expectEqual(@as(u8, 0b00_101_111), raw);
-    try std.testing.expect(f == @as(Flags, @bitCast(raw))); // 0.14+: packed struct 可直接 ==
     try std.testing.expect(f == @as(Flags, @bitCast(raw))); // 0.14+: packed struct 可直接 ==
 }
-}
-
 
 test "u3 等窄整数在普通 struct/数组里仍按字节存储" {
-test "u3 等窄整数在普通 struct/数组里仍按字节存储" {
-    try std.testing.expectEqual(@as(usize, 1), @sizeOf(u3));
     try std.testing.expectEqual(@as(usize, 1), @sizeOf(u3));
     try std.testing.expectEqual(@as(usize, 3), @bitSizeOf(u3));
-    try std.testing.expectEqual(@as(usize, 3), @bitSizeOf(u3));
-    try std.testing.expectEqual(@as(usize, 8), @sizeOf([8]u3)); // 数组里每个 u3 仍占 1 字节
     try std.testing.expectEqual(@as(usize, 8), @sizeOf([8]u3)); // 数组里每个 u3 仍占 1 字节
 
-
-    // 真正按位压缩：8 个 u3 = 24 bit = 3 字节
     // 真正按位压缩：8 个 u3 = 24 bit = 3 字节
     var bytes: [3]u8 = @splat(0);
-    var bytes: [3]u8 = @splat(0);
-    for (0..8) |i| std.mem.writePackedInt(u3, &bytes, i * 3, @intCast(i), .little);
     for (0..8) |i| std.mem.writePackedInt(u3, &bytes, i * 3, @intCast(i), .little);
     try std.testing.expectEqual(@as(u3, 6), std.mem.readPackedInt(u3, &bytes, 6 * 3, .little));
-    try std.testing.expectEqual(@as(u3, 6), std.mem.readPackedInt(u3, &bytes, 6 * 3, .little));
-}
 }
 ```
 
@@ -1107,54 +709,29 @@ test "u3 等窄整数在普通 struct/数组里仍按字节存储" {
 
 ```zig
 const std = @import("std");
-const std = @import("std");
-
 
 /// 用 u32 句柄代替 *Node：省一半空间、可序列化、可整体 memcpy、天然类型安全
-/// 用 u32 句柄代替 *Node：省一半空间、可序列化、可整体 memcpy、天然类型安全
-const NodeIndex = enum(u32) {
 const NodeIndex = enum(u32) {
     none = std.math.maxInt(u32),
-    none = std.math.maxInt(u32),
-    _,
     _,
 
-
-    fn from(i: usize) NodeIndex {
     fn from(i: usize) NodeIndex {
         return @fromBackingInt(@intCast(i)); // 0.17 新增；旧版本用 @enumFromInt
-        return @fromBackingInt(@intCast(i)); // 0.17 新增；旧版本用 @enumFromInt
-    }
     }
     fn get(self: NodeIndex) u32 {
-    fn get(self: NodeIndex) u32 {
-        return @backingInt(self); // 0.17 新增；旧版本用 @intFromEnum
         return @backingInt(self); // 0.17 新增；旧版本用 @intFromEnum
     }
-    }
-};
 };
 
-
-const Node = struct { value: i32, left: NodeIndex, right: NodeIndex };
 const Node = struct { value: i32, left: NodeIndex, right: NodeIndex };
 
-
-test "索引代替指针" {
 test "索引代替指针" {
     try std.testing.expectEqual(@as(usize, 12), @sizeOf(Node)); // 指针版 (i32, ?*Node, ?*Node) 是 24
-    try std.testing.expectEqual(@as(usize, 12), @sizeOf(Node)); // 指针版 (i32, ?*Node, ?*Node) 是 24
-    const nodes = [_]Node{
     const nodes = [_]Node{
         .{ .value = 2, .left = .from(1), .right = .none },
-        .{ .value = 2, .left = .from(1), .right = .none },
-        .{ .value = 1, .left = .none, .right = .none },
         .{ .value = 1, .left = .none, .right = .none },
     };
-    };
     try std.testing.expectEqual(@as(i32, 1), nodes[nodes[0].left.get()].value);
-    try std.testing.expectEqual(@as(i32, 1), nodes[nodes[0].left.get()].value);
-}
 }
 ```
 
@@ -1164,98 +741,51 @@ test "索引代替指针" {
 
 ```zig
 const std = @import("std");
-const std = @import("std");
-
 
 /// generation-index 句柄 + free list：检测悬垂引用（ABA），且槽位可复用。
-/// generation-index 句柄 + free list：检测悬垂引用（ABA），且槽位可复用。
-fn SlotMap(comptime T: type, comptime capacity: u32) type {
 fn SlotMap(comptime T: type, comptime capacity: u32) type {
     return struct {
-    return struct {
-        const Self = @This();
         const Self = @This();
         pub const Handle = packed struct(u64) { index: u32, generation: u32 };
-        pub const Handle = packed struct(u64) { index: u32, generation: u32 };
-
 
         items: [capacity]T = undefined,
-        items: [capacity]T = undefined,
-        generations: [capacity]u32 = @splat(0),
         generations: [capacity]u32 = @splat(0),
         free: [capacity]u32 = undefined,
-        free: [capacity]u32 = undefined,
-        free_len: u32 = 0,
         free_len: u32 = 0,
         len: u32 = 0,
-        len: u32 = 0,
-
 
         pub fn insert(s: *Self, v: T) ?Handle {
-        pub fn insert(s: *Self, v: T) ?Handle {
-            const i: u32 = if (s.free_len > 0) blk: {
             const i: u32 = if (s.free_len > 0) blk: {
                 s.free_len -= 1;
-                s.free_len -= 1;
-                break :blk s.free[s.free_len];
                 break :blk s.free[s.free_len];
             } else if (s.len < capacity) blk: {
-            } else if (s.len < capacity) blk: {
-                s.len += 1;
                 s.len += 1;
                 break :blk s.len - 1;
-                break :blk s.len - 1;
-            } else return null;
             } else return null;
             s.items[i] = v;
-            s.items[i] = v;
-            return .{ .index = i, .generation = s.generations[i] };
             return .{ .index = i, .generation = s.generations[i] };
         }
-        }
-        pub fn remove(s: *Self, h: Handle) void {
         pub fn remove(s: *Self, h: Handle) void {
             std.debug.assert(s.generations[h.index] == h.generation);
-            std.debug.assert(s.generations[h.index] == h.generation);
-            s.generations[h.index] +%= 1; // 让旧句柄失效
             s.generations[h.index] +%= 1; // 让旧句柄失效
             s.free[s.free_len] = h.index;
-            s.free[s.free_len] = h.index;
-            s.free_len += 1;
             s.free_len += 1;
         }
-        }
-        pub fn get(s: *Self, h: Handle) ?*T {
         pub fn get(s: *Self, h: Handle) ?*T {
             if (s.generations[h.index] != h.generation) return null;
-            if (s.generations[h.index] != h.generation) return null;
-            return &s.items[h.index];
             return &s.items[h.index];
         }
-        }
-    };
     };
 }
-}
-
 
 test "generational handles" {
-test "generational handles" {
-    var map: SlotMap(f32, 4) = .{};
     var map: SlotMap(f32, 4) = .{};
     const a = map.insert(1.5).?;
-    const a = map.insert(1.5).?;
-    map.remove(a);
     map.remove(a);
     const b = map.insert(2.5).?;
-    const b = map.insert(2.5).?;
-    try std.testing.expectEqual(a.index, b.index); // 槽位复用
     try std.testing.expectEqual(a.index, b.index); // 槽位复用
     try std.testing.expect(map.get(a) == null); // 旧句柄被识破
-    try std.testing.expect(map.get(a) == null); // 旧句柄被识破
     try std.testing.expectEqual(@as(f32, 2.5), map.get(b).?.*);
-    try std.testing.expectEqual(@as(f32, 2.5), map.get(b).?.*);
-}
 }
 ```
 
@@ -1265,52 +795,28 @@ test "generational handles" {
 
 ```zig
 const std = @import("std");
-const std = @import("std");
-
 
 /// 利用对齐的低位存 tag：*align(8) T 的低 3 位恒为 0。
-/// 利用对齐的低位存 tag：*align(8) T 的低 3 位恒为 0。
-const Tag = enum(u3) { leaf, branch, deleted };
 const Tag = enum(u3) { leaf, branch, deleted };
 
-
-const TaggedPtr = packed struct(usize) {
 const TaggedPtr = packed struct(usize) {
     tag: Tag,
-    tag: Tag,
-    addr_hi: @Int(.unsigned, @bitSizeOf(usize) - 3), // 0.16: 用 @Int 代替 @Type(.{.int=...})
     addr_hi: @Int(.unsigned, @bitSizeOf(usize) - 3), // 0.16: 用 @Int 代替 @Type(.{.int=...})
 
-
-    fn init(p: *align(8) u64, tag: Tag) TaggedPtr {
     fn init(p: *align(8) u64, tag: Tag) TaggedPtr {
         return .{ .tag = tag, .addr_hi = @intCast(@intFromPtr(p) >> 3) };
-        return .{ .tag = tag, .addr_hi = @intCast(@intFromPtr(p) >> 3) };
-    }
     }
     fn ptr(self: TaggedPtr) *align(8) u64 {
-    fn ptr(self: TaggedPtr) *align(8) u64 {
-        return @ptrFromInt(@as(usize, self.addr_hi) << 3);
         return @ptrFromInt(@as(usize, self.addr_hi) << 3);
     }
-    }
-};
 };
 
-
-test "tagged pointer" {
 test "tagged pointer" {
     var x: u64 align(8) = 7;
-    var x: u64 align(8) = 7;
-    const tp: TaggedPtr = .init(&x, .branch);
     const tp: TaggedPtr = .init(&x, .branch);
     try std.testing.expectEqual(@as(usize, 8), @sizeOf(TaggedPtr));
-    try std.testing.expectEqual(@as(usize, 8), @sizeOf(TaggedPtr));
-    try std.testing.expectEqual(Tag.branch, tp.tag);
     try std.testing.expectEqual(Tag.branch, tp.tag);
     try std.testing.expectEqual(@as(u64, 7), tp.ptr().*);
-    try std.testing.expectEqual(@as(u64, 7), tp.ptr().*);
-}
 }
 ```
 
@@ -1320,103 +826,56 @@ test "tagged pointer" {
 
 ```zig
 const std = @import("std");
-const std = @import("std");
-
 
 /// NaN-boxing：所有值塞进 8 字节 —— 普通 f64 原样存；quiet-NaN 空间的 payload 存 tag + 48 位指针/整数
-/// NaN-boxing：所有值塞进 8 字节 —— 普通 f64 原样存；quiet-NaN 空间的 payload 存 tag + 48 位指针/整数
-const Value = packed struct(u64) {
 const Value = packed struct(u64) {
     bits: u64,
-    bits: u64,
-
 
     const qnan: u64 = 0x7ff8_0000_0000_0000;
-    const qnan: u64 = 0x7ff8_0000_0000_0000;
-    const tag_int: u64 = 0x0001_0000_0000_0000;
     const tag_int: u64 = 0x0001_0000_0000_0000;
     const tag_ptr: u64 = 0x0002_0000_0000_0000;
-    const tag_ptr: u64 = 0x0002_0000_0000_0000;
-    const payload_mask: u64 = 0x0000_ffff_ffff_ffff;
     const payload_mask: u64 = 0x0000_ffff_ffff_ffff;
 
-
-    fn fromFloat(f: f64) Value {
     fn fromFloat(f: f64) Value {
         return .{ .bits = @bitCast(f) }; // 注意：真实实现需把输入 NaN 规范化，避免与 tag 冲突
-        return .{ .bits = @bitCast(f) }; // 注意：真实实现需把输入 NaN 规范化，避免与 tag 冲突
-    }
     }
     fn fromInt(i: u32) Value {
-    fn fromInt(i: u32) Value {
-        return .{ .bits = qnan | tag_int | i };
         return .{ .bits = qnan | tag_int | i };
     }
-    }
-    fn fromPtr(p: *const anyopaque) Value {
     fn fromPtr(p: *const anyopaque) Value {
         return .{ .bits = qnan | tag_ptr | (@intFromPtr(p) & payload_mask) };
-        return .{ .bits = qnan | tag_ptr | (@intFromPtr(p) & payload_mask) };
-    }
     }
     fn isFloat(v: Value) bool {
-    fn isFloat(v: Value) bool {
-        return (v.bits & qnan) != qnan or (v.bits & (tag_int | tag_ptr)) == 0;
         return (v.bits & qnan) != qnan or (v.bits & (tag_int | tag_ptr)) == 0;
     }
-    }
-    fn isInt(v: Value) bool {
     fn isInt(v: Value) bool {
         return (v.bits & (qnan | tag_int | tag_ptr)) == (qnan | tag_int);
-        return (v.bits & (qnan | tag_int | tag_ptr)) == (qnan | tag_int);
-    }
     }
     fn asInt(v: Value) u32 {
-    fn asInt(v: Value) u32 {
-        return @truncate(v.bits & payload_mask);
         return @truncate(v.bits & payload_mask);
     }
-    }
-    fn asFloat(v: Value) f64 {
     fn asFloat(v: Value) f64 {
         return @bitCast(v.bits);
-        return @bitCast(v.bits);
-    }
     }
 };
-};
-
 
 test "NaN-boxing" {
-test "NaN-boxing" {
-    try std.testing.expectEqual(@as(usize, 8), @sizeOf(Value)); // tagged union 版本通常是 16 字节
     try std.testing.expectEqual(@as(usize, 8), @sizeOf(Value)); // tagged union 版本通常是 16 字节
     const a: Value = .fromFloat(3.5);
-    const a: Value = .fromFloat(3.5);
-    const b: Value = .fromInt(42);
     const b: Value = .fromInt(42);
     try std.testing.expect(a.isFloat() and !a.isInt());
-    try std.testing.expect(a.isFloat() and !a.isInt());
-    try std.testing.expectEqual(@as(f64, 3.5), a.asFloat());
     try std.testing.expectEqual(@as(f64, 3.5), a.asFloat());
     try std.testing.expect(b.isInt() and !b.isFloat());
-    try std.testing.expect(b.isInt() and !b.isFloat());
-    try std.testing.expectEqual(@as(u32, 42), b.asInt());
     try std.testing.expectEqual(@as(u32, 42), b.asInt());
     var x: u32 = 0;
-    var x: u32 = 0;
-    try std.testing.expect(!Value.fromPtr(&x).isFloat());
     try std.testing.expect(!Value.fromPtr(&x).isFloat());
     try std.testing.expectEqual(@as(usize, 16), @sizeOf(union(enum) { f: f64, i: u32, p: *anyopaque }));
-    try std.testing.expectEqual(@as(usize, 16), @sizeOf(union(enum) { f: f64, i: u32, p: *anyopaque }));
-}
 }
 ```
 
 **不适用**：tagged pointer / NaN-boxing 依赖地址只用低 48 位等平台假设，调试器也看不懂；只在值表示真的是瓶颈（解释器、VM）时使用。
 
 来源：[InternPool PR #15569](https://github.com/ziglang/zig/pull/15569) · [TigerStyle](https://github.com/tigerbeetle/tigerbeetle/blob/main/docs/TIGER_STYLE.md) · [0.16 Forbid Pointers in Packed Structs](https://ziglang.org/download/0.16.0/release-notes.html)
-
 
 当“数组”是一块可重定位、内部混排类型的 mmap slab 时，优先用**相对该基址的字节偏移**，而不是裸指针——见 §2.17。
 ### 2.11 字符串驻留与小字符串优化
@@ -1427,98 +886,51 @@ test "NaN-boxing" {
 
 ```zig
 const std = @import("std");
-const std = @import("std");
-
 
 /// Zig 编译器同款字符串驻留：所有字符串存进一条 bytes 数组，以 u32 偏移引用；
-/// Zig 编译器同款字符串驻留：所有字符串存进一条 bytes 数组，以 u32 偏移引用；
-/// 哈希表只存 u32，靠 StringIndexContext/Adapter 回查 bytes。
 /// 哈希表只存 u32，靠 StringIndexContext/Adapter 回查 bytes。
 const StringPool = struct {
-const StringPool = struct {
-    bytes: std.ArrayList(u8) = .empty,
     bytes: std.ArrayList(u8) = .empty,
     table: std.HashMapUnmanaged(u32, void, std.hash_map.StringIndexContext, 80) = .empty,
-    table: std.HashMapUnmanaged(u32, void, std.hash_map.StringIndexContext, 80) = .empty,
-
 
     fn deinit(p: *StringPool, gpa: std.mem.Allocator) void {
-    fn deinit(p: *StringPool, gpa: std.mem.Allocator) void {
-        p.bytes.deinit(gpa);
         p.bytes.deinit(gpa);
         p.table.deinit(gpa);
-        p.table.deinit(gpa);
-        p.* = undefined;
         p.* = undefined;
     }
-    }
-
 
     fn intern(p: *StringPool, gpa: std.mem.Allocator, s: []const u8) !u32 {
-    fn intern(p: *StringPool, gpa: std.mem.Allocator, s: []const u8) !u32 {
-        const gop = try p.table.getOrPutContextAdapted(
         const gop = try p.table.getOrPutContextAdapted(
             gpa,
-            gpa,
-            s,
             s,
             std.hash_map.StringIndexAdapter{ .bytes = &p.bytes },
-            std.hash_map.StringIndexAdapter{ .bytes = &p.bytes },
-            std.hash_map.StringIndexContext{ .bytes = &p.bytes },
             std.hash_map.StringIndexContext{ .bytes = &p.bytes },
         );
-        );
-        if (gop.found_existing) return gop.key_ptr.*;
         if (gop.found_existing) return gop.key_ptr.*;
         const off: u32 = @intCast(p.bytes.items.len);
-        const off: u32 = @intCast(p.bytes.items.len);
-        try p.bytes.ensureUnusedCapacity(gpa, s.len + 1);
         try p.bytes.ensureUnusedCapacity(gpa, s.len + 1);
         p.bytes.appendSliceAssumeCapacity(s);
-        p.bytes.appendSliceAssumeCapacity(s);
-        p.bytes.appendAssumeCapacity(0); // 以 0 结尾，便于取回
         p.bytes.appendAssumeCapacity(0); // 以 0 结尾，便于取回
         gop.key_ptr.* = off;
-        gop.key_ptr.* = off;
-        return off;
         return off;
     }
-    }
-
 
     fn get(p: *const StringPool, off: u32) []const u8 {
-    fn get(p: *const StringPool, off: u32) []const u8 {
-        const rest = p.bytes.items[off..];
         const rest = p.bytes.items[off..];
         return rest[0..std.mem.findScalar(u8, rest, 0).?]; // 0.16: indexOfScalar -> findScalar
-        return rest[0..std.mem.findScalar(u8, rest, 0).?]; // 0.16: indexOfScalar -> findScalar
-    }
     }
 };
-};
-
 
 test "string interning" {
-test "string interning" {
-    const gpa = std.testing.allocator;
     const gpa = std.testing.allocator;
     var pool: StringPool = .{};
-    var pool: StringPool = .{};
-    defer pool.deinit(gpa);
     defer pool.deinit(gpa);
     const a = try pool.intern(gpa, "hello");
-    const a = try pool.intern(gpa, "hello");
-    const b = try pool.intern(gpa, "world");
     const b = try pool.intern(gpa, "world");
     const c = try pool.intern(gpa, "hello");
-    const c = try pool.intern(gpa, "hello");
-    try std.testing.expectEqual(a, c);
     try std.testing.expectEqual(a, c);
     try std.testing.expect(a != b);
-    try std.testing.expect(a != b);
     try std.testing.expectEqualStrings("world", pool.get(b));
-    try std.testing.expectEqualStrings("world", pool.get(b));
-}
 }
 ```
 
@@ -1536,88 +948,46 @@ test "string interning" {
 
 ```zig
 const std = @import("std");
-const std = @import("std");
-
 
 /// 小字符串优化（SSO）：≤15 字节内联存储，否则落到堆上。总大小 16 字节。
-/// 小字符串优化（SSO）：≤15 字节内联存储，否则落到堆上。总大小 16 字节。
-const SmallString = extern union {
 const SmallString = extern union {
     inline_: extern struct { bytes: [15]u8, len: u8 }, // len 最高位 0 = inline
-    inline_: extern struct { bytes: [15]u8, len: u8 }, // len 最高位 0 = inline
-    heap: extern struct { ptr: [*]u8, len: u32, _pad: [3]u8, tag: u8 }, // tag = 0x80 表示堆
     heap: extern struct { ptr: [*]u8, len: u32, _pad: [3]u8, tag: u8 }, // tag = 0x80 表示堆
 
-
-    const heap_tag = 0x80;
     const heap_tag = 0x80;
 
-
-    fn init(gpa: std.mem.Allocator, s: []const u8) !SmallString {
     fn init(gpa: std.mem.Allocator, s: []const u8) !SmallString {
         if (s.len <= 15) {
-        if (s.len <= 15) {
-            var r: SmallString = .{ .inline_ = .{ .bytes = undefined, .len = @intCast(s.len) } };
             var r: SmallString = .{ .inline_ = .{ .bytes = undefined, .len = @intCast(s.len) } };
             @memcpy(r.inline_.bytes[0..s.len], s);
-            @memcpy(r.inline_.bytes[0..s.len], s);
-            return r;
             return r;
         }
-        }
-        const p = try gpa.dupe(u8, s);
         const p = try gpa.dupe(u8, s);
         return .{ .heap = .{ .ptr = p.ptr, .len = @intCast(s.len), ._pad = undefined, .tag = heap_tag } };
-        return .{ .heap = .{ .ptr = p.ptr, .len = @intCast(s.len), ._pad = undefined, .tag = heap_tag } };
-    }
     }
     fn isHeap(self: *const SmallString) bool {
-    fn isHeap(self: *const SmallString) bool {
-        return self.inline_.len & heap_tag != 0;
         return self.inline_.len & heap_tag != 0;
     }
-    }
-    fn slice(self: *const SmallString) []const u8 {
     fn slice(self: *const SmallString) []const u8 {
         return if (self.isHeap()) self.heap.ptr[0..self.heap.len] else self.inline_.bytes[0..self.inline_.len];
-        return if (self.isHeap()) self.heap.ptr[0..self.heap.len] else self.inline_.bytes[0..self.inline_.len];
-    }
     }
     fn deinit(self: *SmallString, gpa: std.mem.Allocator) void {
-    fn deinit(self: *SmallString, gpa: std.mem.Allocator) void {
-        if (self.isHeap()) gpa.free(self.heap.ptr[0..self.heap.len]);
         if (self.isHeap()) gpa.free(self.heap.ptr[0..self.heap.len]);
         self.* = undefined;
-        self.* = undefined;
-    }
     }
 };
-};
-
 
 test "SSO" {
-test "SSO" {
-    const gpa = std.testing.allocator;
     const gpa = std.testing.allocator;
     try std.testing.expectEqual(@as(usize, 16), @sizeOf(SmallString)); // 与 []const u8 一样大
-    try std.testing.expectEqual(@as(usize, 16), @sizeOf(SmallString)); // 与 []const u8 一样大
-    var a: SmallString = try .init(gpa, "hello");
     var a: SmallString = try .init(gpa, "hello");
     defer a.deinit(gpa);
-    defer a.deinit(gpa);
-    var b: SmallString = try .init(gpa, "this string is definitely longer than 15");
     var b: SmallString = try .init(gpa, "this string is definitely longer than 15");
     defer b.deinit(gpa);
-    defer b.deinit(gpa);
-    try std.testing.expect(!a.isHeap());
     try std.testing.expect(!a.isHeap());
     try std.testing.expect(b.isHeap());
-    try std.testing.expect(b.isHeap());
-    try std.testing.expectEqualStrings("hello", a.slice());
     try std.testing.expectEqualStrings("hello", a.slice());
     try std.testing.expectEqualStrings("this string is definitely longer than 15", b.slice());
-    try std.testing.expectEqualStrings("this string is definitely longer than 15", b.slice());
-}
 }
 ```
 
@@ -1639,64 +1009,34 @@ test "SSO" {
 
 ```zig
 const std = @import("std");
-const std = @import("std");
-
 
 // zperf-lint: ignore zp-optional-scalar-field -- 故意的反例
-// zperf-lint: ignore zp-optional-scalar-field -- 故意的反例
-const WithOpt = struct { parent: ?u32, depth: u32 }; // ?u32 = 4 + 1(flag) -> 对齐到 8
 const WithOpt = struct { parent: ?u32, depth: u32 }; // ?u32 = 4 + 1(flag) -> 对齐到 8
 const WithSentinel = struct {
-const WithSentinel = struct {
-    parent: u32, // maxInt 表示 "无"
     parent: u32, // maxInt 表示 "无"
     depth: u32,
-    depth: u32,
-    const none = std.math.maxInt(u32);
     const none = std.math.maxInt(u32);
 };
-};
-
 
 test "optional 的代价与哨兵值" {
-test "optional 的代价与哨兵值" {
-    try std.testing.expectEqual(@as(usize, 8), @sizeOf(?u32));
     try std.testing.expectEqual(@as(usize, 8), @sizeOf(?u32));
     try std.testing.expectEqual(@as(usize, 8), @sizeOf(*u8));
-    try std.testing.expectEqual(@as(usize, 8), @sizeOf(*u8));
-    try std.testing.expectEqual(@as(usize, 8), @sizeOf(?*u8)); // 指针可选：null 指针优化，零额外开销
     try std.testing.expectEqual(@as(usize, 8), @sizeOf(?*u8)); // 指针可选：null 指针优化，零额外开销
     try std.testing.expectEqual(@as(usize, 12), @sizeOf(WithOpt));
-    try std.testing.expectEqual(@as(usize, 12), @sizeOf(WithOpt));
-    try std.testing.expectEqual(@as(usize, 8), @sizeOf(WithSentinel));
     try std.testing.expectEqual(@as(usize, 8), @sizeOf(WithSentinel));
     // 用非穷举 enum 做带哨兵的句柄（见索引示例）也是同样效果
-    // 用非穷举 enum 做带哨兵的句柄（见索引示例）也是同样效果
-}
 }
 
-
-test "error union 与切片的大小" {
 test "error union 与切片的大小" {
     try std.testing.expectEqual(@as(usize, 2), @sizeOf(anyerror)); // 默认 u16 错误码
-    try std.testing.expectEqual(@as(usize, 2), @sizeOf(anyerror)); // 默认 u16 错误码
-    try std.testing.expectEqual(@as(usize, 16), @sizeOf(anyerror!u64)); // 8 + 2 -> 对齐 16
     try std.testing.expectEqual(@as(usize, 16), @sizeOf(anyerror!u64)); // 8 + 2 -> 对齐 16
     try std.testing.expectEqual(@as(usize, 16), @sizeOf([]u8)); // ptr + usize len
-    try std.testing.expectEqual(@as(usize, 16), @sizeOf([]u8)); // ptr + usize len
-    try std.testing.expectEqual(@as(usize, 8), @sizeOf([*:0]const u8)); // 哨兵终止多项指针：只有 ptr
     try std.testing.expectEqual(@as(usize, 8), @sizeOf([*:0]const u8)); // 哨兵终止多项指针：只有 ptr
     // 自定义 "瘦切片"：ptr + u32 len
-    // 自定义 "瘦切片"：ptr + u32 len
-    const Thin = extern struct { ptr: [*]const u8, len: u32 };
     const Thin = extern struct { ptr: [*]const u8, len: u32 };
     try std.testing.expectEqual(@as(usize, 16), @sizeOf(Thin)); // 单独存时对齐把收益吃掉了……
-    try std.testing.expectEqual(@as(usize, 16), @sizeOf(Thin)); // 单独存时对齐把收益吃掉了……
-    const ThinSoA = struct { offset: u32, len: u32 }; // ……改成"偏移+长度"指向公共缓冲区才是 8 字节
     const ThinSoA = struct { offset: u32, len: u32 }; // ……改成"偏移+长度"指向公共缓冲区才是 8 字节
     try std.testing.expectEqual(@as(usize, 8), @sizeOf(ThinSoA));
-    try std.testing.expectEqual(@as(usize, 8), @sizeOf(ThinSoA));
-}
 }
 ```
 
@@ -1708,48 +1048,26 @@ test "error union 与切片的大小" {
 
 ```zig
 const std = @import("std");
-const std = @import("std");
-
 
 const Kind = enum { int, float, string, bool };
-const Kind = enum { int, float, string, bool };
-
 
 const keywords = std.StaticStringMap(Kind).initComptime(.{
-const keywords = std.StaticStringMap(Kind).initComptime(.{
-    .{ "int", .int },
     .{ "int", .int },
     .{ "float", .float },
-    .{ "float", .float },
-    .{ "string", .string },
     .{ "string", .string },
     .{ "bool", .bool },
-    .{ "bool", .bool },
-});
 });
 
-
-test "EnumArray 代替 HashMap(enum, V)" {
 test "EnumArray 代替 HashMap(enum, V)" {
     var counts: std.EnumArray(Kind, u32) = .initFill(0); // 就是一个 [4]u32
-    var counts: std.EnumArray(Kind, u32) = .initFill(0); // 就是一个 [4]u32
-    counts.getPtr(.float).* += 1;
     counts.getPtr(.float).* += 1;
     try std.testing.expectEqual(@as(u32, 1), counts.get(.float));
-    try std.testing.expectEqual(@as(u32, 1), counts.get(.float));
-    try std.testing.expectEqual(@as(usize, 16), @sizeOf(@TypeOf(counts)));
     try std.testing.expectEqual(@as(usize, 16), @sizeOf(@TypeOf(counts)));
 }
-}
-
 
 test "StaticStringMap：编译期构建的只读字符串表（按长度分桶），零运行时分配" {
-test "StaticStringMap：编译期构建的只读字符串表（按长度分桶），零运行时分配" {
-    try std.testing.expectEqual(Kind.float, keywords.get("float").?);
     try std.testing.expectEqual(Kind.float, keywords.get("float").?);
     try std.testing.expect(keywords.get("double") == null);
-    try std.testing.expect(keywords.get("double") == null);
-}
 }
 ```
 
@@ -1761,54 +1079,29 @@ test "StaticStringMap：编译期构建的只读字符串表（按长度分桶�
 
 ```zig
 const std = @import("std");
-const std = @import("std");
-
 
 /// 零拷贝解析：结果切片直接指向输入缓冲区，不 dupe。
-/// 零拷贝解析：结果切片直接指向输入缓冲区，不 dupe。
-const Field = struct { key: []const u8, value: []const u8 };
 const Field = struct { key: []const u8, value: []const u8 };
 
-
-fn parseLine(line: []const u8) ?Field {
 fn parseLine(line: []const u8) ?Field {
     const eq = std.mem.findScalar(u8, line, '=') orelse return null; // 0.16: indexOfScalar -> findScalar
-    const eq = std.mem.findScalar(u8, line, '=') orelse return null; // 0.16: indexOfScalar -> findScalar
-    return .{
     return .{
         .key = std.mem.trim(u8, line[0..eq], " "),
-        .key = std.mem.trim(u8, line[0..eq], " "),
-        .value = std.mem.trim(u8, line[eq + 1 ..], " "),
         .value = std.mem.trim(u8, line[eq + 1 ..], " "),
     };
-    };
-}
 }
 
-
-test "zero-copy" {
 test "zero-copy" {
     const input = "name = zig\nversion= 0.17\n";
-    const input = "name = zig\nversion= 0.17\n";
-    var it = std.mem.splitScalar(u8, input, '\n');
     var it = std.mem.splitScalar(u8, input, '\n');
     var n: usize = 0;
-    var n: usize = 0;
-    while (it.next()) |line| {
     while (it.next()) |line| {
         const f = parseLine(line) orelse continue;
-        const f = parseLine(line) orelse continue;
-        // 切片指针落在 input 内部 —— 没有发生拷贝
         // 切片指针落在 input 内部 —— 没有发生拷贝
         try std.testing.expect(@intFromPtr(f.key.ptr) >= @intFromPtr(input.ptr));
-        try std.testing.expect(@intFromPtr(f.key.ptr) >= @intFromPtr(input.ptr));
-        n += 1;
         n += 1;
     }
-    }
     try std.testing.expectEqual(@as(usize, 2), n);
-    try std.testing.expectEqual(@as(usize, 2), n);
-}
 }
 ```
 
@@ -1816,36 +1109,20 @@ test "zero-copy" {
 
 ```zig
 const std = @import("std");
-const std = @import("std");
-
 
 // 0.16+: File.MemoryMap（跨平台的 mmap 封装）；也可直接 std.posix.mmap。
-// 0.16+: File.MemoryMap（跨平台的 mmap 封装）；也可直接 std.posix.mmap。
-test "memory-mapped file" {
 test "memory-mapped file" {
     const io = std.testing.io;
-    const io = std.testing.io;
-    var tmp = std.testing.tmpDir(.{});
     var tmp = std.testing.tmpDir(.{});
     defer tmp.cleanup();
-    defer tmp.cleanup();
-
 
     const file = try tmp.dir.createFile(io, "data.bin", .{ .read = true });
-    const file = try tmp.dir.createFile(io, "data.bin", .{ .read = true });
-    defer file.close(io);
     defer file.close(io);
     try file.writeStreamingAll(io, "hello mmap");
-    try file.writeStreamingAll(io, "hello mmap");
-
 
     var map = try file.createMemoryMap(io, .{ .len = 10, .protection = .{ .read = true } });
-    var map = try file.createMemoryMap(io, .{ .len = 10, .protection = .{ .read = true } });
-    defer map.destroy(io);
     defer map.destroy(io);
     try std.testing.expectEqualStrings("hello mmap", map.memory[0..10]);
-    try std.testing.expectEqualStrings("hello mmap", map.memory[0..10]);
-}
 }
 ```
 
@@ -1859,66 +1136,35 @@ test "memory-mapped file" {
 
 ```zig
 const std = @import("std");
-const std = @import("std");
-
 
 /// 差分 + LEB128 变长编码：单调递增的 id 序列通常可以压到每个 1~2 字节。
-/// 差分 + LEB128 变长编码：单调递增的 id 序列通常可以压到每个 1~2 字节。
-fn encode(w: *std.Io.Writer, ids: []const u64) !void {
 fn encode(w: *std.Io.Writer, ids: []const u64) !void {
     var prev: u64 = 0;
-    var prev: u64 = 0;
-    for (ids) |id| {
     for (ids) |id| {
         try w.writeUleb128(id - prev);
-        try w.writeUleb128(id - prev);
-        prev = id;
         prev = id;
     }
-    }
 }
-}
-
 
 fn decode(r: *std.Io.Reader, out: []u64) !void {
-fn decode(r: *std.Io.Reader, out: []u64) !void {
-    var prev: u64 = 0;
     var prev: u64 = 0;
     for (out) |*o| {
-    for (out) |*o| {
-        prev += try r.takeLeb128(u64);
         prev += try r.takeLeb128(u64);
         o.* = prev;
-        o.* = prev;
-    }
     }
 }
-}
-
 
 test "delta + varint" {
-test "delta + varint" {
-    const ids = [_]u64{ 1_000_000, 1_000_003, 1_000_010, 1_000_200 };
     const ids = [_]u64{ 1_000_000, 1_000_003, 1_000_010, 1_000_200 };
     var buf: [64]u8 = undefined;
-    var buf: [64]u8 = undefined;
-    var w: std.Io.Writer = .fixed(&buf);
     var w: std.Io.Writer = .fixed(&buf);
     try encode(&w, &ids);
-    try encode(&w, &ids);
-    try std.testing.expectEqual(@as(usize, 3 + 1 + 1 + 2), w.end); // 7 字节 vs 原始 32 字节
     try std.testing.expectEqual(@as(usize, 3 + 1 + 1 + 2), w.end); // 7 字节 vs 原始 32 字节
 
-
-    var r: std.Io.Reader = .fixed(w.buffered());
     var r: std.Io.Reader = .fixed(w.buffered());
     var out: [4]u64 = undefined;
-    var out: [4]u64 = undefined;
-    try decode(&r, &out);
     try decode(&r, &out);
     try std.testing.expectEqualSlices(u64, &ids, &out);
-    try std.testing.expectEqualSlices(u64, &ids, &out);
-}
 }
 ```
 
@@ -1943,68 +1189,36 @@ test "delta + varint" {
 
 ```zig
 const std = @import("std");
-const std = @import("std");
-
 
 /// 可重定位基址上的类型化字节偏移（不存裸指针）。教学 API，形状参考 Ghostty Offset(T)。
-/// 可重定位基址上的类型化字节偏移（不存裸指针）。教学 API，形状参考 Ghostty Offset(T)。
-fn Offset(comptime T: type) type {
 fn Offset(comptime T: type) type {
     return struct {
-    return struct {
-        byte: u32 = 0,
         byte: u32 = 0,
         const Self = @This();
-        const Self = @This();
-        fn ptr(self: Self, base: []u8) [*]T {
         fn ptr(self: Self, base: []u8) [*]T {
             const addr = @intFromPtr(base.ptr) + self.byte;
-            const addr = @intFromPtr(base.ptr) + self.byte;
-            std.debug.assert(addr % @alignOf(T) == 0);
             std.debug.assert(addr % @alignOf(T) == 0);
             return @ptrFromInt(addr);
-            return @ptrFromInt(addr);
-        }
         }
         fn slice(self: Self, base: []u8, len: usize) []T {
-        fn slice(self: Self, base: []u8, len: usize) []T {
-            return self.ptr(base)[0..len];
             return self.ptr(base)[0..len];
         }
-        }
-    };
     };
 }
-}
-
 
 const Cell = struct { ch: u32, style: u16 };
-const Cell = struct { ch: u32, style: u16 };
-
 
 test "offset into relocatable slab" {
-test "offset into relocatable slab" {
-    var slab: [256]u8 align(@alignOf(Cell)) = undefined;
     var slab: [256]u8 align(@alignOf(Cell)) = undefined;
     const off: Offset(Cell) = .{ .byte = 0 };
-    const off: Offset(Cell) = .{ .byte = 0 };
-    const cells = off.slice(slab[0..], 4);
     const cells = off.slice(slab[0..], 4);
     cells[0] = .{ .ch = 'A', .style = 1 };
-    cells[0] = .{ .ch = 'A', .style = 1 };
-    cells[1] = .{ .ch = 'B', .style = 2 };
     cells[1] = .{ .ch = 'B', .style = 2 };
     var moved: [256]u8 align(@alignOf(Cell)) = undefined;
-    var moved: [256]u8 align(@alignOf(Cell)) = undefined;
-    @memcpy(moved[0..], slab[0..]);
     @memcpy(moved[0..], slab[0..]);
     const again = off.slice(moved[0..], 4);
-    const again = off.slice(moved[0..], 4);
-    try std.testing.expectEqual(@as(u32, 'A'), again[0].ch);
     try std.testing.expectEqual(@as(u32, 'A'), again[0].ch);
     try std.testing.expectEqual(@as(u32, 'B'), again[1].ch);
-    try std.testing.expectEqual(@as(u32, 'B'), again[1].ch);
-}
 }
 ```
 
@@ -2046,32 +1260,18 @@ test "offset into relocatable slab" {
 
 ```zig
 const std = @import("std");
-const std = @import("std");
-
 
 // C: enum Color { RED, GREEN, BLUE };  sizeof == sizeof(int) == 4（实现相关）
-// C: enum Color { RED, GREEN, BLUE };  sizeof == sizeof(int) == 4（实现相关）
-const Color = enum { red, green, blue }; // Zig 自动推断最小 tag：u2
 const Color = enum { red, green, blue }; // Zig 自动推断最小 tag：u2
 const Opcode = enum(u8) { nop, add, sub, _ }; // 显式 tag，非穷举 `_` 便于从字节流解码
-const Opcode = enum(u8) { nop, add, sub, _ }; // 显式 tag，非穷举 `_` 便于从字节流解码
-
 
 test "enum 大小" {
-test "enum 大小" {
-    try std.testing.expectEqual(u2, @typeInfo(Color).@"enum".tag_type);
     try std.testing.expectEqual(u2, @typeInfo(Color).@"enum".tag_type);
     try std.testing.expectEqual(@as(usize, 1), @sizeOf(Color)); // 存储仍按字节
-    try std.testing.expectEqual(@as(usize, 1), @sizeOf(Color)); // 存储仍按字节
-    try std.testing.expectEqual(@as(usize, 2), @bitSizeOf(Color)); // 但在 packed struct 里只占 2 bit
     try std.testing.expectEqual(@as(usize, 2), @bitSizeOf(Color)); // 但在 packed struct 里只占 2 bit
     try std.testing.expectEqual(@as(usize, 1), @sizeOf(Opcode));
-    try std.testing.expectEqual(@as(usize, 1), @sizeOf(Opcode));
-    const op: Opcode = @fromBackingInt(@as(u8, 200)); // 非穷举 enum 允许未命名值
     const op: Opcode = @fromBackingInt(@as(u8, 200)); // 非穷举 enum 允许未命名值
     try std.testing.expect(op != .add);
-    try std.testing.expect(op != .add);
-}
 }
 ```
 
@@ -2081,62 +1281,33 @@ test "enum 大小" {
 
 ```zig
 const std = @import("std");
-const std = @import("std");
-
 
 // C:
-// C:
-// struct Hdr { unsigned version:4; unsigned ihl:4; unsigned dscp:6; unsigned ecn:2; };
 // struct Hdr { unsigned version:4; unsigned ihl:4; unsigned dscp:6; unsigned ecn:2; };
 // C 位域的位序、跨字节规则由编译器/ABI 决定；Zig packed struct 的规则是确定的：
-// C 位域的位序、跨字节规则由编译器/ABI 决定；Zig packed struct 的规则是确定的：
-// 第一个字段放在后备整数的最低位。
 // 第一个字段放在后备整数的最低位。
 const Hdr = packed struct(u16) {
-const Hdr = packed struct(u16) {
-    ihl: u4,
     ihl: u4,
     version: u4,
-    version: u4,
-    ecn: u2,
     ecn: u2,
     dscp: u6,
-    dscp: u6,
-};
 };
 
-
-const Signedness = struct { delta: i7, count: u7 };
 const Signedness = struct { delta: i7, count: u7 };
 
-
-test "packed struct 等价 C 位域" {
 test "packed struct 等价 C 位域" {
     try std.testing.expectEqual(@as(usize, 2), @sizeOf(Hdr));
-    try std.testing.expectEqual(@as(usize, 2), @sizeOf(Hdr));
-    try std.testing.expectEqual(@as(usize, 16), @bitSizeOf(Hdr));
     try std.testing.expectEqual(@as(usize, 16), @bitSizeOf(Hdr));
     try std.testing.expectEqual(@as(u16, 8), @bitOffsetOf(Hdr, "ecn"));
-    try std.testing.expectEqual(@as(u16, 8), @bitOffsetOf(Hdr, "ecn"));
-    const h: Hdr = .{ .version = 4, .ihl = 5, .dscp = 0, .ecn = 0 };
     const h: Hdr = .{ .version = 4, .ihl = 5, .dscp = 0, .ecn = 0 };
     const raw: u16 = @bitCast(h);
-    const raw: u16 = @bitCast(h);
-    try std.testing.expectEqual(@as(u16, 0x45), raw);
     try std.testing.expectEqual(@as(u16, 0x45), raw);
     // 0.17: 也可以用 @backingInt 取后备整数
-    // 0.17: 也可以用 @backingInt 取后备整数
-    try std.testing.expectEqual(raw, @backingInt(h));
     try std.testing.expectEqual(raw, @backingInt(h));
     // 有符号 i7 范围 [-64, 63]，无符号 u7 范围 [0, 127]——按值域选类型
-    // 有符号 i7 范围 [-64, 63]，无符号 u7 范围 [0, 127]——按值域选类型
-    try std.testing.expectEqual(@as(i7, -64), std.math.minInt(i7));
     try std.testing.expectEqual(@as(i7, -64), std.math.minInt(i7));
     try std.testing.expectEqual(@as(u7, 127), std.math.maxInt(u7));
-    try std.testing.expectEqual(@as(u7, 127), std.math.maxInt(u7));
     _ = Signedness;
-    _ = Signedness;
-}
 }
 ```
 
@@ -2146,46 +1317,25 @@ test "packed struct 等价 C 位域" {
 
 ```zig
 const std = @import("std");
-const std = @import("std");
-
 
 // C 的 struct 按声明顺序布局；Zig 普通 struct 不保证顺序（编译器可重排），
-// C 的 struct 按声明顺序布局；Zig 普通 struct 不保证顺序（编译器可重排），
-// extern struct 才与 C ABI 一致，需要手动排序字段。
 // extern struct 才与 C ABI 一致，需要手动排序字段。
 // zperf-lint: ignore zp-extern-struct-padding -- 故意的反例
-// zperf-lint: ignore zp-extern-struct-padding -- 故意的反例
-const Bad = extern struct { a: u8, b: u64, c: u8 }; // 1 + 7pad + 8 + 1 + 7pad = 24
 const Bad = extern struct { a: u8, b: u64, c: u8 }; // 1 + 7pad + 8 + 1 + 7pad = 24
 const Good = extern struct { b: u64, a: u8, c: u8 }; // 8 + 1 + 1 + 6pad = 16
-const Good = extern struct { b: u64, a: u8, c: u8 }; // 8 + 1 + 1 + 6pad = 16
-const Auto = struct { a: u8, b: u64, c: u8 }; // 编译器自行重排
 const Auto = struct { a: u8, b: u64, c: u8 }; // 编译器自行重排
 
-
-// #pragma pack(1) 的对应：字段级 align(1)
 // #pragma pack(1) 的对应：字段级 align(1)
 const Packed1 = extern struct { a: u8, b: u32 align(1) };
-const Packed1 = extern struct { a: u8, b: u32 align(1) };
-
 
 test "sizeof/alignof/offsetof 对应" {
-test "sizeof/alignof/offsetof 对应" {
-    try std.testing.expectEqual(@as(usize, 24), @sizeOf(Bad));
     try std.testing.expectEqual(@as(usize, 24), @sizeOf(Bad));
     try std.testing.expectEqual(@as(usize, 16), @sizeOf(Good));
-    try std.testing.expectEqual(@as(usize, 16), @sizeOf(Good));
-    try std.testing.expectEqual(@as(usize, 8), @offsetOf(Bad, "b"));
     try std.testing.expectEqual(@as(usize, 8), @offsetOf(Bad, "b"));
     try std.testing.expectEqual(@as(usize, 8), @alignOf(Good));
-    try std.testing.expectEqual(@as(usize, 8), @alignOf(Good));
-    try std.testing.expect(@sizeOf(Auto) <= 16);
     try std.testing.expect(@sizeOf(Auto) <= 16);
     try std.testing.expectEqual(@as(usize, 5), @sizeOf(Packed1));
-    try std.testing.expectEqual(@as(usize, 5), @sizeOf(Packed1));
     try std.testing.expectEqual(@as(usize, 1), @offsetOf(Packed1, "b"));
-    try std.testing.expectEqual(@as(usize, 1), @offsetOf(Packed1, "b"));
-}
 }
 ```
 
@@ -2197,52 +1347,28 @@ test "sizeof/alignof/offsetof 对应" {
 
 ```zig
 const std = @import("std");
-const std = @import("std");
-
 
 const Untagged = union { i: u32, f: f32 }; // 无 tag；Debug/ReleaseSafe 下编译器会加隐藏安全 tag
-const Untagged = union { i: u32, f: f32 }; // 无 tag；Debug/ReleaseSafe 下编译器会加隐藏安全 tag
-const Tagged = union(enum) { i: u32, f: f32 }; // 显式 tag：+1 字节 tag，再按对齐补齐
 const Tagged = union(enum) { i: u32, f: f32 }; // 显式 tag：+1 字节 tag，再按对齐补齐
 const CUnion = extern union { i: u32, f: f32 }; // 与 C union 一致，可做类型双关
-const CUnion = extern union { i: u32, f: f32 }; // 与 C union 一致，可做类型双关
-
 
 test "union 开销" {
-test "union 开销" {
-    try std.testing.expectEqual(@as(usize, 8), @sizeOf(Tagged)); // 4 + tag(1) + 3 pad
     try std.testing.expectEqual(@as(usize, 8), @sizeOf(Tagged)); // 4 + tag(1) + 3 pad
     try std.testing.expectEqual(@as(usize, 4), @sizeOf(CUnion));
-    try std.testing.expectEqual(@as(usize, 4), @sizeOf(CUnion));
-    const u: CUnion = .{ .f = 1.0 };
     const u: CUnion = .{ .f = 1.0 };
     try std.testing.expectEqual(@as(u32, 0x3f800000), u.i); // extern union 读另一个字段是合法的
-    try std.testing.expectEqual(@as(u32, 0x3f800000), u.i); // extern union 读另一个字段是合法的
-    _ = Untagged;
     _ = Untagged;
 }
-}
-
 
 // 大量 tagged union 时，把 tag 拆出去（MultiArrayList 对 union 自动拆成 tags + data 两条数组）
-// 大量 tagged union 时，把 tag 拆出去（MultiArrayList 对 union 自动拆成 tags + data 两条数组）
-test "MultiArrayList(tagged union) 拆 tag" {
 test "MultiArrayList(tagged union) 拆 tag" {
     const gpa = std.testing.allocator;
-    const gpa = std.testing.allocator;
-    var list: std.MultiArrayList(Tagged) = .empty;
     var list: std.MultiArrayList(Tagged) = .empty;
     defer list.deinit(gpa);
-    defer list.deinit(gpa);
-    try list.append(gpa, .{ .i = 1 });
     try list.append(gpa, .{ .i = 1 });
     try list.append(gpa, .{ .f = 2.0 });
-    try list.append(gpa, .{ .f = 2.0 });
-    try std.testing.expectEqual(@as(usize, 2), list.items(.tags).len);
     try std.testing.expectEqual(@as(usize, 2), list.items(.tags).len);
     try std.testing.expectEqual(Tagged{ .f = 2.0 }, list.get(1));
-    try std.testing.expectEqual(Tagged{ .f = 2.0 }, list.get(1));
-}
 }
 ```
 
@@ -2254,60 +1380,32 @@ test "MultiArrayList(tagged union) 拆 tag" {
 
 ```zig
 const std = @import("std");
-const std = @import("std");
-
 
 const Perm = enum { read, write, exec, admin };
-const Perm = enum { read, write, exec, admin };
-
 
 test "flags：EnumSet / bit_set" {
-test "flags：EnumSet / bit_set" {
-    // C: #define READ 1, WRITE 2 ... ; unsigned flags;
     // C: #define READ 1, WRITE 2 ... ; unsigned flags;
     var p: std.EnumSet(Perm) = .empty; // 0.17: initEmpty -> .empty
-    var p: std.EnumSet(Perm) = .empty; // 0.17: initEmpty -> .empty
-    p.insert(.read);
     p.insert(.read);
     p.insert(.exec);
-    p.insert(.exec);
-    try std.testing.expect(p.contains(.exec));
     try std.testing.expect(p.contains(.exec));
     try std.testing.expectEqual(@as(usize, 1), @sizeOf(std.EnumSet(Perm)));
-    try std.testing.expectEqual(@as(usize, 1), @sizeOf(std.EnumSet(Perm)));
-
 
     var small: std.bit_set.Integer(64) = .empty; // 一个 u64
-    var small: std.bit_set.Integer(64) = .empty; // 一个 u64
-    small.set(63);
     small.set(63);
     try std.testing.expectEqual(@as(usize, 1), small.count());
-    try std.testing.expectEqual(@as(usize, 1), small.count());
-
 
     var big: std.bit_set.Static(1000) = .empty; // >64 位时自动变成 [N]usize 数组
-    var big: std.bit_set.Static(1000) = .empty; // >64 位时自动变成 [N]usize 数组
-    big.set(999);
     big.set(999);
     try std.testing.expectEqual(@as(?usize, 999), big.findFirstSet());
-    try std.testing.expectEqual(@as(?usize, 999), big.findFirstSet());
-
 
     // 运行时长度：Dynamic（0.17 起不带 allocator 字段）
-    // 运行时长度：Dynamic（0.17 起不带 allocator 字段）
-    const gpa = std.testing.allocator;
     const gpa = std.testing.allocator;
     var dyn: std.bit_set.Dynamic = try .initEmpty(gpa, 10_000);
-    var dyn: std.bit_set.Dynamic = try .initEmpty(gpa, 10_000);
-    defer dyn.deinit(gpa);
     defer dyn.deinit(gpa);
     dyn.set(1234);
-    dyn.set(1234);
-    try std.testing.expect(dyn.isSet(1234));
     try std.testing.expect(dyn.isSet(1234));
     // 对比：[10_000]bool 占 10_000 字节；bit set 占 10_000/8 ≈ 1250 字节
-    // 对比：[10_000]bool 占 10_000 字节；bit set 占 10_000/8 ≈ 1250 字节
-}
 }
 ```
 
@@ -2339,150 +1437,77 @@ test "flags：EnumSet / bit_set" {
 
 ```zig
 const std = @import("std");
-const std = @import("std");
-
 
 // 第 1/2 步  C: enum Car { ELECTRIC=1, BENZINE=2, DIESEL=3 }; struct { int type1; int type2; }
-// 第 1/2 步  C: enum Car { ELECTRIC=1, BENZINE=2, DIESEL=3 }; struct { int type1; int type2; }
-const CarC = enum(c_int) { electric = 1, benzine = 2, diesel = 3 };
 const CarC = enum(c_int) { electric = 1, benzine = 2, diesel = 3 };
 const HybridC = extern struct { type1: CarC, type2: CarC };
-const HybridC = extern struct { type1: CarC, type2: CarC };
-
 
 // Zig 第一步：枚举只需要能装下 1..3 的 tag
-// Zig 第一步：枚举只需要能装下 1..3 的 tag
-const Car = enum(u2) { electric = 1, benzine = 2, diesel = 3 };
 const Car = enum(u2) { electric = 1, benzine = 2, diesel = 3 };
 const Hybrid = struct { type1: Car, type2: Car };
-const Hybrid = struct { type1: Car, type2: Car };
-
 
 // 第 3 步  C: 位标志 ELECTRIC=1, BENZINE=1<<1, DIESEL=1<<2; int types = ELECTRIC|BENZINE;
-// 第 3 步  C: 位标志 ELECTRIC=1, BENZINE=1<<1, DIESEL=1<<2; int types = ELECTRIC|BENZINE;
-const ELECTRIC: c_uint = 1;
 const ELECTRIC: c_uint = 1;
 const BENZINE: c_uint = 1 << 1;
-const BENZINE: c_uint = 1 << 1;
-const DIESEL: c_uint = 1 << 2;
 const DIESEL: c_uint = 1 << 2;
 
-
-// 第 4 步  C: struct { uint8_t electric:1; uint8_t benzine:1; uint8_t diesel:1; }
 // 第 4 步  C: struct { uint8_t electric:1; uint8_t benzine:1; uint8_t diesel:1; }
 const Fuel = packed struct(u8) {
-const Fuel = packed struct(u8) {
-    electric: bool,
     electric: bool,
     benzine: bool,
-    benzine: bool,
-    diesel: bool,
     diesel: bool,
     _pad: u5 = 0,
-    _pad: u5 = 0,
-};
 };
 
-
-// 同样的语义用 EnumSet：按枚举字段数量自动选位宽
 // 同样的语义用 EnumSet：按枚举字段数量自动选位宽
 const FuelKind = enum { electric, benzine, diesel };
-const FuelKind = enum { electric, benzine, diesel };
-
 
 /// 再进一步：大量车辆时每辆只要 3 bit（0.17 已删除 std.PackedIntArray，这里用 std.mem.readPackedInt/writePackedInt 手写一个）
-/// 再进一步：大量车辆时每辆只要 3 bit（0.17 已删除 std.PackedIntArray，这里用 std.mem.readPackedInt/writePackedInt 手写一个）
-fn PackedArray(comptime T: type, comptime n: usize) type {
 fn PackedArray(comptime T: type, comptime n: usize) type {
     return struct {
-    return struct {
-        bytes: [(n * @bitSizeOf(T) + 7) / 8]u8 = @splat(0),
         bytes: [(n * @bitSizeOf(T) + 7) / 8]u8 = @splat(0),
         fn set(self: *@This(), i: usize, v: T) void {
-        fn set(self: *@This(), i: usize, v: T) void {
-            std.mem.writePackedInt(T, &self.bytes, i * @bitSizeOf(T), v, .little);
             std.mem.writePackedInt(T, &self.bytes, i * @bitSizeOf(T), v, .little);
         }
-        }
-        fn get(self: *const @This(), i: usize) T {
         fn get(self: *const @This(), i: usize) T {
             return std.mem.readPackedInt(T, &self.bytes, i * @bitSizeOf(T), .little);
-            return std.mem.readPackedInt(T, &self.bytes, i * @bitSizeOf(T), .little);
-        }
         }
     };
-    };
 }
-}
-
 
 test "car case study" {
-test "car case study" {
-    // 2 个 int：8 字节 = 64 bit
     // 2 个 int：8 字节 = 64 bit
     try std.testing.expectEqual(@as(usize, 8), @sizeOf(HybridC));
-    try std.testing.expectEqual(@as(usize, 8), @sizeOf(HybridC));
-    // Zig 小 tag：2 字节（每个 enum(u2) 存储时仍占 1 字节）
     // Zig 小 tag：2 字节（每个 enum(u2) 存储时仍占 1 字节）
     try std.testing.expectEqual(@as(usize, 2), @sizeOf(Hybrid));
-    try std.testing.expectEqual(@as(usize, 2), @sizeOf(Hybrid));
-    try std.testing.expectEqual(@as(usize, 2), @bitSizeOf(Car));
     try std.testing.expectEqual(@as(usize, 2), @bitSizeOf(Car));
 
-
-    // 位标志：一个 int 4 字节
     // 位标志：一个 int 4 字节
     const types: c_uint = ELECTRIC | BENZINE;
-    const types: c_uint = ELECTRIC | BENZINE;
-    try std.testing.expectEqual(@as(usize, 4), @sizeOf(@TypeOf(types)));
     try std.testing.expectEqual(@as(usize, 4), @sizeOf(@TypeOf(types)));
     try std.testing.expect(types & DIESEL == 0);
-    try std.testing.expect(types & DIESEL == 0);
-
 
     // packed struct：1 字节，有效位 8（其中 3 位有意义）
-    // packed struct：1 字节，有效位 8（其中 3 位有意义）
-    const f: Fuel = .{ .electric = true, .benzine = true, .diesel = false };
     const f: Fuel = .{ .electric = true, .benzine = true, .diesel = false };
     try std.testing.expectEqual(@as(usize, 1), @sizeOf(Fuel));
-    try std.testing.expectEqual(@as(usize, 1), @sizeOf(Fuel));
-    try std.testing.expectEqual(@as(usize, 8), @bitSizeOf(Fuel));
     try std.testing.expectEqual(@as(usize, 8), @bitSizeOf(Fuel));
     const wire: u8 = @bitCast(f); // 序列化：直接拿后备整数
-    const wire: u8 = @bitCast(f); // 序列化：直接拿后备整数
-    try std.testing.expectEqual(@as(u8, 0b011), wire); // 与 C 的 ELECTRIC|BENZINE 数值一致
     try std.testing.expectEqual(@as(u8, 0b011), wire); // 与 C 的 ELECTRIC|BENZINE 数值一致
     try std.testing.expectEqual(f, @as(Fuel, @bitCast(wire)));
-    try std.testing.expectEqual(f, @as(Fuel, @bitCast(wire)));
-
 
     var set: std.EnumSet(FuelKind) = .empty;
-    var set: std.EnumSet(FuelKind) = .empty;
-    set.insert(.electric);
     set.insert(.electric);
     set.insert(.benzine);
-    set.insert(.benzine);
-    try std.testing.expectEqual(@as(usize, 1), @sizeOf(std.EnumSet(FuelKind)));
     try std.testing.expectEqual(@as(usize, 1), @sizeOf(std.EnumSet(FuelKind)));
     try std.testing.expect(!set.contains(.diesel));
-    try std.testing.expect(!set.contains(.diesel));
-
 
     // 1000 辆车 × 3 bit = 3000 bit = 375 字节；对比 [1000]Fuel = 1000 字节，[1000]HybridC = 8000 字节
-    // 1000 辆车 × 3 bit = 3000 bit = 375 字节；对比 [1000]Fuel = 1000 字节，[1000]HybridC = 8000 字节
-    var cars: PackedArray(u3, 1000) = .{};
     var cars: PackedArray(u3, 1000) = .{};
     try std.testing.expectEqual(@as(usize, 375), @sizeOf(@TypeOf(cars)));
-    try std.testing.expectEqual(@as(usize, 375), @sizeOf(@TypeOf(cars)));
-    cars.set(999, @truncate(wire));
     cars.set(999, @truncate(wire));
     try std.testing.expectEqual(@as(u3, 0b011), cars.get(999));
-    try std.testing.expectEqual(@as(u3, 0b011), cars.get(999));
-    try std.testing.expectEqual(@as(usize, 1000), @sizeOf([1000]Fuel));
     try std.testing.expectEqual(@as(usize, 1000), @sizeOf([1000]Fuel));
     try std.testing.expectEqual(@as(usize, 8000), @sizeOf([1000]HybridC));
-    try std.testing.expectEqual(@as(usize, 8000), @sizeOf([1000]HybridC));
-}
 }
 ```
 
@@ -2507,66 +1532,35 @@ test "car case study" {
 
 ```zig
 const std = @import("std");
-const std = @import("std");
-
 
 /// 编译期生成查找表：CRC32（多项式 0xEDB88320）256 项，运行时零初始化成本。
-/// 编译期生成查找表：CRC32（多项式 0xEDB88320）256 项，运行时零初始化成本。
-const crc_table: [256]u32 = blk: {
 const crc_table: [256]u32 = blk: {
     @setEvalBranchQuota(256 * 8 * 4);
-    @setEvalBranchQuota(256 * 8 * 4);
-    var t: [256]u32 = undefined;
     var t: [256]u32 = undefined;
     for (&t, 0..) |*e, i| {
-    for (&t, 0..) |*e, i| {
-        var c: u32 = @intCast(i);
         var c: u32 = @intCast(i);
         for (0..8) |_| c = if (c & 1 != 0) 0xEDB88320 ^ (c >> 1) else c >> 1;
-        for (0..8) |_| c = if (c & 1 != 0) 0xEDB88320 ^ (c >> 1) else c >> 1;
-        e.* = c;
         e.* = c;
     }
-    }
-    break :blk t;
     break :blk t;
 };
-};
-
 
 fn crc32(data: []const u8) u32 {
-fn crc32(data: []const u8) u32 {
-    var c: u32 = 0xFFFFFFFF;
     var c: u32 = 0xFFFFFFFF;
     for (data) |b| c = crc_table[(c ^ b) & 0xFF] ^ (c >> 8);
-    for (data) |b| c = crc_table[(c ^ b) & 0xFF] ^ (c >> 8);
-    return ~c;
     return ~c;
 }
-}
-
 
 /// comptime 参数做泛型特化：每个 N 生成一份完全展开的代码
-/// comptime 参数做泛型特化：每个 N 生成一份完全展开的代码
-fn dot(comptime N: usize, a: [N]f32, b: [N]f32) f32 {
 fn dot(comptime N: usize, a: [N]f32, b: [N]f32) f32 {
     var s: f32 = 0;
-    var s: f32 = 0;
-    inline for (0..N) |i| s += a[i] * b[i];
     inline for (0..N) |i| s += a[i] * b[i];
     return s;
-    return s;
-}
 }
 
-
-test "comptime LUT" {
 test "comptime LUT" {
     try std.testing.expectEqual(std.hash.Crc32.hash("hello"), crc32("hello"));
-    try std.testing.expectEqual(std.hash.Crc32.hash("hello"), crc32("hello"));
     try std.testing.expectEqual(@as(f32, 11), dot(2, .{ 1, 2 }, .{ 3, 4 }));
-    try std.testing.expectEqual(@as(f32, 11), dot(2, .{ 1, 2 }, .{ 3, 4 }));
-}
 }
 ```
 
@@ -2592,102 +1586,53 @@ test "comptime LUT" {
 
 ```zig
 const std = @import("std");
-const std = @import("std");
-
 
 const lanes = std.simd.suggestVectorLength(f32) orelse 4;
-const lanes = std.simd.suggestVectorLength(f32) orelse 4;
-const V = @Vector(lanes, f32);
 const V = @Vector(lanes, f32);
 
-
-/// 显式 SIMD 求和。注意 0.16/0.17 因 LLVM bug 关闭了循环自动向量化，手写 @Vector 更重要了。
 /// 显式 SIMD 求和。注意 0.16/0.17 因 LLVM bug 关闭了循环自动向量化，手写 @Vector 更重要了。
 fn sum(xs: []const f32) f32 {
-fn sum(xs: []const f32) f32 {
-    var acc: V = @splat(0);
     var acc: V = @splat(0);
     var i: usize = 0;
-    var i: usize = 0;
-    while (i + lanes <= xs.len) : (i += lanes) {
     while (i + lanes <= xs.len) : (i += lanes) {
         const v: V = xs[i..][0..lanes].*; // 数组 -> 向量 强制转换
-        const v: V = xs[i..][0..lanes].*; // 数组 -> 向量 强制转换
-        acc += v;
         acc += v;
     }
-    }
-    var s = @reduce(.Add, acc);
     var s = @reduce(.Add, acc);
     while (i < xs.len) : (i += 1) s += xs[i]; // 尾部标量处理
-    while (i < xs.len) : (i += 1) s += xs[i]; // 尾部标量处理
-    return s;
     return s;
 }
-}
-
 
 /// 字节查找：比较得到 bool 向量 -> 位掩码 -> @ctz 找第一个命中
-/// 字节查找：比较得到 bool 向量 -> 位掩码 -> @ctz 找第一个命中
-fn findByte(hay: []const u8, needle: u8) ?usize {
 fn findByte(hay: []const u8, needle: u8) ?usize {
     const n = 16;
-    const n = 16;
-    const B = @Vector(n, u8);
     const B = @Vector(n, u8);
     const nv: B = @splat(needle);
-    const nv: B = @splat(needle);
-    var i: usize = 0;
     var i: usize = 0;
     while (i + n <= hay.len) : (i += n) {
-    while (i + n <= hay.len) : (i += n) {
-        const chunk: B = hay[i..][0..n].*;
         const chunk: B = hay[i..][0..n].*;
         const mask: u16 = @bitCast(chunk == nv);
-        const mask: u16 = @bitCast(chunk == nv);
-        if (mask != 0) return i + @ctz(mask);
         if (mask != 0) return i + @ctz(mask);
     }
-    }
-    while (i < hay.len) : (i += 1) if (hay[i] == needle) return i;
     while (i < hay.len) : (i += 1) if (hay[i] == needle) return i;
     return null;
-    return null;
 }
-}
-
 
 test "simd" {
-test "simd" {
-    var xs: [37]f32 = undefined;
     var xs: [37]f32 = undefined;
     for (&xs, 0..) |*x, i| x.* = @floatFromInt(i);
-    for (&xs, 0..) |*x, i| x.* = @floatFromInt(i);
-    try std.testing.expectEqual(@as(f32, 666), sum(&xs));
     try std.testing.expectEqual(@as(f32, 666), sum(&xs));
     try std.testing.expectEqual(@as(?usize, 20), findByte("aaaaaaaaaaaaaaaaaaaaXaaa", 'X'));
-    try std.testing.expectEqual(@as(?usize, 20), findByte("aaaaaaaaaaaaaaaaaaaaXaaa", 'X'));
-    try std.testing.expectEqual(@as(?usize, 20), std.mem.findScalar(u8, "aaaaaaaaaaaaaaaaaaaaXaaa", 'X')); // std 已向量化
     try std.testing.expectEqual(@as(?usize, 20), std.mem.findScalar(u8, "aaaaaaaaaaaaaaaaaaaaXaaa", 'X')); // std 已向量化
 }
-}
-
 
 test "@shuffle / @select" {
-test "@shuffle / @select" {
-    const a: @Vector(4, i32) = .{ 1, 2, 3, 4 };
     const a: @Vector(4, i32) = .{ 1, 2, 3, 4 };
     const b: @Vector(4, i32) = .{ 10, 20, 30, 40 };
-    const b: @Vector(4, i32) = .{ 10, 20, 30, 40 };
-    const rev = @shuffle(i32, a, undefined, @Vector(4, i32){ 3, 2, 1, 0 });
     const rev = @shuffle(i32, a, undefined, @Vector(4, i32){ 3, 2, 1, 0 });
     try std.testing.expectEqual(@Vector(4, i32){ 4, 3, 2, 1 }, rev);
-    try std.testing.expectEqual(@Vector(4, i32){ 4, 3, 2, 1 }, rev);
-    const mx = @select(i32, a > @as(@Vector(4, i32), @splat(2)), a, b); // 无分支逐 lane 选择
     const mx = @select(i32, a > @as(@Vector(4, i32), @splat(2)), a, b); // 无分支逐 lane 选择
     try std.testing.expectEqual(@Vector(4, i32){ 10, 20, 3, 4 }, mx);
-    try std.testing.expectEqual(@Vector(4, i32){ 10, 20, 3, 4 }, mx);
-}
 }
 ```
 
@@ -2711,56 +1656,30 @@ test "@shuffle / @select" {
 
 ```zig
 const std = @import("std");
-const std = @import("std");
-
 
 /// 不可预测的数据上，用算术/选择代替分支
-/// 不可预测的数据上，用算术/选择代替分支
-fn countLess(xs: []const u32, pivot: u32) usize {
 fn countLess(xs: []const u32, pivot: u32) usize {
     var n: usize = 0;
-    var n: usize = 0;
-    for (xs) |x| n += @intFromBool(x < pivot); // 无分支计数
     for (xs) |x| n += @intFromBool(x < pivot); // 无分支计数
     return n;
-    return n;
 }
-}
-
 
 fn clampAll(xs: []i32, lo: i32, hi: i32) void {
-fn clampAll(xs: []i32, lo: i32, hi: i32) void {
-    for (xs) |*x| x.* = @min(@max(x.*, lo), hi); // 通常编译为 cmov / min/max 指令
     for (xs) |*x| x.* = @min(@max(x.*, lo), hi); // 通常编译为 cmov / min/max 指令
 }
-}
-
 
 fn absBranchless(x: i32) u32 {
-fn absBranchless(x: i32) u32 {
-    const m = x >> 31; // 算术右移得到全 0 或全 1
     const m = x >> 31; // 算术右移得到全 0 或全 1
     return @bitCast((x ^ m) -% m);
-    return @bitCast((x ^ m) -% m);
-}
 }
 
-
-test "branchless" {
 test "branchless" {
     try std.testing.expectEqual(@as(usize, 2), countLess(&.{ 5, 1, 9, 3 }, 4));
-    try std.testing.expectEqual(@as(usize, 2), countLess(&.{ 5, 1, 9, 3 }, 4));
-    var a = [_]i32{ -5, 3, 99 };
     var a = [_]i32{ -5, 3, 99 };
     clampAll(&a, 0, 10);
-    clampAll(&a, 0, 10);
-    try std.testing.expectEqualSlices(i32, &.{ 0, 3, 10 }, &a);
     try std.testing.expectEqualSlices(i32, &.{ 0, 3, 10 }, &a);
     try std.testing.expectEqual(@as(u32, 7), absBranchless(-7));
-    try std.testing.expectEqual(@as(u32, 7), absBranchless(-7));
     try std.testing.expectEqual(@as(u32, 7), @abs(@as(i32, -7))); // 内建 @abs 更清晰
-    try std.testing.expectEqual(@as(u32, 7), @abs(@as(i32, -7))); // 内建 @abs 更清晰
-}
 }
 ```
 
@@ -2774,94 +1693,49 @@ test "branchless" {
 
 ```zig
 const std = @import("std");
-const std = @import("std");
-
 
 const Op = enum(u8) { push, add, mul, halt };
-const Op = enum(u8) { push, add, mul, halt };
-
 
 /// 0.14+ labeled switch：每个 continue 是独立的间接跳转点，利于分支预测（tokenizer 因此快了 13%）
-/// 0.14+ labeled switch：每个 continue 是独立的间接跳转点，利于分支预测（tokenizer 因此快了 13%）
-/// 前置条件：code 是合法字节码（栈深不超过 16、以 halt 结尾）。
 /// 前置条件：code 是合法字节码（栈深不超过 16、以 halt 结尾）。
 /// assert 在 Debug 下检查，ReleaseFast 下成为优化假设。
-/// assert 在 Debug 下检查，ReleaseFast 下成为优化假设。
-fn run(code: []const u8) i64 {
 fn run(code: []const u8) i64 {
     var stack: [16]i64 = undefined;
-    var stack: [16]i64 = undefined;
-    var sp: usize = 0;
     var sp: usize = 0;
     var pc: usize = 0;
-    var pc: usize = 0;
-    loop: switch (@as(Op, @fromBackingInt(code[pc]))) {
     loop: switch (@as(Op, @fromBackingInt(code[pc]))) {
         .push => {
-        .push => {
-            std.debug.assert(sp < stack.len);
             std.debug.assert(sp < stack.len);
             stack[sp] = code[pc + 1];
-            stack[sp] = code[pc + 1];
-            sp += 1;
             sp += 1;
             pc += 2;
-            pc += 2;
             continue :loop @fromBackingInt(code[pc]);
-            continue :loop @fromBackingInt(code[pc]);
-        },
         },
         .add => {
-        .add => {
             std.debug.assert(sp >= 2);
-            std.debug.assert(sp >= 2);
-            sp -= 1;
             sp -= 1;
             stack[sp - 1] += stack[sp]; // zbc-disable-line: index-minus-one-without-zero-guard
-            stack[sp - 1] += stack[sp]; // zbc-disable-line: index-minus-one-without-zero-guard
-            pc += 1;
             pc += 1;
             continue :loop @fromBackingInt(code[pc]);
-            continue :loop @fromBackingInt(code[pc]);
-        },
         },
         .mul => {
-        .mul => {
-            std.debug.assert(sp >= 2);
             std.debug.assert(sp >= 2);
             sp -= 1;
-            sp -= 1;
-            stack[sp - 1] *= stack[sp]; // zbc-disable-line: index-minus-one-without-zero-guard
             stack[sp - 1] *= stack[sp]; // zbc-disable-line: index-minus-one-without-zero-guard
             pc += 1;
-            pc += 1;
-            continue :loop @fromBackingInt(code[pc]);
             continue :loop @fromBackingInt(code[pc]);
         },
-        },
-        .halt => {
         .halt => {
             std.debug.assert(sp >= 1);
-            std.debug.assert(sp >= 1);
-            return stack[sp - 1]; // zbc-disable-line: index-minus-one-without-zero-guard
             return stack[sp - 1]; // zbc-disable-line: index-minus-one-without-zero-guard
         },
-        },
-    }
     }
 }
-}
-
 
 test "labeled switch interpreter" {
-test "labeled switch interpreter" {
-    const P = @backingInt(Op.push);
     const P = @backingInt(Op.push);
     const code = [_]u8{ P, 2, P, 3, @backingInt(Op.add), P, 4, @backingInt(Op.mul), @backingInt(Op.halt) };
-    const code = [_]u8{ P, 2, P, 3, @backingInt(Op.add), P, 4, @backingInt(Op.mul), @backingInt(Op.halt) };
     try std.testing.expectEqual(@as(i64, 20), run(&code));
-    try std.testing.expectEqual(@as(i64, 20), run(&code));
-}
 }
 ```
 
@@ -2883,74 +1757,39 @@ test "labeled switch interpreter" {
 
 ```zig
 const std = @import("std");
-const std = @import("std");
-
 
 fn parseDigit(c: u8) !u4 {
-fn parseDigit(c: u8) !u4 {
-    if (c < '0' or c > '9') {
     if (c < '0' or c > '9') {
         @branchHint(.cold); // 0.14+ 替代 @setCold；必须是块内第一条语句
-        @branchHint(.cold); // 0.14+ 替代 @setCold；必须是块内第一条语句
-        return error.InvalidDigit;
         return error.InvalidDigit;
     }
-    }
-    return @intCast(c - '0');
     return @intCast(c - '0');
 }
-}
-
 
 fn reportError(msg: []const u8) void {
-fn reportError(msg: []const u8) void {
-    @branchHint(.cold); // 放在函数开头：整函数冷，调用点的分支也会被视为不太可能
     @branchHint(.cold); // 放在函数开头：整函数冷，调用点的分支也会被视为不太可能
     std.log.err("{s}", .{msg});
-    std.log.err("{s}", .{msg});
 }
-}
-
 
 fn sumWithPrefetch(xs: []const u64) u64 {
-fn sumWithPrefetch(xs: []const u64) u64 {
-    var s: u64 = 0;
     var s: u64 = 0;
     for (xs, 0..) |x, i| {
-    for (xs, 0..) |x, i| {
-        if (i + 64 < xs.len) {
         if (i + 64 < xs.len) {
             // TigerStyle 建议显式写出所有选项，避免默认值变化
-            // TigerStyle 建议显式写出所有选项，避免默认值变化
-            @prefetch(&xs[i + 64], .{ .rw = .read, .locality = 3, .cache = .data });
             @prefetch(&xs[i + 64], .{ .rw = .read, .locality = 3, .cache = .data });
         }
-        }
-        s +%= x;
         s +%= x;
     }
-    }
-    return s;
     return s;
 }
-}
-
 
 test "hints" {
-test "hints" {
-    try std.testing.expectEqual(@as(u4, 7), try parseDigit('7'));
     try std.testing.expectEqual(@as(u4, 7), try parseDigit('7'));
     try std.testing.expectError(error.InvalidDigit, parseDigit('x'));
-    try std.testing.expectError(error.InvalidDigit, parseDigit('x'));
-    var xs: [200]u64 = undefined;
     var xs: [200]u64 = undefined;
     for (&xs, 0..) |*x, i| x.* = i;
-    for (&xs, 0..) |*x, i| x.* = i;
-    try std.testing.expectEqual(@as(u64, 19900), sumWithPrefetch(&xs));
     try std.testing.expectEqual(@as(u64, 19900), sumWithPrefetch(&xs));
     _ = &reportError;
-    _ = &reportError;
-}
 }
 ```
 
@@ -2970,116 +1809,60 @@ test "hints" {
 
 ```zig
 const std = @import("std");
-const std = @import("std");
-
 
 const Mesh = struct {
-const Mesh = struct {
-    xs: []f32,
     xs: []f32,
     scale: f32,
-    scale: f32,
-
 
     /// 反模式：热循环里反复经过 self 指针访问字段，编译器要证明无别名才能缓存
-    /// 反模式：热循环里反复经过 self 指针访问字段，编译器要证明无别名才能缓存
-    fn scaleSlow(self: *Mesh) void {
     fn scaleSlow(self: *Mesh) void {
         for (self.xs) |*x| x.* *= self.scale;
-        for (self.xs) |*x| x.* *= self.scale;
-    }
     }
     /// TigerStyle：把热循环抽成只接收原始参数的独立函数
-    /// TigerStyle：把热循环抽成只接收原始参数的独立函数
-    fn scaleFast(self: *Mesh) void {
     fn scaleFast(self: *Mesh) void {
         scaleKernel(self.xs, self.scale);
-        scaleKernel(self.xs, self.scale);
-    }
     }
 };
-};
-
 
 fn scaleKernel(xs: []f32, scale: f32) void {
-fn scaleKernel(xs: []f32, scale: f32) void {
-    for (xs) |*x| x.* *= scale;
     for (xs) |*x| x.* *= scale;
 }
-}
-
 
 /// 循环展开：inline for 生成固定 4 路累加器，打破依赖链
-/// 循环展开：inline for 生成固定 4 路累加器，打破依赖链
-fn sum4(xs: []const u64) u64 {
 fn sum4(xs: []const u64) u64 {
     var acc: [4]u64 = @splat(0);
-    var acc: [4]u64 = @splat(0);
-    var i: usize = 0;
     var i: usize = 0;
     while (i + 4 <= xs.len) : (i += 4) {
-    while (i + 4 <= xs.len) : (i += 4) {
-        inline for (0..4) |k| acc[k] +%= xs[i + k];
         inline for (0..4) |k| acc[k] +%= xs[i + k];
     }
-    }
-    var s = acc[0] +% acc[1] +% acc[2] +% acc[3];
     var s = acc[0] +% acc[1] +% acc[2] +% acc[3];
     for (xs[i..]) |x| s +%= x;
-    for (xs[i..]) |x| s +%= x;
-    return s;
     return s;
 }
-}
-
 
 /// 大结构体按 *const 传，避免意外拷贝（TigerStyle：>16 字节时）
-/// 大结构体按 *const 传，避免意外拷贝（TigerStyle：>16 字节时）
-const Big = struct { data: [256]u8 };
 const Big = struct { data: [256]u8 };
 fn checksum(b: *const Big) u32 {
-fn checksum(b: *const Big) u32 {
-    var s: u32 = 0;
     var s: u32 = 0;
     for (b.data) |x| s +%= x;
-    for (b.data) |x| s +%= x;
-    return s;
     return s;
 }
-}
-
 
 /// inline fn：强制在调用点内联（语义上的保证，不是提示）
-/// inline fn：强制在调用点内联（语义上的保证，不是提示）
-inline fn sq(x: f32) f32 {
 inline fn sq(x: f32) f32 {
     return x * x;
-    return x * x;
-}
 }
 
-
-test "hot loops" {
 test "hot loops" {
     var data = [_]f32{ 1, 2, 3 };
-    var data = [_]f32{ 1, 2, 3 };
-    var m: Mesh = .{ .xs = &data, .scale = 2 };
     var m: Mesh = .{ .xs = &data, .scale = 2 };
     m.scaleSlow();
-    m.scaleSlow();
-    m.scaleFast();
     m.scaleFast();
     try std.testing.expectEqual(@as(f32, 12), data[2]);
-    try std.testing.expectEqual(@as(f32, 12), data[2]);
-    try std.testing.expectEqual(@as(u64, 15), sum4(&.{ 1, 2, 3, 4, 5 }));
     try std.testing.expectEqual(@as(u64, 15), sum4(&.{ 1, 2, 3, 4, 5 }));
     const big: Big = .{ .data = @splat(1) };
-    const big: Big = .{ .data = @splat(1) };
-    try std.testing.expectEqual(@as(u32, 256), checksum(&big));
     try std.testing.expectEqual(@as(u32, 256), checksum(&big));
     try std.testing.expectEqual(@as(f32, 9), sq(3));
-    try std.testing.expectEqual(@as(f32, 9), sq(3));
-}
 }
 ```
 
@@ -3095,50 +1878,27 @@ test "hot loops" {
 
 ```zig
 const std = @import("std");
-const std = @import("std");
-
 
 /// 只在已验证的热点里局部关闭安全检查，不要放在文件作用域
-/// 只在已验证的热点里局部关闭安全检查，不要放在文件作用域
-fn sumUnchecked(xs: []const u32) u32 {
 fn sumUnchecked(xs: []const u32) u32 {
     @setRuntimeSafety(false); // 本作用域内去掉越界/溢出检查（在 ReleaseSafe/Debug 下生效）
-    @setRuntimeSafety(false); // 本作用域内去掉越界/溢出检查（在 ReleaseSafe/Debug 下生效）
-    var s: u32 = 0;
     var s: u32 = 0;
     for (xs) |x| s += x; // 溢出将变成 UB 而不是 panic —— 前提是你已经证明不会溢出
-    for (xs) |x| s += x; // 溢出将变成 UB 而不是 panic —— 前提是你已经证明不会溢出
-    return s;
     return s;
 }
-}
-
 
 fn dotFast(a: []const f32, b: []const f32) f32 {
-fn dotFast(a: []const f32, b: []const f32) f32 {
-    @setFloatMode(.optimized); // 允许重结合/FMA 收缩等（-ffast-math 语义），结果可能有微小差异
     @setFloatMode(.optimized); // 允许重结合/FMA 收缩等（-ffast-math 语义），结果可能有微小差异
     std.debug.assert(a.len == b.len); // Release 下 assert 变成优化假设
-    std.debug.assert(a.len == b.len); // Release 下 assert 变成优化假设
-    var s: f32 = 0;
     var s: f32 = 0;
     for (a, b) |x, y| s += x * y;
-    for (a, b) |x, y| s += x * y;
-    return s;
     return s;
 }
-}
-
 
 test "safety toggles" {
-test "safety toggles" {
-    try std.testing.expectEqual(@as(u32, 6), sumUnchecked(&.{ 1, 2, 3 }));
     try std.testing.expectEqual(@as(u32, 6), sumUnchecked(&.{ 1, 2, 3 }));
     try std.testing.expectApproxEqAbs(@as(f32, 11), dotFast(&.{ 1, 2 }, &.{ 3, 4 }), 1e-6);
-    try std.testing.expectApproxEqAbs(@as(f32, 11), dotFast(&.{ 1, 2 }, &.{ 3, 4 }), 1e-6);
     try std.testing.expectEqual(@as(f32, 7), @mulAdd(f32, 2, 3, 1)); // 显式 FMA
-    try std.testing.expectEqual(@as(f32, 7), @mulAdd(f32, 2, 3, 1)); // 显式 FMA
-}
 }
 ```
 
@@ -3157,76 +1917,40 @@ test "safety toggles" {
 
 ```zig
 const std = @import("std");
-const std = @import("std");
-
 
 /// 容量取 2 的幂：取模变成按位与
-/// 容量取 2 的幂：取模变成按位与
-const Ring = struct {
 const Ring = struct {
     const cap = 1024;
-    const cap = 1024;
-    comptime {
     comptime {
         std.debug.assert(std.math.isPowerOfTwo(cap));
-        std.debug.assert(std.math.isPowerOfTwo(cap));
-    }
     }
     buf: [cap]u32 = undefined,
-    buf: [cap]u32 = undefined,
-    head: u32 = 0, // 允许自然回绕
     head: u32 = 0, // 允许自然回绕
 
-
-    fn push(r: *Ring, v: u32) void {
     fn push(r: *Ring, v: u32) void {
         r.buf[r.head & (cap - 1)] = v; // 等价于 % cap，但不需要除法
-        r.buf[r.head & (cap - 1)] = v; // 等价于 % cap，但不需要除法
-        r.head +%= 1; // wrapping 加法：明确表示可回绕，没有溢出检查
         r.head +%= 1; // wrapping 加法：明确表示可回绕，没有溢出检查
     }
-    }
-};
 };
 
-
-test "整数技巧" {
 test "整数技巧" {
     var r: Ring = .{};
-    var r: Ring = .{};
-    for (0..2000) |i| r.push(@intCast(i));
     for (0..2000) |i| r.push(@intCast(i));
     try std.testing.expectEqual(@as(u32, 1999), r.buf[1999 & 1023]);
-    try std.testing.expectEqual(@as(u32, 1999), r.buf[1999 & 1023]);
-
 
     // 除以编译期常量：LLVM 会改写成乘法+移位；除以运行时变量才是真·除法指令
-    // 除以编译期常量：LLVM 会改写成乘法+移位；除以运行时变量才是真·除法指令
-    const x: u32 = 1000;
     const x: u32 = 1000;
     try std.testing.expectEqual(@as(u32, 142), x / 7);
-    try std.testing.expectEqual(@as(u32, 142), x / 7);
-    try std.testing.expectEqual(@as(u32, 3), @divCeil(@as(u32, 7), 3)); // 0.17 新增
     try std.testing.expectEqual(@as(u32, 3), @divCeil(@as(u32, 7), 3)); // 0.17 新增
     try std.testing.expectEqual(@as(u32, 125), x >> 3);
-    try std.testing.expectEqual(@as(u32, 125), x >> 3);
-
 
     const r2 = @mulWithOverflow(@as(u8, 200), 2); // 显式拿到溢出位
-    const r2 = @mulWithOverflow(@as(u8, 200), 2); // 显式拿到溢出位
-    try std.testing.expectEqual(@as(u1, 1), r2[1]);
     try std.testing.expectEqual(@as(u1, 1), r2[1]);
     try std.testing.expectEqual(@as(u8, 255), @as(u8, 200) +| 100); // 饱和加法
-    try std.testing.expectEqual(@as(u8, 255), @as(u8, 200) +| 100); // 饱和加法
-    try std.testing.expectEqual(@as(u32, 3), @popCount(@as(u32, 0b1011)));
     try std.testing.expectEqual(@as(u32, 3), @popCount(@as(u32, 0b1011)));
     try std.testing.expectEqual(@as(u32, 28), @clz(@as(u32, 0b1011)));
-    try std.testing.expectEqual(@as(u32, 28), @clz(@as(u32, 0b1011)));
-    try std.testing.expectEqual(@as(u64, 0x0807060504030201), @byteSwap(@as(u64, 0x0102030405060708)));
     try std.testing.expectEqual(@as(u64, 0x0807060504030201), @byteSwap(@as(u64, 0x0102030405060708)));
     try std.testing.expectEqual(@as(u32, 16), try std.math.ceilPowerOfTwo(u32, 9));
-    try std.testing.expectEqual(@as(u32, 16), try std.math.ceilPowerOfTwo(u32, 9));
-}
 }
 ```
 
@@ -3256,46 +1980,25 @@ std 默认质量排序是 **pdqsort**（`std.sort.pdq` / `lib/std/sort/pdq.zig`�
 
 ```zig
 const std = @import("std");
-const std = @import("std");
-
 
 /// 每线程计数器各占一条缓存行，避免 false sharing
-/// 每线程计数器各占一条缓存行，避免 false sharing
-const PaddedCounter = struct {
 const PaddedCounter = struct {
     value: std.atomic.Value(u64) align(std.atomic.cache_line) = .init(0),
-    value: std.atomic.Value(u64) align(std.atomic.cache_line) = .init(0),
-};
 };
 
-
-fn worker(c: *PaddedCounter, n: usize) void {
 fn worker(c: *PaddedCounter, n: usize) void {
     for (0..n) |_| _ = c.value.fetchAdd(1, .monotonic);
-    for (0..n) |_| _ = c.value.fetchAdd(1, .monotonic);
-}
 }
 
-
-test "false sharing" {
 test "false sharing" {
     try std.testing.expect(@sizeOf(PaddedCounter) >= std.atomic.cache_line);
-    try std.testing.expect(@sizeOf(PaddedCounter) >= std.atomic.cache_line);
-    var counters: [4]PaddedCounter = @splat(.{});
     var counters: [4]PaddedCounter = @splat(.{});
     var threads: [4]std.Thread = undefined;
-    var threads: [4]std.Thread = undefined;
-    for (&threads, &counters) |*t, *c| t.* = try std.Thread.spawn(.{}, worker, .{ c, 10_000 });
     for (&threads, &counters) |*t, *c| t.* = try std.Thread.spawn(.{}, worker, .{ c, 10_000 });
     for (threads) |t| t.join();
-    for (threads) |t| t.join();
-    var total: u64 = 0;
     var total: u64 = 0;
     for (&counters) |*c| total += c.value.load(.monotonic);
-    for (&counters) |*c| total += c.value.load(.monotonic);
     try std.testing.expectEqual(@as(u64, 40_000), total);
-    try std.testing.expectEqual(@as(u64, 40_000), total);
-}
 }
 ```
 
@@ -3309,68 +2012,36 @@ test "false sharing" {
 
 ```zig
 const std = @import("std");
-const std = @import("std");
-const Io = std.Io;
 const Io = std.Io;
 
-
-/// 0.16 移除了 std.Thread.Pool，并行任务改用 Io.Group / io.async
 /// 0.16 移除了 std.Thread.Pool，并行任务改用 Io.Group / io.async
 fn sumChunk(xs: []const u64, out: *u64) void {
-fn sumChunk(xs: []const u64, out: *u64) void {
-    var s: u64 = 0;
     var s: u64 = 0;
     for (xs) |x| s +%= x;
-    for (xs) |x| s +%= x;
-    out.* = s;
     out.* = s;
 }
-}
-
 
 fn parallelSum(io: Io, xs: []const u64) !u64 {
-fn parallelSum(io: Io, xs: []const u64) !u64 {
-    const chunks = 4;
     const chunks = 4;
     var partial: [chunks]u64 = @splat(0); // 每个任务写自己的槽，无共享写
-    var partial: [chunks]u64 = @splat(0); // 每个任务写自己的槽，无共享写
-    const step = (xs.len + chunks - 1) / chunks;
     const step = (xs.len + chunks - 1) / chunks;
     var g: Io.Group = .init;
-    var g: Io.Group = .init;
-    errdefer g.cancel(io);
     errdefer g.cancel(io);
     for (0..chunks) |c| {
-    for (0..chunks) |c| {
-        const lo = @min(c * step, xs.len);
         const lo = @min(c * step, xs.len);
         const hi = @min(lo + step, xs.len);
-        const hi = @min(lo + step, xs.len);
-        g.async(io, sumChunk, .{ xs[lo..hi], &partial[c] });
         g.async(io, sumChunk, .{ xs[lo..hi], &partial[c] });
     }
-    }
-    try g.await(io);
     try g.await(io);
     var s: u64 = 0;
-    var s: u64 = 0;
-    for (partial) |p| s +%= p;
     for (partial) |p| s +%= p;
     return s;
-    return s;
-}
 }
 
-
-test "Io.Group" {
 test "Io.Group" {
     var xs: [1000]u64 = undefined;
-    var xs: [1000]u64 = undefined;
-    for (&xs, 0..) |*x, i| x.* = i;
     for (&xs, 0..) |*x, i| x.* = i;
     try std.testing.expectEqual(@as(u64, 499500), try parallelSum(std.testing.io, &xs));
-    try std.testing.expectEqual(@as(u64, 499500), try parallelSum(std.testing.io, &xs));
-}
 }
 ```
 
@@ -3386,60 +2057,32 @@ test "Io.Group" {
 
 ```zig
 const std = @import("std");
-const std = @import("std");
-
 
 /// 0.15 Writergate 之后：缓冲区在接口内，用户提供 buffer；记得 flush！
-/// 0.15 Writergate 之后：缓冲区在接口内，用户提供 buffer；记得 flush！
-fn writeReport(w: *std.Io.Writer, rows: []const u32) !void {
 fn writeReport(w: *std.Io.Writer, rows: []const u32) !void {
     for (rows, 0..) |r, i| try w.print("{d}: {d}\n", .{ i, r });
-    for (rows, 0..) |r, i| try w.print("{d}: {d}\n", .{ i, r });
-    try w.splatByteAll('-', 10); // splat：重复字节无需物化
     try w.splatByteAll('-', 10); // splat：重复字节无需物化
     try w.writeByte('\n');
-    try w.writeByte('\n');
 }
-}
-
 
 test "buffered writer to file" {
-test "buffered writer to file" {
-    const io = std.testing.io;
     const io = std.testing.io;
     var tmp = std.testing.tmpDir(.{});
-    var tmp = std.testing.tmpDir(.{});
-    defer tmp.cleanup();
     defer tmp.cleanup();
     const file = try tmp.dir.createFile(io, "out.txt", .{});
-    const file = try tmp.dir.createFile(io, "out.txt", .{});
-    defer file.close(io);
     defer file.close(io);
 
-
-    var buf: [4096]u8 = undefined; // 一次 write 系统调用最多刷 4 KiB
     var buf: [4096]u8 = undefined; // 一次 write 系统调用最多刷 4 KiB
     var fw = file.writer(io, &buf);
-    var fw = file.writer(io, &buf);
-    try writeReport(&fw.interface, &.{ 7, 8, 9 });
     try writeReport(&fw.interface, &.{ 7, 8, 9 });
     try fw.interface.flush(); // 不 flush 数据会丢
-    try fw.interface.flush(); // 不 flush 数据会丢
-}
 }
 
-
-test "Allocating writer" {
 test "Allocating writer" {
     var aw: std.Io.Writer.Allocating = .init(std.testing.allocator);
-    var aw: std.Io.Writer.Allocating = .init(std.testing.allocator);
-    defer aw.deinit();
     defer aw.deinit();
     try writeReport(&aw.writer, &.{1});
-    try writeReport(&aw.writer, &.{1});
     try std.testing.expectEqualStrings("0: 1\n----------\n", aw.written());
-    try std.testing.expectEqualStrings("0: 1\n----------\n", aw.written());
-}
 }
 ```
 
@@ -3469,32 +2112,18 @@ test "Allocating writer" {
 
 ```zig
 const std = @import("std");
-const std = @import("std");
-const builtin = @import("builtin");
 const builtin = @import("builtin");
 
-
-// Linux io_uring：批量提交多个 I/O，一次 syscall（submit）完成
 // Linux io_uring：批量提交多个 I/O，一次 syscall（submit）完成
 test "io_uring nop batch" {
-test "io_uring nop batch" {
-    if (builtin.target.os.tag != .linux) return error.SkipZigTest;
     if (builtin.target.os.tag != .linux) return error.SkipZigTest;
     var ring = std.os.linux.IoUring.init(8, 0) catch return error.SkipZigTest; // 容器/老内核可能不支持
-    var ring = std.os.linux.IoUring.init(8, 0) catch return error.SkipZigTest; // 容器/老内核可能不支持
-    defer ring.deinit();
     defer ring.deinit();
     for (0..4) |i| _ = try ring.nop(@intCast(i));
-    for (0..4) |i| _ = try ring.nop(@intCast(i));
-    try std.testing.expectEqual(@as(u32, 4), try ring.submit()); // 4 个 SQE 一次提交
     try std.testing.expectEqual(@as(u32, 4), try ring.submit()); // 4 个 SQE 一次提交
     var cqes: [4]std.os.linux.io_uring_cqe = undefined;
-    var cqes: [4]std.os.linux.io_uring_cqe = undefined;
-    const n = try ring.copy_cqes(&cqes, 4);
     const n = try ring.copy_cqes(&cqes, 4);
     try std.testing.expectEqual(@as(u32, 4), n);
-    try std.testing.expectEqual(@as(u32, 4), n);
-}
 }
 ```
 
@@ -3526,44 +2155,24 @@ test "io_uring nop batch" {
 
 ```zig
 const std = @import("std");
-const std = @import("std");
-
 
 pub fn build(b: *std.Build) void {
-pub fn build(b: *std.Build) void {
-    const target = b.standardTargetOptions(.{}); // -Dtarget=... -Dcpu=native
     const target = b.standardTargetOptions(.{}); // -Dtarget=... -Dcpu=native
     const optimize = b.standardOptimizeOption(.{}); // -Doptimize=ReleaseFast 等
-    const optimize = b.standardOptimizeOption(.{}); // -Doptimize=ReleaseFast 等
-    const exe = b.addExecutable(.{
     const exe = b.addExecutable(.{
         .name = "app",
-        .name = "app",
-        .root_module = b.createModule(.{
         .root_module = b.createModule(.{
             .root_source_file = b.path("main.zig"),
-            .root_source_file = b.path("main.zig"),
-            .target = target,
             .target = target,
             .optimize = optimize,
-            .optimize = optimize,
-            .strip = optimize != .debug, // 去符号，减小体积
             .strip = optimize != .debug, // 去符号，减小体积
             .single_threaded = false, // 确认无多线程时设 true：原子/锁降级为普通操作
-            .single_threaded = false, // 确认无多线程时设 true：原子/锁降级为普通操作
-            .unwind_tables = .none, // 体积敏感时去掉 unwind 表（会影响栈回溯）
             .unwind_tables = .none, // 体积敏感时去掉 unwind 表（会影响栈回溯）
             .omit_frame_pointer = true,
-            .omit_frame_pointer = true,
-        }),
         }),
     });
-    });
-    exe.lto = .full; // LTO（需要 LLVM 后端；0.17 字段名为 lto: ?LtoMode）
     exe.lto = .full; // LTO（需要 LLVM 后端；0.17 字段名为 lto: ?LtoMode）
     b.installArtifact(exe);
-    b.installArtifact(exe);
-}
 }
 ```
 
@@ -3610,62 +2219,33 @@ pub fn build(b: *std.Build) void {
 
 ```zig
 const std = @import("std");
-const std = @import("std");
-
 
 /// 微基准：0.16 起 std.time.Timer 已移除，计时走 Io.Clock
-/// 微基准：0.16 起 std.time.Timer 已移除，计时走 Io.Clock
-fn work(xs: []u64) u64 {
 fn work(xs: []u64) u64 {
     var s: u64 = 0;
-    var s: u64 = 0;
-    for (xs) |x| s +%= x *% 2654435761;
     for (xs) |x| s +%= x *% 2654435761;
     return s;
-    return s;
 }
-}
-
 
 pub fn main(init: std.process.Init) !void {
-pub fn main(init: std.process.Init) !void {
-    const io = init.io;
     const io = init.io;
     const gpa = init.gpa;
-    const gpa = init.gpa;
-    const xs = try gpa.alloc(u64, 1 << 20);
     const xs = try gpa.alloc(u64, 1 << 20);
     defer gpa.free(xs);
-    defer gpa.free(xs);
-    for (xs, 0..) |*x, i| x.* = i;
     for (xs, 0..) |*x, i| x.* = i;
 
-
-    var best: i96 = std.math.maxInt(i96);
     var best: i96 = std.math.maxInt(i96);
     for (0..10) |_| {
-    for (0..10) |_| {
-        const t0: std.Io.Clock.Timestamp = .now(io, .awake);
         const t0: std.Io.Clock.Timestamp = .now(io, .awake);
         const r = work(xs);
-        const r = work(xs);
-        std.mem.doNotOptimizeAway(r);
         std.mem.doNotOptimizeAway(r);
         const dt = t0.untilNow(io);
-        const dt = t0.untilNow(io);
-        best = @min(best, dt.raw.nanoseconds);
         best = @min(best, dt.raw.nanoseconds);
     }
-    }
-    var buf: [256]u8 = undefined;
     var buf: [256]u8 = undefined;
     var w = std.Io.File.stdout().writerStreaming(io, &buf);
-    var w = std.Io.File.stdout().writerStreaming(io, &buf);
-    try w.interface.print("best: {d} ns\n", .{best});
     try w.interface.print("best: {d} ns\n", .{best});
     try w.interface.flush();
-    try w.interface.flush();
-}
 }
 ```
 
@@ -3708,8 +2288,6 @@ pub fn main(init: std.process.Init) !void {
 
 ```sh
 perf stat -e cycles,instructions,cache-misses,branch-misses,task-clock \
-perf stat -e cycles,instructions,cache-misses,branch-misses,task-clock \
-  ./zig-out/bin/your_bench
   ./zig-out/bin/your_bench
 ```
 
@@ -3733,12 +2311,8 @@ TigerBeetle 的 `perf_event` 包装草案（[PR #3859](https://github.com/tigerb
 
 ```sh
 cd zperf-lint
-cd zperf-lint
-zig build -Doptimize=fast          # 产物: zig-out/bin/zperf-lint
 zig build -Doptimize=fast          # 产物: zig-out/bin/zperf-lint
 zig build test                     # 单元测试 + 夹具测试（每条规则 bad 必中、good 必不中）
-zig build test                     # 单元测试 + 夹具测试（每条规则 bad 必中、good 必不中）
-./zig-out/bin/zperf-lint src/ my_file.zig --format json --disable zp-runtime-div-hot
 ./zig-out/bin/zperf-lint src/ my_file.zig --format json --disable zp-runtime-div-hot
 ```
 
@@ -3779,46 +2353,25 @@ zig build test                     # 单元测试 + 夹具测试（每条规则 
 
 ```text
 $ zperf-lint fixtures/bad/zp-alloc-hot.zig fixtures/bad/zp-extern-struct-padding.zig ...
-$ zperf-lint fixtures/bad/zp-alloc-hot.zig fixtures/bad/zp-extern-struct-padding.zig ...
-fixtures/bad/zp-alloc-hot.zig:5:34: warning[zp-alloc-hot alloc-in-loop] 循环体内进行堆分配 / heap allocation inside a loop body: gpa.alloc(...)
 fixtures/bad/zp-alloc-hot.zig:5:34: warning[zp-alloc-hot alloc-in-loop] 循环体内进行堆分配 / heap allocation inside a loop body: gpa.alloc(...)
     建议: 把分配提到循环外并复用缓冲区；或改用 ArenaAllocator + reset(.retain_capacity) / MemoryPool
-    建议: 把分配提到循环外并复用缓冲区；或改用 ArenaAllocator + reset(.retain_capacity) / MemoryPool
-fixtures/bad/zp-extern-struct-padding.zig:1:27: warning[zp-extern-struct-padding extern-struct-padding] extern struct 字段顺序导致多余 padding / extern struct field order wastes bytes on padding: 当前 24 字节，按对齐降序重排后 16 字节
 fixtures/bad/zp-extern-struct-padding.zig:1:27: warning[zp-extern-struct-padding extern-struct-padding] extern struct 字段顺序导致多余 padding / extern struct field order wastes bytes on padding: 当前 24 字节，按对齐降序重排后 16 字节
     建议: 按对齐从大到小重排字段（若 ABI 允许）；普通 struct 编译器会自动重排
-    建议: 按对齐从大到小重排字段（若 ABI 允许）；普通 struct 编译器会自动重排
-fixtures/bad/zp-oversized-enum-tag.zig:1:19: info[zp-oversized-enum-tag oversized-enum-tag] enum 显式 tag 类型远大于所需 / enum explicit tag type is wider than needed: enum(u32) 只有 3 个值，u8 即可（不写 tag 时编译器自动选最小宽度）
 fixtures/bad/zp-oversized-enum-tag.zig:1:19: info[zp-oversized-enum-tag oversized-enum-tag] enum 显式 tag 类型远大于所需 / enum explicit tag type is wider than needed: enum(u32) 只有 3 个值，u8 即可（不写 tag 时编译器自动选最小宽度）
     建议: 去掉显式 tag 让编译器推断最小宽度，或用 enum(u8)；仅在 ABI/协议要求时保留宽 tag
-    建议: 去掉显式 tag 让编译器推断最小宽度，或用 enum(u8)；仅在 ABI/协议要求时保留宽 tag
-fixtures/bad/zp-bool-array.zig:2:11: info[zp-bool-array bool-array] 用 bool 数组/切片存位标志 / array/slice of bool used as a bit set: [4096]bool = 4096 字节，bit set 只需 512 字节
 fixtures/bad/zp-bool-array.zig:2:11: info[zp-bool-array bool-array] 用 bool 数组/切片存位标志 / array/slice of bool used as a bit set: [4096]bool = 4096 字节，bit set 只需 512 字节
     建议: 改用 std.bit_set.Static(N) / std.bit_set.Dynamic，省 8 倍内存，且可按字批量运算
-    建议: 改用 std.bit_set.Static(N) / std.bit_set.Dynamic，省 8 倍内存，且可按字批量运算
-fixtures/bad/zp-bool-array.zig:3:48: info[zp-bool-array bool-array] 用 bool 数组/切片存位标志 / array/slice of bool used as a bit set: []bool
 fixtures/bad/zp-bool-array.zig:3:48: info[zp-bool-array bool-array] 用 bool 数组/切片存位标志 / array/slice of bool used as a bit set: []bool
     建议: 改用 std.bit_set.Static(N) / std.bit_set.Dynamic，省 8 倍内存，且可按字批量运算
-    建议: 改用 std.bit_set.Static(N) / std.bit_set.Dynamic，省 8 倍内存，且可按字批量运算
-fixtures/bad/zp-bool-array.zig:4:32: info[zp-bool-array bool-array] 用 bool 数组/切片存位标志 / array/slice of bool used as a bit set: gpa.alloc(bool, ...)
 fixtures/bad/zp-bool-array.zig:4:32: info[zp-bool-array bool-array] 用 bool 数组/切片存位标志 / array/slice of bool used as a bit set: gpa.alloc(bool, ...)
     建议: 改用 std.bit_set.Static(N) / std.bit_set.Dynamic，省 8 倍内存，且可按字批量运算
-    建议: 改用 std.bit_set.Static(N) / std.bit_set.Dynamic，省 8 倍内存，且可按字批量运算
-fixtures/bad/zp-bool-array.zig:7:21: info[zp-bool-array bool-array] 用 bool 数组/切片存位标志 / array/slice of bool used as a bit set: []const bool
 fixtures/bad/zp-bool-array.zig:7:21: info[zp-bool-array bool-array] 用 bool 数组/切片存位标志 / array/slice of bool used as a bit set: []const bool
     建议: 改用 std.bit_set.Static(N) / std.bit_set.Dynamic，省 8 倍内存，且可按字批量运算
-    建议: 改用 std.bit_set.Static(N) / std.bit_set.Dynamic，省 8 倍内存，且可按字批量运算
-fixtures/bad/zp-static-string-map.zig:3:9: info[zp-static-string-map static-string-map] StringHashMap 只用字面量键填充 / StringHashMap populated only with literal keys: `map` 共 3 次 put，全部为字面量键
 fixtures/bad/zp-static-string-map.zig:3:9: info[zp-static-string-map static-string-map] StringHashMap 只用字面量键填充 / StringHashMap populated only with literal keys: `map` 共 3 次 put，全部为字面量键
     建议: 键在编译期已知时用 std.StaticStringMap(V).initComptime(.{ ... })：零分配、零初始化
-    建议: 键在编译期已知时用 std.StaticStringMap(V).initComptime(.{ ... })：零分配、零初始化
-
 
 共检查 5 个文件，发现 8 处（warning 2, info 6, hint 0）
-共检查 5 个文件，发现 8 处（warning 2, info 6, hint 0）
 $ echo $?
-$ echo $?
-1
 1
 ```
 

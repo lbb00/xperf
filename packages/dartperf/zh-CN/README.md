@@ -20,14 +20,10 @@ Dart 性能笔记、小示例，以及 `dartperf-lint`。
 
 ```sh
 cd packages/dartperf/dartperf-lint && dart pub get
-cd packages/dartperf/dartperf-lint && dart pub get
-dart run bin/dartperf_lint.dart path/to/sources
 dart run bin/dartperf_lint.dart path/to/sources
 bash ../scripts/smoke-lint.sh
-bash ../scripts/smoke-lint.sh
 bash ../scripts/self-lint.sh
-bash ../scripts/self-lint.sh
-```}
+```
 
 仅在 **错误** 严重性发现时退出 `1`（提示默认退出 `0`，除非使用 `--strict-hints`）。
 
@@ -35,15 +31,9 @@ bash ../scripts/self-lint.sh
 
 ```text
 docs/guide-src/   chapter sources
-docs/guide-src/   chapter sources
-docs/             assembled guide + corpus.md + evidence-policy.md
 docs/             assembled guide + corpus.md + evidence-policy.md
 evidence/         pending stubs until benches land
-evidence/         pending stubs until benches land
-examples/         tiny demos
 examples/         tiny demos
 dartperf-lint/  checker + fixtures
-dartperf-lint/  checker + fixtures
 scripts/          smoke-lint.sh, self-lint.sh
-scripts/          smoke-lint.sh, self-lint.sh
-```}
+```

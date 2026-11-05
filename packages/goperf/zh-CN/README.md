@@ -18,18 +18,12 @@ Go 性能笔记、小示例，以及用 **Go** 编写的 `goperf-lint`。
 
 ```sh
 cd packages/goperf/goperf-lint
-cd packages/goperf/goperf-lint
-go build -o goperf-lint ./cmd/goperf-lint
 go build -o goperf-lint ./cmd/goperf-lint
 ./goperf-lint path/to/sources
-./goperf-lint path/to/sources
-./goperf-lint path/to/sources --severity gp-append-nil-slice=error
 ./goperf-lint path/to/sources --severity gp-append-nil-slice=error
 bash ../scripts/smoke-lint.sh
-bash ../scripts/smoke-lint.sh
 bash ../scripts/self-lint.sh
-bash ../scripts/self-lint.sh
-```}
+```
 
 仅当存在**错误**严重性的发现时才退出 `1`（提示信息会打印，但除非使用 `--strict-hints`，否则退出码为 `0`）。
 
@@ -37,15 +31,9 @@ bash ../scripts/self-lint.sh
 
 ```text
 docs/guide-src/   chapter sources
-docs/guide-src/   chapter sources
-docs/             assembled guide + corpus.md + evidence-policy.md
 docs/             assembled guide + corpus.md + evidence-policy.md
 evidence/         per-rule claims + measured JSONL
-evidence/         per-rule claims + measured JSONL
-examples/         tiny Go demos
 examples/         tiny Go demos
 goperf-lint/      Go checker + fixtures
-goperf-lint/      Go checker + fixtures
 scripts/          smoke-lint.sh, self-lint.sh
-scripts/          smoke-lint.sh, self-lint.sh
-```}
+```

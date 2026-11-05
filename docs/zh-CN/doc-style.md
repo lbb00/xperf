@@ -26,8 +26,6 @@
 
 ```sh
 bash scripts/build-guides.sh          # 从 guide-src 重写指南
-bash scripts/build-guides.sh          # 从 guide-src 重写指南
-bash scripts/build-guides.sh --check  # 若指南被手改则失败
 bash scripts/build-guides.sh --check  # 若指南被手改则失败
 ```
 

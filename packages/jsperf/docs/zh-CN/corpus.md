@@ -4,7 +4,6 @@
 
 ```sh
 node jsperf-lint/bin/jsperf-lint.js <path-to-clone> --format json --no-fail
-node jsperf-lint/bin/jsperf-lint.js <path-to-clone> --format json --no-fail
 ```
 
 检查器：**jsperf-lint**。
@@ -52,14 +51,9 @@ jp-string-plus-in-loop 和 jp-map-filter-chain 也跳过 inspect/debugger/test_r
 
 ```text
 <corpus-dir>/
-<corpus-dir>/
-  node/
   node/
   preact/
-  preact/
   TypeScript/
-  TypeScript/
-  quickjs/   # shared with the C kit
   quickjs/   # shared with the C kit
 ```
 

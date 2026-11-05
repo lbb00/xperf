@@ -20,12 +20,8 @@ Rust 性能笔记、小示例，以及 `rustperf-lint`。
 
 ```sh
 cd packages/rustperf/rustperf-lint && cargo build --release
-cd packages/rustperf/rustperf-lint && cargo build --release
-./target/release/rustperf-lint path/to/sources
 ./target/release/rustperf-lint path/to/sources
 bash ../scripts/smoke-lint.sh
-bash ../scripts/smoke-lint.sh
-bash ../scripts/self-lint.sh
 bash ../scripts/self-lint.sh
 ```
 
@@ -35,15 +31,9 @@ bash ../scripts/self-lint.sh
 
 ```text
 docs/guide-src/   章节源
-docs/guide-src/   章节源
-docs/             组装后的指南 + corpus.md + evidence-policy.md
 docs/             组装后的指南 + corpus.md + evidence-policy.md
 evidence/         每规则主张 + 实测 JSONL；rs-format-rebind-hot error（~99×），其余 off/hint
-evidence/         每规则主张 + 实测 JSONL；rs-format-rebind-hot error（~99×），其余 off/hint
-examples/         小演示
 examples/         小演示
 rustperf-lint/    检查器 + 夹具
-rustperf-lint/    检查器 + 夹具
-scripts/          smoke-lint.sh, self-lint.sh
 scripts/          smoke-lint.sh, self-lint.sh
 ```

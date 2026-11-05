@@ -6,7 +6,6 @@
 >
 > 配套：`cperf-lint/` —— 十二条行窗规则（见 Lint 对照表）。已在 quickjs、lua、gcc（稀疏）以及 sqlite `src/` 上跑过（2026-10-21 Asia/Shanghai）。该次运行未覆盖较晚的 hint 规则；见 [corpus.md](corpus.md)。语料树未 vendored。
 
-
 先在真实负载上测量（`perf`、cachegrind；ASan 找 bug，不是测速）。当 lint 打在引擎或编译器代码上时，先确认调用是调试、代码生成，还是有意的 CLI I/O，再改。
 
 ## 目录
@@ -154,8 +153,6 @@ Lint：**cp-printf-hot** —— 循环体窗口内的 `printf` / `fprintf` / `pu
 
 ```sh
 perf stat -e cycles,instructions,cache-misses,branch-misses,task-clock -- ./app
-perf stat -e cycles,instructions,cache-misses,branch-misses,task-clock -- ./app
-perf record -g -- ./app && perf report   # 尽量保留 frame pointers
 perf record -g -- ./app && perf report   # 尽量保留 frame pointers
 ```
 

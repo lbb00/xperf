@@ -8,10 +8,7 @@
 
 ```mermaid
 flowchart TB
-flowchart TB
   inventory --> evidence --> corpus["corpus lint"] --> triage["TP / FP triage"]
-  inventory --> evidence --> corpus["corpus lint"] --> triage["TP / FP triage"]
-  triage --> reverse["reverse-opt"] --> dogfood --> docs
   triage --> reverse["reverse-opt"] --> dogfood --> docs
 ```
 

@@ -37,16 +37,10 @@
 
 ```sh
 cd packages/jsperf
-cd packages/jsperf
-bash scripts/regen-evidence.sh
 bash scripts/regen-evidence.sh
 # or:
-# or:
-# node examples/bench/evidence_jp003_jp004.js
 # node examples/bench/evidence_jp003_jp004.js
 # node examples/bench/evidence_jp001_jp002.js
-# node examples/bench/evidence_jp001_jp002.js
-# node examples/bench/evidence_jp005_jp006.js
 # node examples/bench/evidence_jp005_jp006.js
 ```
 

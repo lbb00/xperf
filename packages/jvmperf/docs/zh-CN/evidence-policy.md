@@ -62,14 +62,9 @@ CLI 仍然可能在任何发现时 **以非零退出**（除非使用 `--no-fail
 
 ```sh
 cd packages/jvmperf
-cd packages/jvmperf
-# Lint/tests: JAVA_HOME → JDK 21. Optional benches may use 25:
 # Lint/tests: JAVA_HOME → JDK 21. Optional benches may use 25:
 JAVA_HOME=/usr/lib/jvm/java-25-openjdk-amd64 bash scripts/run_jmh.sh J32_RuleEvidenceBatch
-JAVA_HOME=/usr/lib/jvm/java-25-openjdk-amd64 bash scripts/run_jmh.sh J32_RuleEvidenceBatch
 JAVA_HOME=/usr/lib/jvm/java-25-openjdk-amd64 bash scripts/run_kotlin_alloc.sh K15
-JAVA_HOME=/usr/lib/jvm/java-25-openjdk-amd64 bash scripts/run_kotlin_alloc.sh K15
-# then refresh evidence/*.jsonl from bench-results if numbers move
 # then refresh evidence/*.jsonl from bench-results if numbers move
 ```
 

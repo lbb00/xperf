@@ -78,26 +78,15 @@ G0 smoke 必须断言 **slug** ID。G4 证据文件以 slug 命名（`evidence/<
 
 ```mermaid
 flowchart TB
-flowchart TB
-  claim["guide / smell claim"]
   claim["guide / smell claim"]
   claim --> g0["paired fixtures<br/>bad fires, good stays clean · G0"]
-  claim --> g0["paired fixtures<br/>bad fires, good stays clean · G0"]
-  g0 --> rule["same-language lint rule<br/>default severity: hint"]
   g0 --> rule["same-language lint rule<br/>default severity: hint"]
   rule --> g1["self-dogfood · G1"]
-  rule --> g1["self-dogfood · G1"]
-  g1 --> g2["corpus dogfood<br/>at least 3 projects, out of repo · G2"]
   g1 --> g2["corpus dogfood<br/>at least 3 projects, out of repo · G2"]
   g2 --> g3["TP / FP triage · G3"]
-  g2 --> g3["TP / FP triage · G3"]
-  g3 --> rev["reverse-opt<br/>re-lint delta, before to after"]
   g3 --> rev["reverse-opt<br/>re-lint delta, before to after"]
   rev --> off["demote to off<br/>when almost all OK-idiom"]
-  rev --> off["demote to off<br/>when almost all OK-idiom"]
   off --> g4["measured JSONL<br/>before escalating to error · G4"]
-  off --> g4["measured JSONL<br/>before escalating to error · G4"]
-  g4 --> reg["registries and corpus.md"]
   g4 --> reg["registries and corpus.md"]
 ```
 

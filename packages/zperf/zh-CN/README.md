@@ -27,12 +27,8 @@ Zig 包根是 **`zperf-lint/`**（`build.zig` 与 `build.zig.zon` 在那里）�
 
 ```sh
 cd zperf-lint
-cd zperf-lint
-zig build -Doptimize=fast
 zig build -Doptimize=fast
 zig build test
-zig build test
-zig-out/bin/zperf-lint ../examples
 zig-out/bin/zperf-lint ../examples
 ```
 
@@ -41,7 +37,6 @@ zig-out/bin/zperf-lint ../examples
 从 `packages/zperf/` 与检查器一起跑社区 linter：
 
 ```sh
-zig run scripts/repo.zig -- lint-all
 zig run scripts/repo.zig -- lint-all
 ```
 
@@ -53,13 +48,11 @@ zig run scripts/repo.zig -- lint-all
 
 ```sh
 cd examples && zig build test
-cd examples && zig build test
 ```
 
 指南由 `docs/guide-src/` 章节分片生成。编辑分片后，从仓库根重新生成：
 
 ```sh
-bash scripts/build-guides.sh zperf
 bash scripts/build-guides.sh zperf
 ```
 
@@ -69,16 +62,10 @@ bash scripts/build-guides.sh zperf
 
 ```text
 ci/                 指向根 `.github/workflows/ci.yml` 的指针（无嵌套 Actions）
-ci/                 指向根 `.github/workflows/ci.yml` 的指针（无嵌套 Actions）
-docs/               指南、语料固定目标、证据策略，以及 guide-src 章节
 docs/               指南、语料固定目标、证据策略，以及 guide-src 章节
 evidence/           墙钟门禁与每规则笔记（*.md + *.jsonl）
-evidence/           墙钟门禁与每规则笔记（*.md + *.jsonl）
-examples/           指南引用的可运行 Zig 示例
 examples/           指南引用的可运行 Zig 示例
 scripts/            repo.zig（lint-all）与 regen-evidence.sh
-scripts/            repo.zig（lint-all）与 regen-evidence.sh
-zperf-lint/         检查器包、测试与夹具
 zperf-lint/         检查器包、测试与夹具
 ```
 

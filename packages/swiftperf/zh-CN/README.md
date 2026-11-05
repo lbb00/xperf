@@ -20,12 +20,8 @@ Swift 性能笔记、小示例，以及 `swiftperf-lint`（Swift Package）。
 
 ```sh
 cd packages/swiftperf/swiftperf-lint
-cd packages/swiftperf/swiftperf-lint
-swift build -c release
 swift build -c release
 "$(swift build -c release --show-bin-path)/swiftperf-lint" path/to/sources
-"$(swift build -c release --show-bin-path)/swiftperf-lint" path/to/sources
-bash ../scripts/smoke-lint.sh
 bash ../scripts/smoke-lint.sh
 ```
 
@@ -35,15 +31,9 @@ bash ../scripts/smoke-lint.sh
 
 ```text
 docs/guide-src/   章节源
-docs/guide-src/   章节源
-docs/             组装后的指南 + corpus.md + evidence-policy.md
 docs/             组装后的指南 + corpus.md + evidence-policy.md
 evidence/         阻塞 stub（有 Swift 工具链前无 JSONL）
-evidence/         阻塞 stub（有 Swift 工具链前无 JSONL）
-examples/         小 Swift 演示
 examples/         小 Swift 演示
 swiftperf-lint/   Package.swift + Sources + 夹具
-swiftperf-lint/   Package.swift + Sources + 夹具
-scripts/          smoke-lint.sh, self-lint.sh, text-lint.cjs（无 swift 时的回退）
 scripts/          smoke-lint.sh, self-lint.sh, text-lint.cjs（无 swift 时的回退）
 ```

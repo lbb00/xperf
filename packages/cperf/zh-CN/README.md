@@ -18,29 +18,20 @@ C11/C17 性能笔记、小示例，以及用 **C11** 编写的 `cperf-lint`。�
 
 ```sh
 cc -std=c17 -O2 -o /tmp/m01 examples/m01_arena.c && /tmp/m01
-cc -std=c17 -O2 -o /tmp/m01 examples/m01_arena.c && /tmp/m01
 cc -std=c17 -O2 -o /tmp/p01 examples/p01_soa.c && /tmp/p01
-cc -std=c17 -O2 -o /tmp/p01 examples/p01_soa.c && /tmp/p01
-```}
+```
 
 ## 运行 lint
 
 ```sh
 cd packages/cperf/cperf-lint
-cd packages/cperf/cperf-lint
-make
 make
 ./cperf-lint path/to/sources --preset app          # alloc/realloc=error; strlen, later hints, and cp-regex-hot=hint; printf/strcat=off
-./cperf-lint path/to/sources --preset app          # alloc/realloc=error; strlen, later hints, and cp-regex-hot=hint; printf/strcat=off
-./cperf-lint path/to/sources --preset all          # every rule error
 ./cperf-lint path/to/sources --preset all          # every rule error
 ./cperf-lint path/to/sources --severity cp-printf-hot=off
-./cperf-lint path/to/sources --severity cp-printf-hot=off
-make self-lint   # dogfood: lint src/ + include/, must be clean
 make self-lint   # dogfood: lint src/ + include/, must be clean
 make test        # fixtures + severity smoke + self-lint
-make test        # fixtures + severity smoke + self-lint
-```}
+```
 
 从包根目录：`bash scripts/smoke-lint.sh`。
 
@@ -50,15 +41,9 @@ make test        # fixtures + severity smoke + self-lint
 
 ```text
 docs/guide-src/   chapter sources (00_head … 04_hot_calls, 99_tail)
-docs/guide-src/   chapter sources (00_head … 04_hot_calls, 99_tail)
-docs/             assembled guide + corpus.md + evidence-policy.md
 docs/             assembled guide + corpus.md + evidence-policy.md
 evidence/         wall-clock gates: cp-alloc-hot, cp-realloc-grow-one, cp-printf-hot (*.md + *.jsonl)
-evidence/         wall-clock gates: cp-alloc-hot, cp-realloc-grow-one, cp-printf-hot (*.md + *.jsonl)
-examples/         tiny C demos + bench/ harnesses
 examples/         tiny C demos + bench/ harnesses
 cperf-lint/       C11 checker (src/, include/, Makefile) + fixtures
-cperf-lint/       C11 checker (src/, include/, Makefile) + fixtures
 scripts/          regen-evidence-*.sh, run-static-vs-o2.sh
-scripts/          regen-evidence-*.sh, run-static-vs-o2.sh
-```}
+```

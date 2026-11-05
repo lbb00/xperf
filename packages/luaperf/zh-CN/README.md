@@ -20,12 +20,9 @@ Lua 性能注意事项、小示例和 `luaperf-lint`。
 
 ```sh
 lua packages/luaperf/luaperf-lint/luaperf-lint.lua path/to/sources
-lua packages/luaperf/luaperf-lint/luaperf-lint.lua path/to/sources
-bash packages/luaperf/scripts/smoke-lint.sh
 bash packages/luaperf/scripts/smoke-lint.sh
 bash packages/luaperf/scripts/self-lint.sh
-bash packages/luaperf/scripts/self-lint.sh
-```}
+```
 
 仅在 **错误** 严重级别的发现时退出 `1`（提示默认退出 `0`，除非使用 `--strict-hints`）。
 
@@ -33,15 +30,9 @@ bash packages/luaperf/scripts/self-lint.sh
 
 ```text
 docs/guide-src/   chapter sources
-docs/guide-src/   chapter sources
-docs/             assembled guide + corpus.md + evidence-policy.md
 docs/             assembled guide + corpus.md + evidence-policy.md
 evidence/         lu-string-concat-hot measured (error); lu-print-hot measured (hint); lu-table-insert-hot measured (off)
-evidence/         lu-string-concat-hot measured (error); lu-print-hot measured (hint); lu-table-insert-hot measured (off)
-examples/         tiny demos
 examples/         tiny demos
 luaperf-lint/      checker + fixtures
-luaperf-lint/      checker + fixtures
 scripts/          smoke-lint.sh, self-lint.sh
-scripts/          smoke-lint.sh, self-lint.sh
-```}
+```

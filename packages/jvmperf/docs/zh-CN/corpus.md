@@ -6,12 +6,8 @@
 
 ```sh
 export JAVA_HOME=/opt/java/jdk-21.0.12.1+1   # or any JDK 21+
-export JAVA_HOME=/opt/java/jdk-21.0.12.1+1   # or any JDK 21+
-cd packages/jvmperf/jvmperf-lint && ./gradlew jar
 cd packages/jvmperf/jvmperf-lint && ./gradlew jar
 LINT=$PWD/bin/jvmperf-lint
-LINT=$PWD/bin/jvmperf-lint
-$LINT --no-fail -f json -j 4 <path-to-clone>
 $LINT --no-fail -f json -j 4 <path-to-clone>
 ```
 
@@ -23,12 +19,8 @@ $LINT --no-fail -f json -j 4 <path-to-clone>
 
 ```text
 <corpus-dir>/
-<corpus-dir>/
-  okhttp/ retrofit/ kotlinx-coroutines/ guava/ vertx/ fastjson2/
   okhttp/ retrofit/ kotlinx-coroutines/ guava/ vertx/ fastjson2/
   jetty/          # sparse jetty-core
-  jetty/          # sparse jetty-core
-  netty/          # sparse buffer + common
   netty/          # sparse buffer + common
 ```
 

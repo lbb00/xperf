@@ -5,8 +5,6 @@
 
 ```sh
 packages/nimperf/nimperf-lint/nimperf-lint \
-packages/nimperf/nimperf-lint/nimperf-lint \
-  <corpus-dir>/<name> --format json --no-fail
   <corpus-dir>/<name> --format json --no-fail
 ```
 

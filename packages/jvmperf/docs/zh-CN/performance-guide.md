@@ -96,12 +96,8 @@ HotSpot 中每个对象都有对象头：
 
 ```sh
 # JDK 25：正式但默认关闭，可以直接打开
-# JDK 25：正式但默认关闭，可以直接打开
-java -XX:+UseCompactObjectHeaders -jar app.jar
 java -XX:+UseCompactObjectHeaders -jar app.jar
 # JDK 27：默认开启，如需关闭
-# JDK 27：默认开启，如需关闭
-java -XX:-UseCompactObjectHeaders -jar app.jar
 java -XX:-UseCompactObjectHeaders -jar app.jar
 ```
 
@@ -117,26 +113,15 @@ HotSpot 会重排字段：先按大小从大到小排，再用小字段填补头
 
 ```text
 【本机实测】JolSizes$Mixed（默认对象头）
-【本机实测】JolSizes$Mixed（默认对象头）
-OFF  SZ     TYPE DESCRIPTION
 OFF  SZ     TYPE DESCRIPTION
   0   8          (object header: mark)
-  0   8          (object header: mark)
-  8   4          (object header: class)
   8   4          (object header: class)
  12   4      int Mixed.i
- 12   4      int Mixed.i
- 16   8     long Mixed.l
  16   8     long Mixed.l
  24   1     byte Mixed.b
- 24   1     byte Mixed.b
- 25   1  boolean Mixed.z
  25   1  boolean Mixed.z
  26   2          (alignment/padding gap)
- 26   2          (alignment/padding gap)
  28   4   Object Mixed.ref
- 28   4   Object Mixed.ref
-Instance size: 32 bytes
 Instance size: 32 bytes
 ```
 
@@ -148,136 +133,70 @@ Instance size: 32 bytes
 
 ```java
 import org.openjdk.jol.info.ClassLayout;
-import org.openjdk.jol.info.ClassLayout;
-import org.openjdk.jol.info.GraphLayout;
 import org.openjdk.jol.info.GraphLayout;
 import org.openjdk.jol.vm.VM;
-import org.openjdk.jol.vm.VM;
-import java.util.*;
 import java.util.*;
 
-
-/** 用 JOL 实测对象大小。运行：java -cp jol-core.jar:. [-XX:+UseCompactObjectHeaders] JolSizes */
 /** 用 JOL 实测对象大小。运行：java -cp jol-core.jar:. [-XX:+UseCompactObjectHeaders] JolSizes */
 public class JolSizes {
-public class JolSizes {
-    enum Fuel { ELECTRIC, BENZINE, DIESEL }
     enum Fuel { ELECTRIC, BENZINE, DIESEL }
     // 视频里的四步
-    // 视频里的四步
-    static final class HybridTwoInts { int electric; int benzine; }   // C: struct { int; int; } = 8 字节
     static final class HybridTwoInts { int electric; int benzine; }   // C: struct { int; int; } = 8 字节
     static final class FlagsInt { int flags; }                         // C: int flags = 4 字节
-    static final class FlagsInt { int flags; }                         // C: int flags = 4 字节
-    static final class FlagsByte { byte flags; }                       // C: uint8_t 位域 = 1 字节
     static final class FlagsByte { byte flags; }                       // C: uint8_t 位域 = 1 字节
     static final class FlagsBools { boolean electric, benzine, diesel; }
-    static final class FlagsBools { boolean electric, benzine, diesel; }
-    static final class FlagsEnumSet { final EnumSet<Fuel> fuels = EnumSet.noneOf(Fuel.class); }
     static final class FlagsEnumSet { final EnumSet<Fuel> fuels = EnumSet.noneOf(Fuel.class); }
     static final class Point { int x; int y; }
-    static final class Point { int x; int y; }
-    static final class Mixed { byte b; long l; int i; Object ref; boolean z; }
     static final class Mixed { byte b; long l; int i; Object ref; boolean z; }
 
-
-    static void cls(Class<?> c) {
     static void cls(Class<?> c) {
         System.out.printf("%-28s instance=%d%n", c.getSimpleName(), ClassLayout.parseClass(c).instanceSize());
-        System.out.printf("%-28s instance=%d%n", c.getSimpleName(), ClassLayout.parseClass(c).instanceSize());
-    }
     }
     static void graph(String what, Object o) {
-    static void graph(String what, Object o) {
-        System.out.printf("%-40s total=%d bytes, objects=%d%n", what, GraphLayout.parseInstance(o).totalSize(),
         System.out.printf("%-40s total=%d bytes, objects=%d%n", what, GraphLayout.parseInstance(o).totalSize(),
                 GraphLayout.parseInstance(o).totalCount());
-                GraphLayout.parseInstance(o).totalCount());
-    }
     }
 
-
-    public static void main(String[] args) {
     public static void main(String[] args) {
         System.out.println("java.version=" + System.getProperty("java.version"));
-        System.out.println("java.version=" + System.getProperty("java.version"));
-        System.out.println(VM.current().details());
         System.out.println(VM.current().details());
         System.out.println(ClassLayout.parseClass(Mixed.class).toPrintable());
-        System.out.println(ClassLayout.parseClass(Mixed.class).toPrintable());
-        for (Class<?> c : List.of(Object.class, Integer.class, Long.class, Boolean.class, Point.class,
         for (Class<?> c : List.of(Object.class, Integer.class, Long.class, Boolean.class, Point.class,
                 HybridTwoInts.class, FlagsInt.class, FlagsByte.class, FlagsBools.class, FlagsEnumSet.class, Mixed.class)) cls(c);
-                HybridTwoInts.class, FlagsInt.class, FlagsByte.class, FlagsBools.class, FlagsEnumSet.class, Mixed.class)) cls(c);
-        // EnumSet/EnumMap 引用的 Class 对象、枚举常量和 universe 数组是全类型共享的，这里只计每个实例独有的部分
         // EnumSet/EnumMap 引用的 Class 对象、枚举常量和 universe 数组是全类型共享的，这里只计每个实例独有的部分
         EnumSet<Fuel> es = EnumSet.of(Fuel.ELECTRIC, Fuel.BENZINE);
-        EnumSet<Fuel> es = EnumSet.of(Fuel.ELECTRIC, Fuel.BENZINE);
-        long esSize = ClassLayout.parseInstance(es).instanceSize();
         long esSize = ClassLayout.parseInstance(es).instanceSize();
         System.out.printf("%-40s %s=%d bytes (独有部分)%n", "EnumSet.of(ELECTRIC,BENZINE)", es.getClass().getSimpleName(), esSize);
-        System.out.printf("%-40s %s=%d bytes (独有部分)%n", "EnumSet.of(ELECTRIC,BENZINE)", es.getClass().getSimpleName(), esSize);
-        System.out.printf("%-40s total=%d bytes (持有者 + RegularEnumSet)%n", "FlagsEnumSet 对象", ClassLayout.parseClass(FlagsEnumSet.class).instanceSize() + esSize);
         System.out.printf("%-40s total=%d bytes (持有者 + RegularEnumSet)%n", "FlagsEnumSet 对象", ClassLayout.parseClass(FlagsEnumSet.class).instanceSize() + esSize);
         graph("BitSet(3)", new BitSet(3));
-        graph("BitSet(3)", new BitSet(3));
-        graph("20 个 ASCII 字符的 String (Latin1)", new String("abcdefghijklmnopqrst"));
         graph("20 个 ASCII 字符的 String (Latin1)", new String("abcdefghijklmnopqrst"));
         graph("20 个汉字的 String (UTF16)", new String("一二三四五六七八九十一二三四五六七八九十"));
-        graph("20 个汉字的 String (UTF16)", new String("一二三四五六七八九十一二三四五六七八九十"));
-        graph("new int[0]", new int[0]);
         graph("new int[0]", new int[0]);
         graph("new byte[1000]", new byte[1000]);
-        graph("new byte[1000]", new byte[1000]);
-        graph("new int[1000]", new int[1000]);
         graph("new int[1000]", new int[1000]);
         graph("new long[1000]", new long[1000]);
-        graph("new long[1000]", new long[1000]);
-        HybridTwoInts[] cars = new HybridTwoInts[1000];
         HybridTwoInts[] cars = new HybridTwoInts[1000];
         for (int i = 0; i < cars.length; i++) cars[i] = new HybridTwoInts();
-        for (int i = 0; i < cars.length; i++) cars[i] = new HybridTwoInts();
-        graph("HybridTwoInts[1000] + 1000 objects", cars);
         graph("HybridTwoInts[1000] + 1000 objects", cars);
         FlagsByte[] fb = new FlagsByte[1000];
-        FlagsByte[] fb = new FlagsByte[1000];
-        for (int i = 0; i < fb.length; i++) fb[i] = new FlagsByte();
         for (int i = 0; i < fb.length; i++) fb[i] = new FlagsByte();
         graph("FlagsByte[1000] + 1000 objects", fb);
-        graph("FlagsByte[1000] + 1000 objects", fb);
-        graph("BitSet(3000) (1000 辆车 × 3 位)", new BitSet(3000));
         graph("BitSet(3000) (1000 辆车 × 3 位)", new BitSet(3000));
         List<Integer> boxed = new ArrayList<>(1000);
-        List<Integer> boxed = new ArrayList<>(1000);
-        for (int i = 0; i < 1000; i++) boxed.add(i + 1000); // 超出 Integer 缓存，确保都是新对象
         for (int i = 0; i < 1000; i++) boxed.add(i + 1000); // 超出 Integer 缓存，确保都是新对象
         graph("ArrayList<Integer> 1000 个 (>=1000)", boxed);
-        graph("ArrayList<Integer> 1000 个 (>=1000)", boxed);
-        int[] prim = new int[1000];
         int[] prim = new int[1000];
         graph("int[1000]", prim);
-        graph("int[1000]", prim);
-        Map<Integer, Integer> hm = new HashMap<>();
         Map<Integer, Integer> hm = new HashMap<>();
         for (int i = 0; i < 1000; i++) hm.put(i + 1000, i + 1000);
-        for (int i = 0; i < 1000; i++) hm.put(i + 1000, i + 1000);
-        graph("HashMap<Integer,Integer> 1000 项", hm);
         graph("HashMap<Integer,Integer> 1000 项", hm);
         var fu = new it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap();
-        var fu = new it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap();
-        for (int i = 0; i < 1000; i++) fu.put(i + 1000, i + 1000);
         for (int i = 0; i < 1000; i++) fu.put(i + 1000, i + 1000);
         graph("fastutil Int2IntOpenHashMap 1000 项", fu);
-        graph("fastutil Int2IntOpenHashMap 1000 项", fu);
-        EnumMap<Fuel, Integer> em = new EnumMap<>(Fuel.class);
         EnumMap<Fuel, Integer> em = new EnumMap<>(Fuel.class);
         System.out.printf("%-40s total=%d bytes (EnumMap 对象 + 长度 3 的 vals 数组，独有部分)%n", "EnumMap<Fuel,Integer>",
-        System.out.printf("%-40s total=%d bytes (EnumMap 对象 + 长度 3 的 vals 数组，独有部分)%n", "EnumMap<Fuel,Integer>",
-                ClassLayout.parseInstance(em).instanceSize() + ClassLayout.parseInstance(new Object[3]).instanceSize());
                 ClassLayout.parseInstance(em).instanceSize() + ClassLayout.parseInstance(new Object[3]).instanceSize());
     }
-    }
-}
 }
 ```
 
@@ -310,82 +229,43 @@ public class JolSizes {
 
 ```java
 import java.util.ArrayList;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.List;
 import java.util.stream.IntStream;
-import java.util.stream.IntStream;
-
 
 /** Boxing costs and pitfalls: List<Integer> vs int[], the Integer cache, and reference equality. */
-/** Boxing costs and pitfalls: List<Integer> vs int[], the Integer cache, and reference equality. */
-public class J01_Boxing {
 public class J01_Boxing {
     // jvmperf-lint: ignore jp-boxed-primitive-collection -- Intentional counterexample.
-    // jvmperf-lint: ignore jp-boxed-primitive-collection -- Intentional counterexample.
-    static long sumBoxed(List<Integer> xs) {
     static long sumBoxed(List<Integer> xs) {
         long s = 0;
-        long s = 0;
-        for (Integer x : xs) s += x;          // Unboxes each value; throws NPE if x is null.
         for (Integer x : xs) s += x;          // Unboxes each value; throws NPE if x is null.
         return s;
-        return s;
-    }
     }
     static long sumPrimitive(int[] xs) {
-    static long sumPrimitive(int[] xs) {
-        long s = 0;
         long s = 0;
         for (int x : xs) s += x;              // Contiguous storage, no pointer chasing; C2 may vectorize it.
-        for (int x : xs) s += x;              // Contiguous storage, no pointer chasing; C2 may vectorize it.
-        return s;
         return s;
     }
-    }
-    public static void main(String[] args) {
     public static void main(String[] args) {
         int n = 10_000;
-        int n = 10_000;
-        // jvmperf-lint: ignore jp-boxed-primitive-collection -- Intentional counterexample.
         // jvmperf-lint: ignore jp-boxed-primitive-collection -- Intentional counterexample.
         List<Integer> boxed = new ArrayList<>(n);
-        List<Integer> boxed = new ArrayList<>(n);
-        int[] prim = new int[n];
         int[] prim = new int[n];
         for (int i = 0; i < n; i++) { boxed.add(i); prim[i] = i; }
-        for (int i = 0; i < n; i++) { boxed.add(i); prim[i] = i; }
-        check(sumBoxed(boxed) == sumPrimitive(prim), "sum");
         check(sumBoxed(boxed) == sumPrimitive(prim), "sum");
 
-
-        // Integer.valueOf caches -128..127; raise the upper bound with -XX:AutoBoxCacheMax.
         // Integer.valueOf caches -128..127; raise the upper bound with -XX:AutoBoxCacheMax.
         Integer a = 127, b = 127, c = 128, d = 128;
-        Integer a = 127, b = 127, c = 128, d = 128;
-        check(a == b, "cached");                   // The same cached object.
         check(a == b, "cached");                   // The same cached object.
         check(c.equals(d), "equals");              // Always use equals for wrapper values.
-        check(c.equals(d), "equals");              // Always use equals for wrapper values.
-        // c == d is false with default settings; do not rely on reference identity.
         // c == d is false with default settings; do not rely on reference identity.
 
-
-        // Streams: mapToInt keeps primitive values; map(...).reduce(Integer::sum) boxes each step.
         // Streams: mapToInt keeps primitive values; map(...).reduce(Integer::sum) boxes each step.
         long s1 = IntStream.range(0, n).asLongStream().sum();
-        long s1 = IntStream.range(0, n).asLongStream().sum();
-        int s2 = boxed.stream().mapToInt(Integer::intValue).sum();
         int s2 = boxed.stream().mapToInt(Integer::intValue).sum();
         check(s1 == sumPrimitive(prim) && s2 == (int) s1, "streams");
-        check(s1 == sumPrimitive(prim) && s2 == (int) s1, "streams");
-        System.out.println("J01 ok");
         System.out.println("J01 ok");
     }
-    }
     static void check(boolean ok, String what) { if (!ok) throw new AssertionError(what); }
-    static void check(boolean ok, String what) { if (!ok) throw new AssertionError(what); }
-}
 }
 ```
 
@@ -407,60 +287,32 @@ public class J01_Boxing {
 
 ```java
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
-import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
-import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import org.eclipse.collections.api.list.primitive.MutableIntList;
-import org.eclipse.collections.api.list.primitive.MutableIntList;
-import org.eclipse.collections.impl.factory.primitive.IntLists;
 import org.eclipse.collections.impl.factory.primitive.IntLists;
 import org.eclipse.collections.impl.map.mutable.primitive.IntIntHashMap;
-import org.eclipse.collections.impl.map.mutable.primitive.IntIntHashMap;
-
 
 /** Primitive collections from fastutil and Eclipse Collections avoid boxing and per-entry Node objects. */
-/** Primitive collections from fastutil and Eclipse Collections avoid boxing and per-entry Node objects. */
-public class J02_PrimitiveCollections {
 public class J02_PrimitiveCollections {
     public static void main(String[] args) {
-    public static void main(String[] args) {
-        int n = 1000;
         int n = 1000;
         Int2IntOpenHashMap counts = new Int2IntOpenHashMap(n);   // Reserve capacity.
-        Int2IntOpenHashMap counts = new Int2IntOpenHashMap(n);   // Reserve capacity.
-        counts.defaultReturnValue(0);
         counts.defaultReturnValue(0);
         for (int i = 0; i < n; i++) counts.addTo(i % 10, 1);     // Increment in place without boxing.
-        for (int i = 0; i < n; i++) counts.addTo(i % 10, 1);     // Increment in place without boxing.
-        check(counts.get(3) == 100, "fastutil map");
         check(counts.get(3) == 100, "fastutil map");
 
-
-        IntArrayList list = new IntArrayList(n);
         IntArrayList list = new IntArrayList(n);
         for (int i = 0; i < n; i++) list.add(i);
-        for (int i = 0; i < n; i++) list.add(i);
-        check(list.getInt(999) == 999, "fastutil list");
         check(list.getInt(999) == 999, "fastutil list");
 
-
-        IntIntHashMap ec = new IntIntHashMap(n);
         IntIntHashMap ec = new IntIntHashMap(n);
         for (int i = 0; i < n; i++) ec.addToValue(i % 10, 1);
-        for (int i = 0; i < n; i++) ec.addToValue(i % 10, 1);
-        MutableIntList ecl = IntLists.mutable.withInitialCapacity(n);
         MutableIntList ecl = IntLists.mutable.withInitialCapacity(n);
         for (int i = 0; i < n; i++) ecl.add(i);
-        for (int i = 0; i < n; i++) ecl.add(i);
-        check(ec.get(3) == 100 && ecl.sum() == 499500L, "eclipse collections");
         check(ec.get(3) == 100 && ecl.sum() == 499500L, "eclipse collections");
         System.out.println("J02 ok");
-        System.out.println("J02 ok");
-    }
     }
     static void check(boolean ok, String what) { if (!ok) throw new AssertionError(what); }
-    static void check(boolean ok, String what) { if (!ok) throw new AssertionError(what); }
-}
 }
 ```
 
@@ -515,112 +367,58 @@ Java 版本：
 
 ```java
 import java.util.BitSet;
-import java.util.BitSet;
-import java.util.EnumSet;
 import java.util.EnumSet;
 
-
-/** Flags using bit operations, EnumSet, and BitSet; this is the hybrid-car case study. */
 /** Flags using bit operations, EnumSet, and BitSet; this is the hybrid-car case study. */
 public class J03_Flags {
-public class J03_Flags {
-    enum Fuel { ELECTRIC, BENZINE, DIESEL }
     enum Fuel { ELECTRIC, BENZINE, DIESEL }
 
-
-    // 1) One field per flag: three booleans.
     // 1) One field per flag: three booleans.
     static final class CarBools { boolean electric, benzine, diesel; }
-    static final class CarBools { boolean electric, benzine, diesel; }
-
 
     // 2) Store three flags in one byte; Java requires explicit bit operations.
-    // 2) Store three flags in one byte; Java requires explicit bit operations.
-    static final class CarByte {
     static final class CarByte {
         static final int ELECTRIC = 1, BENZINE = 1 << 1, DIESEL = 1 << 2;
-        static final int ELECTRIC = 1, BENZINE = 1 << 1, DIESEL = 1 << 2;
-        byte flags;
         byte flags;
         boolean has(int f) { return (flags & f) != 0; }
-        boolean has(int f) { return (flags & f) != 0; }
-        void set(int f) { flags = (byte) (flags | f); }
         void set(int f) { flags = (byte) (flags | f); }
         void clear(int f) { flags = (byte) (flags & ~f); }
-        void clear(int f) { flags = (byte) (flags & ~f); }
     }
-    }
-
 
     // 3) Packing saves meaningful memory in arrays: one byte or three bits per car.
-    // 3) Packing saves meaningful memory in arrays: one byte or three bits per car.
-    static final class Fleet {
     static final class Fleet {
         final byte[] flags;               // Primitive array: one byte per car.
-        final byte[] flags;               // Primitive array: one byte per car.
-        Fleet(int n) { flags = new byte[n]; }
         Fleet(int n) { flags = new byte[n]; }
     }
-    }
-    static final class PackedFleet {
     static final class PackedFleet {
         final long[] bits;                // Three densely packed bits per car.
-        final long[] bits;                // Three densely packed bits per car.
-        PackedFleet(int n) { bits = new long[(n * 3 + 63) >>> 6]; }
         PackedFleet(int n) { bits = new long[(n * 3 + 63) >>> 6]; }
         void set(int car, int fuelBit) { int i = car * 3 + fuelBit; bits[i >>> 6] |= 1L << i; } // long shifts use the low six bits of the distance.
-        void set(int car, int fuelBit) { int i = car * 3 + fuelBit; bits[i >>> 6] |= 1L << i; } // long shifts use the low six bits of the distance.
-        boolean has(int car, int fuelBit) { int i = car * 3 + fuelBit; return (bits[i >>> 6] & (1L << i)) != 0; }
         boolean has(int car, int fuelBit) { int i = car * 3 + fuelBit; return (bits[i >>> 6] & (1L << i)) != 0; }
     }
-    }
-
 
     public static void main(String[] args) {
-    public static void main(String[] args) {
-        CarByte hybrid = new CarByte();
         CarByte hybrid = new CarByte();
         hybrid.set(CarByte.ELECTRIC | CarByte.BENZINE);
-        hybrid.set(CarByte.ELECTRIC | CarByte.BENZINE);
-        check(hybrid.has(CarByte.ELECTRIC) && !hybrid.has(CarByte.DIESEL) && hybrid.flags == 0b011, "byte flags");
         check(hybrid.has(CarByte.ELECTRIC) && !hybrid.has(CarByte.DIESEL) && hybrid.flags == 0b011, "byte flags");
 
-
-        EnumSet<Fuel> fuels = EnumSet.of(Fuel.ELECTRIC, Fuel.BENZINE);   // Up to 64 constants fit in one long.
         EnumSet<Fuel> fuels = EnumSet.of(Fuel.ELECTRIC, Fuel.BENZINE);   // Up to 64 constants fit in one long.
         check(fuels.contains(Fuel.BENZINE) && fuels.size() == 2, "EnumSet");
-        check(fuels.contains(Fuel.BENZINE) && fuels.size() == 2, "EnumSet");
-
 
         BitSet bs = new BitSet(3000);
-        BitSet bs = new BitSet(3000);
-        bs.set(5 * 3 + Fuel.BENZINE.ordinal());
         bs.set(5 * 3 + Fuel.BENZINE.ordinal());
         check(bs.get(16) && bs.cardinality() == 1, "BitSet");
-        check(bs.get(16) && bs.cardinality() == 1, "BitSet");
-
 
         PackedFleet pf = new PackedFleet(1000);
-        PackedFleet pf = new PackedFleet(1000);
-        check(pf.bits.length == 47, "47 longs = 376 bytes of data"); // ceil(3000/64)
         check(pf.bits.length == 47, "47 longs = 376 bytes of data"); // ceil(3000/64)
         pf.set(999, 2);
-        pf.set(999, 2);
-        check(pf.has(999, 2) && !pf.has(999, 1), "packed");
         check(pf.has(999, 2) && !pf.has(999, 1), "packed");
         Fleet f = new Fleet(1000);
-        Fleet f = new Fleet(1000);
-        f.flags[0] = CarByte.ELECTRIC | CarByte.BENZINE;
         f.flags[0] = CarByte.ELECTRIC | CarByte.BENZINE;
         check(Integer.bitCount(f.flags[0]) == 2, "fleet");
-        check(Integer.bitCount(f.flags[0]) == 2, "fleet");
-        System.out.println("J03 ok");
         System.out.println("J03 ok");
     }
-    }
     static void check(boolean ok, String what) { if (!ok) throw new AssertionError(what); }
-    static void check(boolean ok, String what) { if (!ok) throw new AssertionError(what); }
-}
 }
 ```
 
@@ -630,80 +428,42 @@ Kotlin 版本（`value class` 给 `Byte` 加上类型与运算符，运行时字
 
 ```kotlin
 // Kotlin version of the flag case study: boolean fields, bit operations, a value class, and arrays.
-// Kotlin version of the flag case study: boolean fields, bit operations, a value class, and arrays.
-package k05
 package k05
 
-
-import java.util.EnumSet
 import java.util.EnumSet
 
-
-enum class Fuel { ELECTRIC, BENZINE, DIESEL }
 enum class Fuel { ELECTRIC, BENZINE, DIESEL }
 
-
-data class HybridBools(val electric: Boolean, val benzine: Boolean, val diesel: Boolean)
 data class HybridBools(val electric: Boolean, val benzine: Boolean, val diesel: Boolean)
 
-
-// The value class adds a type and operations to Byte; the runtime representation remains a byte.
 // The value class adds a type and operations to Byte; the runtime representation remains a byte.
 @JvmInline
-@JvmInline
-value class FuelFlags(val bits: Byte) {
 value class FuelFlags(val bits: Byte) {
     operator fun contains(f: Fuel): Boolean = (bits.toInt() and (1 shl f.ordinal)) != 0
-    operator fun contains(f: Fuel): Boolean = (bits.toInt() and (1 shl f.ordinal)) != 0
-    operator fun plus(f: Fuel): FuelFlags = FuelFlags((bits.toInt() or (1 shl f.ordinal)).toByte())
     operator fun plus(f: Fuel): FuelFlags = FuelFlags((bits.toInt() or (1 shl f.ordinal)).toByte())
     operator fun minus(f: Fuel): FuelFlags = FuelFlags((bits.toInt() and (1 shl f.ordinal).inv()).toByte())
-    operator fun minus(f: Fuel): FuelFlags = FuelFlags((bits.toInt() and (1 shl f.ordinal).inv()).toByte())
-    companion object {
     companion object {
         val NONE = FuelFlags(0)
-        val NONE = FuelFlags(0)
-    }
     }
 }
-}
-
 
 class Car(var fuels: FuelFlags)      // The field is represented as a byte.
-class Car(var fuels: FuelFlags)      // The field is represented as a byte.
-
 
 fun main() {
-fun main() {
-    val hybrid = FuelFlags.NONE + Fuel.ELECTRIC + Fuel.BENZINE
     val hybrid = FuelFlags.NONE + Fuel.ELECTRIC + Fuel.BENZINE
     check(Fuel.ELECTRIC in hybrid && Fuel.DIESEL !in hybrid)
-    check(Fuel.ELECTRIC in hybrid && Fuel.DIESEL !in hybrid)
-    check(hybrid.bits.toInt() == 0b011)
     check(hybrid.bits.toInt() == 0b011)
     check((hybrid - Fuel.BENZINE).bits.toInt() == 0b001)
-    check((hybrid - Fuel.BENZINE).bits.toInt() == 0b001)
-    check(Car::class.java.getDeclaredField("fuels").type == Byte::class.javaPrimitiveType)
     check(Car::class.java.getDeclaredField("fuels").type == Byte::class.javaPrimitiveType)
     // Kotlin uses infix functions for bit operations: shl, shr, ushr, and, or, xor, inv.
-    // Kotlin uses infix functions for bit operations: shl, shr, ushr, and, or, xor, inv.
-    check((1 shl 2) or 1 == 5 && (0b110 and 0b011) == 0b010 && 5.inv() == -6)
     check((1 shl 2) or 1 == 5 && (0b110 and 0b011) == 0b010 && 5.inv() == -6)
     // For 1,000 cars, ByteArray uses one byte each; Array<FuelFlags> and List<FuelFlags> box every value.
-    // For 1,000 cars, ByteArray uses one byte each; Array<FuelFlags> and List<FuelFlags> box every value.
-    val fleet = ByteArray(1000)
     val fleet = ByteArray(1000)
     fleet[7] = hybrid.bits
-    fleet[7] = hybrid.bits
-    check(Fuel.BENZINE in FuelFlags(fleet[7]))
     check(Fuel.BENZINE in FuelFlags(fleet[7]))
     val es: EnumSet<Fuel> = EnumSet.of(Fuel.ELECTRIC, Fuel.BENZINE)
-    val es: EnumSet<Fuel> = EnumSet.of(Fuel.ELECTRIC, Fuel.BENZINE)
-    check(es.size == 2 && HybridBools(true, true, false).electric)
     check(es.size == 2 && HybridBools(true, true, false).electric)
     println("K05 ok")
-    println("K05 ok")
-}
 }
 ```
 
@@ -726,72 +486,38 @@ fun main() {
 
 ```java
 /** Array of Structures vs Structure of Arrays: SoA is contiguous and header-free when scanning one field. */
-/** Array of Structures vs Structure of Arrays: SoA is contiguous and header-free when scanning one field. */
-public class J04_SoA {
 public class J04_SoA {
     static final class Particle { double x, y, vx, vy; boolean alive; }   // AoS: each particle is a separate heap object.
-    static final class Particle { double x, y, vx, vy; boolean alive; }   // AoS: each particle is a separate heap object.
-
 
     static final class Particles {                                       // SoA: one primitive array per field.
-    static final class Particles {                                       // SoA: one primitive array per field.
-        final double[] x, y, vx, vy;
         final double[] x, y, vx, vy;
         final long[] alive;                                              // Store liveness flags out of band in a bitmap.
-        final long[] alive;                                              // Store liveness flags out of band in a bitmap.
-        int size;
         int size;
         Particles(int cap) {
-        Particles(int cap) {
-            x = new double[cap]; y = new double[cap]; vx = new double[cap]; vy = new double[cap];
             x = new double[cap]; y = new double[cap]; vx = new double[cap]; vy = new double[cap];
             alive = new long[(cap + 63) >>> 6];
-            alive = new long[(cap + 63) >>> 6];
-        }
         }
         int add(double px, double py, double pvx, double pvy) {
-        int add(double px, double py, double pvx, double pvy) {
-            int i = size++;
             int i = size++;
             x[i] = px; y[i] = py; vx[i] = pvx; vy[i] = pvy; alive[i >>> 6] |= 1L << i;
-            x[i] = px; y[i] = py; vx[i] = pvx; vy[i] = pvy; alive[i >>> 6] |= 1L << i;
-            return i;
             return i;
         }
-        }
-        void step(double dt) {                                           // The hot loop touches only the needed arrays.
         void step(double dt) {                                           // The hot loop touches only the needed arrays.
             for (int i = 0; i < size; i++) { x[i] += vx[i] * dt; y[i] += vy[i] * dt; }
-            for (int i = 0; i < size; i++) { x[i] += vx[i] * dt; y[i] += vy[i] * dt; }
-        }
         }
     }
-    }
-
 
     public static void main(String[] args) {
-    public static void main(String[] args) {
-        Particles ps = new Particles(1024);
         Particles ps = new Particles(1024);
         for (int i = 0; i < 1000; i++) ps.add(i, 0, 1, 2);
-        for (int i = 0; i < 1000; i++) ps.add(i, 0, 1, 2);
-        ps.step(0.5);
         ps.step(0.5);
         if (ps.x[10] != 10.5 || ps.y[10] != 1.0) throw new AssertionError();
-        if (ps.x[10] != 10.5 || ps.y[10] != 1.0) throw new AssertionError();
-        Particle[] aos = new Particle[1000];
         Particle[] aos = new Particle[1000];
         for (int i = 0; i < aos.length; i++) { aos[i] = new Particle(); aos[i].x = i; aos[i].vx = 1; }
-        for (int i = 0; i < aos.length; i++) { aos[i] = new Particle(); aos[i].x = i; aos[i].vx = 1; }
-        for (Particle p : aos) p.x += p.vx * 0.5;
         for (Particle p : aos) p.x += p.vx * 0.5;
         if (aos[10].x != ps.x[10]) throw new AssertionError();
-        if (aos[10].x != ps.x[10]) throw new AssertionError();
-        System.out.println("J04 ok");
         System.out.println("J04 ok");
     }
-    }
-}
 }
 ```
 
@@ -809,58 +535,31 @@ public class J04_SoA {
 
 ```java
 import java.util.ArrayList;
-import java.util.ArrayList;
-import java.util.EnumMap;
 import java.util.EnumMap;
 import java.util.EnumSet;
-import java.util.EnumSet;
-import java.util.HashMap;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.HashSet;
-import java.util.List;
 import java.util.List;
 import java.util.Map;
-import java.util.Map;
-
 
 /** Reserve collection capacity and use EnumMap/EnumSet for enum keys. */
-/** Reserve collection capacity and use EnumMap/EnumSet for enum keys. */
-public class J13_Presize {
 public class J13_Presize {
     enum Color { RED, GREEN, BLUE }
-    enum Color { RED, GREEN, BLUE }
-    public static void main(String[] args) {
     public static void main(String[] args) {
         int n = 10_000;
-        int n = 10_000;
-        List<String> names = new ArrayList<>(n);                  // Avoid repeated growth and array copies.
         List<String> names = new ArrayList<>(n);                  // Avoid repeated growth and array copies.
         // jvmperf-lint: ignore jp-boxed-primitive-collection -- Intentional counterexample.
-        // jvmperf-lint: ignore jp-boxed-primitive-collection -- Intentional counterexample.
-        Map<String, Integer> idx = HashMap.newHashMap(n);           // JDK 19+: reserve by element count, accounting for the load factor.
         Map<String, Integer> idx = HashMap.newHashMap(n);           // JDK 19+: reserve by element count, accounting for the load factor.
         HashSet<String> seen = HashSet.newHashSet(n);               // JDK 19+
-        HashSet<String> seen = HashSet.newHashSet(n);               // JDK 19+
-        for (int i = 0; i < n; i++) { String s = "k" + i; names.add(s); idx.put(s, i); seen.add(s); }
         for (int i = 0; i < n; i++) { String s = "k" + i; names.add(s); idx.put(s, i); seen.add(s); }
         // Note: new HashMap<>(n) takes table capacity; inserting n elements may still resize it.
-        // Note: new HashMap<>(n) takes table capacity; inserting n elements may still resize it.
-        EnumMap<Color, Integer> hits = new EnumMap<>(Color.class);  // Internally an array indexed by ordinal.
         EnumMap<Color, Integer> hits = new EnumMap<>(Color.class);  // Internally an array indexed by ordinal.
         hits.merge(Color.RED, 1, Integer::sum);
-        hits.merge(Color.RED, 1, Integer::sum);
-        EnumSet<Color> warm = EnumSet.of(Color.RED, Color.GREEN);
         EnumSet<Color> warm = EnumSet.of(Color.RED, Color.GREEN);
         if (idx.get("k42") != 42 || !warm.contains(Color.RED) || hits.get(Color.RED) != 1 || seen.size() != n)
-        if (idx.get("k42") != 42 || !warm.contains(Color.RED) || hits.get(Color.RED) != 1 || seen.size() != n)
-            throw new AssertionError();
             throw new AssertionError();
         System.out.println("J13 ok");
-        System.out.println("J13 ok");
     }
-    }
-}
 }
 ```
 
@@ -878,44 +577,24 @@ public class J13_Presize {
 
 ```java
 import java.util.Arrays;
-import java.util.Arrays;
-
 
 /** Immutable values and bulk operations: record arrays vs primitive arrays; Arrays methods use intrinsics. */
-/** Immutable values and bulk operations: record arrays vs primitive arrays; Arrays methods use intrinsics. */
-public class J18_Records {
 public class J18_Records {
     record Sample(long ts, double value) {}
-    record Sample(long ts, double value) {}
-    public static void main(String[] args) {
     public static void main(String[] args) {
         int n = 1000;
-        int n = 1000;
-        long[] ts = new long[n];
         long[] ts = new long[n];
         double[] vs = new double[n];
-        double[] vs = new double[n];
-        Arrays.setAll(ts, i -> 1_000L * i);
         Arrays.setAll(ts, i -> 1_000L * i);
         Arrays.fill(vs, 1.5);
-        Arrays.fill(vs, 1.5);
-        double sum = 0;
         double sum = 0;
         for (double v : vs) sum += v;
-        for (double v : vs) sum += v;
-        long[] copy = Arrays.copyOf(ts, n * 2);                // System.arraycopy intrinsic
         long[] copy = Arrays.copyOf(ts, n * 2);                // System.arraycopy intrinsic
         if (sum != 1500 || copy[999] != 999_000L || Arrays.binarySearch(ts, 5_000L) != 5) throw new AssertionError();
-        if (sum != 1500 || copy[999] != 999_000L || Arrays.binarySearch(ts, 5_000L) != 5) throw new AssertionError();
-        Sample s = new Sample(ts[1], vs[1]);
         Sample s = new Sample(ts[1], vs[1]);
         if (s.ts() != 1000) throw new AssertionError();
-        if (s.ts() != 1000) throw new AssertionError();
-        System.out.println("J18 ok");
         System.out.println("J18 ok");
     }
-    }
-}
 }
 ```
 
@@ -941,74 +620,39 @@ public class J18_Records {
 
 ```java
 import java.util.List;
-import java.util.List;
-import java.util.StringJoiner;
 import java.util.StringJoiner;
 
-
-/** Strings: reserve StringBuilder capacity, avoid += in loops, and use join or intern appropriately. */
 /** Strings: reserve StringBuilder capacity, avoid += in loops, and use join or intern appropriately. */
 public class J05_Strings {
-public class J05_Strings {
-    static String joinSlow(List<String> parts) {
     static String joinSlow(List<String> parts) {
         String s = "";
-        String s = "";
-        // jvmperf-lint: ignore jp-string-concat-hot -- Intentional counterexample.
         // jvmperf-lint: ignore jp-string-concat-hot -- Intentional counterexample.
         for (String p : parts) s += p + ",";          // Creates and copies a new String each iteration: O(n²).
-        for (String p : parts) s += p + ",";          // Creates and copies a new String each iteration: O(n²).
-        return s;
         return s;
     }
-    }
-    static String joinFast(List<String> parts) {
     static String joinFast(List<String> parts) {
         int cap = 0;
-        int cap = 0;
-        for (String p : parts) cap += p.length() + 1;
         for (String p : parts) cap += p.length() + 1;
         StringBuilder sb = new StringBuilder(cap);     // Allocate enough capacity once.
-        StringBuilder sb = new StringBuilder(cap);     // Allocate enough capacity once.
-        for (String p : parts) sb.append(p).append(',');
         for (String p : parts) sb.append(p).append(',');
         return sb.toString();
-        return sb.toString();
-    }
     }
     public static void main(String[] args) {
-    public static void main(String[] args) {
-        List<String> parts = List.of("a", "bb", "ccc");
         List<String> parts = List.of("a", "bb", "ccc");
         check(joinSlow(parts).equals(joinFast(parts)), "join");
-        check(joinSlow(parts).equals(joinFast(parts)), "join");
-        check(String.join(",", parts).equals("a,bb,ccc"), "String.join");
         check(String.join(",", parts).equals("a,bb,ccc"), "String.join");
         StringJoiner sj = new StringJoiner(",", "[", "]");
-        StringJoiner sj = new StringJoiner(",", "[", "]");
-        parts.forEach(sj::add);
         parts.forEach(sj::add);
         check(sj.toString().equals("[a,bb,ccc]"), "joiner");
-        check(sj.toString().equals("[a,bb,ccc]"), "joiner");
-        // A single + expression is fine: javac 9+ uses invokedynamic and StringConcatFactory (JEP 280).
         // A single + expression is fine: javac 9+ uses invokedynamic and StringConcatFactory (JEP 280).
         String name = "x"; int n = 3;
-        String name = "x"; int n = 3;
-        check((name + "=" + n).equals("x=3"), "indy concat");
         check((name + "=" + n).equals("x=3"), "indy concat");
         // Use intern for a small set of long-lived, repeated values; UseStringDeduplication shares backing arrays only.
-        // Use intern for a small set of long-lived, repeated values; UseStringDeduplication shares backing arrays only.
-        String k1 = new String("status-OK").intern(), k2 = "status-OK";
         String k1 = new String("status-OK").intern(), k2 = "status-OK";
         check(k1 == k2, "intern");
-        check(k1 == k2, "intern");
-        System.out.println("J05 ok");
         System.out.println("J05 ok");
     }
-    }
     static void check(boolean ok, String what) { if (!ok) throw new AssertionError(what); }
-    static void check(boolean ok, String what) { if (!ok) throw new AssertionError(what); }
-}
 }
 ```
 
@@ -1016,46 +660,25 @@ public class J05_Strings {
 
 ```kotlin
 // Build strings with reserved capacity; avoid += concatenation in loops.
-// Build strings with reserved capacity; avoid += concatenation in loops.
-package k11
 package k11
 
-
-fun render(items: List<Pair<String, Int>>): String =
 fun render(items: List<Pair<String, Int>>): String =
     buildString(items.size * 16) {                    // Estimate capacity to reduce growth.
-    buildString(items.size * 16) {                    // Estimate capacity to reduce growth.
-        for ((k, v) in items) { append(k); append('='); append(v); append('\n') }
         for ((k, v) in items) { append(k); append('='); append(v); append('\n') }
     }
-    }
-
 
 fun renderSlow(items: List<Pair<String, Int>>): String {
-fun renderSlow(items: List<Pair<String, Int>>): String {
-    var s = ""
     var s = ""
     // jvmperf-lint: ignore jp-string-concat-hot -- Intentional counterexample.
-    // jvmperf-lint: ignore jp-string-concat-hot -- Intentional counterexample.
-    for ((k, v) in items) s += "$k=$v\n"              // Copies the entire string on each iteration.
     for ((k, v) in items) s += "$k=$v\n"              // Copies the entire string on each iteration.
     return s
-    return s
-}
 }
 
-
-fun main() {
 fun main() {
     val items = List(100) { "k$it" to it }
-    val items = List(100) { "k$it" to it }
-    check(render(items) == renderSlow(items))
     check(render(items) == renderSlow(items))
     check(items.joinToString(",", limit = 2) { it.first } == "k0,k1,...")
-    check(items.joinToString(",", limit = 2) { it.first } == "k0,k1,...")
     println("K11 ok")
-    println("K11 ok")
-}
 }
 ```
 
@@ -1067,58 +690,31 @@ fun main() {
 
 ```java
 import java.util.regex.Pattern;
-import java.util.regex.Pattern;
-
 
 /** Compile and reuse Pattern; String.split has a single-character fast path; replace(CharSequence) is literal. */
-/** Compile and reuse Pattern; String.split has a single-character fast path; replace(CharSequence) is literal. */
-public class J15_Regex {
 public class J15_Regex {
     private static final Pattern WS = Pattern.compile("\\s+");     // Compile once.
-    private static final Pattern WS = Pattern.compile("\\s+");     // Compile once.
-
 
     static int countWordsSlow(String[] lines) {
-    static int countWordsSlow(String[] lines) {
-        int n = 0;
         int n = 0;
         // jvmperf-lint: ignore jp-regex-hot -- Intentional counterexample.
-        // jvmperf-lint: ignore jp-regex-hot -- Intentional counterexample.
-        for (String l : lines) n += l.trim().split("\\s+").length;   // Compiles the regex on each call.
         for (String l : lines) n += l.trim().split("\\s+").length;   // Compiles the regex on each call.
         return n;
-        return n;
-    }
     }
     static int countWordsFast(String[] lines) {
-    static int countWordsFast(String[] lines) {
-        int n = 0;
         int n = 0;
         for (String l : lines) n += WS.split(l.trim()).length;
-        for (String l : lines) n += WS.split(l.trim()).length;
-        return n;
         return n;
     }
-    }
-    public static void main(String[] args) {
     public static void main(String[] args) {
         String[] lines = {"a b  c", " d e "};
-        String[] lines = {"a b  c", " d e "};
-        if (countWordsSlow(lines) != countWordsFast(lines)) throw new AssertionError();
         if (countWordsSlow(lines) != countWordsFast(lines)) throw new AssertionError();
         // A single non-metacharacter such as "," takes String.split's fast path without regex compilation.
-        // A single non-metacharacter such as "," takes String.split's fast path without regex compilation.
-        if ("a,b,c".split(",").length != 3) throw new AssertionError();
         if ("a,b,c".split(",").length != 3) throw new AssertionError();
         // replace(CharSequence, CharSequence) is literal; replaceAll treats its first argument as a regex.
-        // replace(CharSequence, CharSequence) is literal; replaceAll treats its first argument as a regex.
-        if (!"a.b.c".replace(".", "/").equals("a/b/c")) throw new AssertionError();
         if (!"a.b.c".replace(".", "/").equals("a/b/c")) throw new AssertionError();
         System.out.println("J15 ok");
-        System.out.println("J15 ok");
     }
-    }
-}
 }
 ```
 
@@ -1149,76 +745,40 @@ Kotlin/JVM 最终也是 JVM 字节码，前面各章的结论都适用。本章�
 
 ```kotlin
 // IntArray maps to JVM int[]; Array<Int> and List<Int> store boxed Integer values.
-// IntArray maps to JVM int[]; Array<Int> and List<Int> store boxed Integer values.
-package k01
 package k01
 
-
-fun sumIntArray(xs: IntArray): Long {
 fun sumIntArray(xs: IntArray): Long {
     var s = 0L
-    var s = 0L
-    for (x in xs) s += x            // Compiles to an indexed loop with no iterator or boxing.
     for (x in xs) s += x            // Compiles to an indexed loop with no iterator or boxing.
     return s
-    return s
 }
-}
-
 
 // jvmperf-lint: ignore jp-boxed-primitive-collection -- Intentional counterexample.
-// jvmperf-lint: ignore jp-boxed-primitive-collection -- Intentional counterexample.
-fun sumList(xs: List<Int>): Long {
 fun sumList(xs: List<Int>): Long {
     var s = 0L
-    var s = 0L
-    for (x in xs) s += x            // Uses an iterator and unboxes each element.
     for (x in xs) s += x            // Uses an iterator and unboxes each element.
     return s
-    return s
-}
 }
 
-
-fun main() {
 fun main() {
     val n = 1000
-    val n = 1000
-    val prim = IntArray(n) { it }                 // int[]
     val prim = IntArray(n) { it }                 // int[]
     // jvmperf-lint: ignore jp-boxed-primitive-collection -- Intentional counterexample.
-    // jvmperf-lint: ignore jp-boxed-primitive-collection -- Intentional counterexample.
-    val boxedArr: Array<Int> = Array(n) { it }    // Integer[]
     val boxedArr: Array<Int> = Array(n) { it }    // Integer[]
     // jvmperf-lint: ignore jp-boxed-primitive-collection -- Intentional counterexample.
-    // jvmperf-lint: ignore jp-boxed-primitive-collection -- Intentional counterexample.
-    val list: List<Int> = List(n) { it }          // ArrayList<Integer>
     val list: List<Int> = List(n) { it }          // ArrayList<Integer>
     check(prim.javaClass.name == "[I")
-    check(prim.javaClass.name == "[I")
-    check(boxedArr.javaClass.name == "[Ljava.lang.Integer;")
     check(boxedArr.javaClass.name == "[Ljava.lang.Integer;")
     check(sumIntArray(prim) == sumList(list))
-    check(sumIntArray(prim) == sumList(list))
-    check(prim.sum() == boxedArr.sum())
     check(prim.sum() == boxedArr.sum())
     // Range loops also avoid allocation: 0 until n and xs.indices compile to integer loops.
-    // Range loops also avoid allocation: 0 until n and xs.indices compile to integer loops.
-    var s = 0
     var s = 0
     for (i in prim.indices) s += prim[i]
-    for (i in prim.indices) s += prim[i]
-    check(s == 499500)
     check(s == 499500)
     // (0 until n).map { } creates a boxed List<Int>; use IntArray(n) { } for primitive results.
-    // (0 until n).map { } creates a boxed List<Int>; use IntArray(n) { } for primitive results.
-    val squares = IntArray(n) { it * it }
     val squares = IntArray(n) { it * it }
     check(squares[3] == 9)
-    check(squares[3] == 9)
     println("K01 ok")
-    println("K01 ok")
-}
 }
 ```
 
@@ -1238,72 +798,38 @@ fun main() {
 
 ```kotlin
 // A value class stays unboxed as its own type, but boxes as a generic, nullable, or interface value.
-// A value class stays unboxed as its own type, but boxes as a generic, nullable, or interface value.
-package k02
 package k02
 
-
-@JvmInline
 @JvmInline
 value class UserId(val raw: Int)
-value class UserId(val raw: Int)
-
 
 class Holder(val id: UserId)            // The field is represented as int.
-class Holder(val id: UserId)            // The field is represented as int.
-// jvmperf-lint: ignore jp-value-class-boxing -- Intentional counterexample.
 // jvmperf-lint: ignore jp-value-class-boxing -- Intentional counterexample.
 class NullableHolder(val id: UserId?)   // Nullable use boxes the field as UserId.
-class NullableHolder(val id: UserId?)   // Nullable use boxes the field as UserId.
-
 
 // Use a sentinel instead of null to avoid boxing.
-// Use a sentinel instead of null to avoid boxing.
-@JvmInline
 @JvmInline
 value class OptUserId(val raw: Int) {
-value class OptUserId(val raw: Int) {
-    val isNone: Boolean get() = raw == NONE
     val isNone: Boolean get() = raw == NONE
     companion object {
-    companion object {
-        const val NONE = -1
         const val NONE = -1
         val None = OptUserId(NONE)
-        val None = OptUserId(NONE)
-    }
     }
 }
-}
-class OptHolder(val id: OptUserId)
 class OptHolder(val id: OptUserId)
 
-
-fun main() {
 fun main() {
     check(Holder::class.java.getDeclaredField("id").type == Int::class.javaPrimitiveType)
-    check(Holder::class.java.getDeclaredField("id").type == Int::class.javaPrimitiveType)
-    check(NullableHolder::class.java.getDeclaredField("id").type == UserId::class.java)
     check(NullableHolder::class.java.getDeclaredField("id").type == UserId::class.java)
     check(OptHolder::class.java.getDeclaredField("id").type == Int::class.javaPrimitiveType)
-    check(OptHolder::class.java.getDeclaredField("id").type == Int::class.javaPrimitiveType)
-    // jvmperf-lint: ignore jp-value-class-boxing -- Intentional counterexample.
     // jvmperf-lint: ignore jp-value-class-boxing -- Intentional counterexample.
     val ids: List<UserId> = listOf(UserId(1), UserId(2))   // Generic elements are boxed UserId objects.
-    val ids: List<UserId> = listOf(UserId(1), UserId(2))   // Generic elements are boxed UserId objects.
-    check((ids[0] as Any).javaClass == UserId::class.java)
     check((ids[0] as Any).javaClass == UserId::class.java)
     // Store many IDs in IntArray and wrap them as UserId only when needed.
-    // Store many IDs in IntArray and wrap them as UserId only when needed.
-    val raw = intArrayOf(1, 2, 3)
     val raw = intArrayOf(1, 2, 3)
     val first = UserId(raw[0])
-    val first = UserId(raw[0])
-    check(first == UserId(1) && OptHolder(OptUserId.None).id.isNone)
     check(first == UserId(1) && OptHolder(OptUserId.None).id.isNone)
     println("K02 ok")
-    println("K02 ok")
-}
 }
 ```
 
@@ -1320,88 +846,46 @@ fun main() {
 
 ```kotlin
 // Inline functions, reified types, and lambda allocations.
-// Inline functions, reified types, and lambda allocations.
-package k03
 package k03
 
-
-// inline expands the lambda at the call site, avoiding a function object and Int boxing.
 // inline expands the lambda at the call site, avoiding a function object and Int boxing.
 inline fun repeatSum(n: Int, f: (Int) -> Int): Int {
-inline fun repeatSum(n: Int, f: (Int) -> Int): Int {
-    var s = 0
     var s = 0
     for (i in 0 until n) s += f(i)
-    for (i in 0 until n) s += f(i)
-    return s
     return s
 }
-}
-
 
 // A non-inline function receives a lambda object; Function1.invoke(Object) boxes the Int argument and result.
-// A non-inline function receives a lambda object; Function1.invoke(Object) boxes the Int argument and result.
-fun repeatSumBoxed(n: Int, f: (Int) -> Int): Int {
 fun repeatSumBoxed(n: Int, f: (Int) -> Int): Int {
     var s = 0
-    var s = 0
-    for (i in 0 until n) s += f(i)
     for (i in 0 until n) s += f(i)
     return s
-    return s
 }
-}
-
 
 // A primitive-signature fun interface avoids boxing through generic Function1.
-// A primitive-signature fun interface avoids boxing through generic Function1.
-fun interface IntOp { fun apply(x: Int): Int }
 fun interface IntOp { fun apply(x: Int): Int }
 fun repeatSumPrim(n: Int, f: IntOp): Int {
-fun repeatSumPrim(n: Int, f: IntOp): Int {
-    var s = 0
     var s = 0
     for (i in 0 until n) s += f.apply(i)
-    for (i in 0 until n) s += f.apply(i)
-    return s
     return s
 }
-}
-
 
 // reified lets an inline function access its type parameter without a Class argument.
-// reified lets an inline function access its type parameter without a Class argument.
-inline fun <reified T> List<Any>.countOf(): Int = count { it is T }
 inline fun <reified T> List<Any>.countOf(): Int = count { it is T }
 
-
-fun nonCapturing(): (Int) -> Int = { it + 1 }
 fun nonCapturing(): (Int) -> Int = { it + 1 }
 fun capturing(k: Int): (Int) -> Int = { it + k }
-fun capturing(k: Int): (Int) -> Int = { it + k }
-
 
 fun main() {
-fun main() {
-    val k = 3
     val k = 3
     check(repeatSum(10) { it * k } == repeatSumBoxed(10) { it * k })
-    check(repeatSum(10) { it * k } == repeatSumBoxed(10) { it * k })
-    check(repeatSumPrim(10) { it * k } == 135)
     check(repeatSumPrim(10) { it * k } == 135)
     check(listOf<Any>(1, "a", 2).countOf<Int>() == 2)
-    check(listOf<Any>(1, "a", 2).countOf<Int>() == 2)
-    // Since Kotlin 2.0, lambdas use invokedynamic (LambdaMetafactory) by default.
     // Since Kotlin 2.0, lambdas use invokedynamic (LambdaMetafactory) by default.
     // A non-capturing lambda reuses an instance at one call site; a capturing lambda creates a new object each time.
-    // A non-capturing lambda reuses an instance at one call site; a capturing lambda creates a new object each time.
-    check(nonCapturing() === nonCapturing())
     check(nonCapturing() === nonCapturing())
     check(capturing(1) !== capturing(1))
-    check(capturing(1) !== capturing(1))
     println("K03 ok")
-    println("K03 ok")
-}
 }
 ```
 
@@ -1415,42 +899,23 @@ fun main() {
 
 ```kotlin
 // Use asSequence() for multi-step chains over large data or with early termination; direct operations suit small collections.
-// Use asSequence() for multi-step chains over large data or with early termination; direct operations suit small collections.
-package k04
 package k04
 
-
-fun main() {
 fun main() {
     val data = List(100_000) { it }
-    val data = List(100_000) { it }
-    // Collection version: map creates a 100,000-element list, filter creates another, then take returns five.
     // Collection version: map creates a 100,000-element list, filter creates another, then take returns five.
     // jvmperf-lint: ignore jp-collection-chain -- Intentional counterexample.
-    // jvmperf-lint: ignore jp-collection-chain -- Intentional counterexample.
-    val eager = data.map { it * 2 }.filter { it % 3 == 0 }.take(5)
     val eager = data.map { it * 2 }.filter { it % 3 == 0 }.take(5)
     // Sequence version: process one element at a time and stop after five matches, with no intermediate lists.
-    // Sequence version: process one element at a time and stop after five matches, with no intermediate lists.
-    var mapped = 0
     var mapped = 0
     val lazy = data.asSequence().map { mapped++; it * 2 }.filter { it % 3 == 0 }.take(5).toList()
-    val lazy = data.asSequence().map { mapped++; it * 2 }.filter { it % 3 == 0 }.take(5).toList()
-    check(eager == lazy)
     check(eager == lazy)
     check(mapped < 20)              // Only the first few elements were processed.
-    check(mapped < 20)              // Only the first few elements were processed.
-    // Primitive operations such as IntArray.sumOf/fold are inline and do not box values.
     // Primitive operations such as IntArray.sumOf/fold are inline and do not box values.
     val arr = IntArray(1000) { it }
-    val arr = IntArray(1000) { it }
-    check(arr.sumOf { it.toLong() } == 499500L)
     check(arr.sumOf { it.toLong() } == 499500L)
     // Sequence<Int> still boxes elements; use a loop or IntStream for numeric pipelines.
-    // Sequence<Int> still boxes elements; use a loop or IntStream for numeric pipelines.
     println("K04 ok")
-    println("K04 ok")
-}
 }
 ```
 
@@ -1462,56 +927,30 @@ fun main() {
 
 ```kotlin
 // by lazy defaults to SYNCHRONIZED (with locking and an extra object); use NONE for single-threaded access.
-// by lazy defaults to SYNCHRONIZED (with locking and an extra object); use NONE for single-threaded access.
-package k06
 package k06
 
-
-class Config {
 class Config {
     // Accessed only on the main thread or another single thread:
-    // Accessed only on the main thread or another single thread:
-    val parsed: Map<String, String> by lazy(LazyThreadSafetyMode.NONE) { mapOf("a" to "1") }
     val parsed: Map<String, String> by lazy(LazyThreadSafetyMode.NONE) { mapOf("a" to "1") }
     // Multiple threads may access it and initialization is cheap and idempotent: PUBLICATION (may initialize more than once).
-    // Multiple threads may access it and initialization is cheap and idempotent: PUBLICATION (may initialize more than once).
-    val table: IntArray by lazy(LazyThreadSafetyMode.PUBLICATION) { IntArray(256) { it * it } }
     val table: IntArray by lazy(LazyThreadSafetyMode.PUBLICATION) { IntArray(256) { it * it } }
     // Default mode: SYNCHRONIZED.
-    // Default mode: SYNCHRONIZED.
-    // jvmperf-lint: ignore jp-lazy-default-mode -- Intentional counterexample.
     // jvmperf-lint: ignore jp-lazy-default-mode -- Intentional counterexample.
     val heavy: String by lazy { "computed" }
-    val heavy: String by lazy { "computed" }
 }
-}
-
 
 // Each by lazy property adds a Lazy object and a lambda, which costs memory across many instances.
-// Each by lazy property adds a Lazy object and a lambda, which costs memory across many instances.
-// For many instances, use a nullable field with a manual check or move the cache elsewhere.
 // For many instances, use a nullable field with a manual check or move the cache elsewhere.
 class Row(private val raw: String) {
-class Row(private val raw: String) {
-    private var cachedLen: Int = -1
     private var cachedLen: Int = -1
     val len: Int get() { if (cachedLen < 0) cachedLen = raw.length; return cachedLen }
-    val len: Int get() { if (cachedLen < 0) cachedLen = raw.length; return cachedLen }
-}
 }
 
-
-fun main() {
 fun main() {
     val c = Config()
-    val c = Config()
-    check(c.parsed["a"] == "1" && c.table[3] == 9 && c.heavy == "computed")
     check(c.parsed["a"] == "1" && c.table[3] == 9 && c.heavy == "computed")
     check(Row("abc").len == 3)
-    check(Row("abc").len == 3)
     println("K06 ok")
-    println("K06 ok")
-}
 }
 ```
 
@@ -1525,58 +964,31 @@ fun main() {
 
 ```kotlin
 // const val and @JvmField change generated getters and companion-object indirection.
-// const val and @JvmField change generated getters and companion-object indirection.
-package k07
 package k07
 
-
-import java.lang.reflect.Modifier
 import java.lang.reflect.Modifier
 
-
-class Limits {
 class Limits {
     companion object {
-    companion object {
-        const val MAX = 1024                      // Compile-time constant, inlined at use sites.
         const val MAX = 1024                      // Compile-time constant, inlined at use sites.
         @JvmField val DEFAULT_NAMES = listOf("a")  // Public static final field on the outer class; no getter.
-        @JvmField val DEFAULT_NAMES = listOf("a")  // Public static final field on the outer class; no getter.
-        val viaGetter = listOf("b")                // Private static field plus Companion.getViaGetter().
         val viaGetter = listOf("b")                // Private static field plus Companion.getViaGetter().
     }
-    }
 }
-}
-
 
 object Registry {
-object Registry {
-    @JvmField val items = ArrayList<String>()     // @JvmField lets Java access Registry.items directly.
     @JvmField val items = ArrayList<String>()     // @JvmField lets Java access Registry.items directly.
 }
-}
-
 
 class Point(@JvmField val x: Int, @JvmField val y: Int)   // Java callers access the fields directly.
-class Point(@JvmField val x: Int, @JvmField val y: Int)   // Java callers access the fields directly.
-
 
 fun main() {
-fun main() {
-    val f = Limits::class.java.getDeclaredField("DEFAULT_NAMES")
     val f = Limits::class.java.getDeclaredField("DEFAULT_NAMES")
     check(Modifier.isPublic(f.modifiers) && Modifier.isStatic(f.modifiers))
-    check(Modifier.isPublic(f.modifiers) && Modifier.isStatic(f.modifiers))
-    check(!Modifier.isPublic(Limits::class.java.getDeclaredField("viaGetter").modifiers))
     check(!Modifier.isPublic(Limits::class.java.getDeclaredField("viaGetter").modifiers))
     check(Limits.MAX == 1024 && Point(1, 2).x == 1)
-    check(Limits.MAX == 1024 && Point(1, 2).x == 1)
-    Registry.items.add("x")
     Registry.items.add("x")
     println("K07 ok")
-    println("K07 ok")
-}
 }
 ```
 
@@ -1588,50 +1000,27 @@ fun main() {
 
 ```kotlin
 // Each data class copy() allocates an object; repeated copies in a hot loop create many short-lived objects.
-// Each data class copy() allocates an object; repeated copies in a hot loop create many short-lived objects.
-package k08
 package k08
 
-
-data class State(val x: Int, val y: Int, val steps: Int)
 data class State(val x: Int, val y: Int, val steps: Int)
 
-
-fun simulateCopy(n: Int): State {
 fun simulateCopy(n: Int): State {
     var s = State(0, 0, 0)
-    var s = State(0, 0, 0)
-    // jvmperf-lint: ignore jp-data-copy-hot -- Intentional counterexample.
     // jvmperf-lint: ignore jp-data-copy-hot -- Intentional counterexample.
     repeat(n) { s = s.copy(x = s.x + 1, steps = s.steps + 1) }   // n allocations; escape analysis may not remove them.
-    repeat(n) { s = s.copy(x = s.x + 1, steps = s.steps + 1) }   // n allocations; escape analysis may not remove them.
-    return s
     return s
 }
-}
-
 
 // On a hot path, accumulate in locals (or a mutable helper) and construct the immutable result once.
-// On a hot path, accumulate in locals (or a mutable helper) and construct the immutable result once.
-fun simulateLocals(n: Int): State {
 fun simulateLocals(n: Int): State {
     var x = 0; var steps = 0
-    var x = 0; var steps = 0
-    repeat(n) { x++; steps++ }
     repeat(n) { x++; steps++ }
     return State(x, 0, steps)
-    return State(x, 0, steps)
-}
 }
 
-
-fun main() {
 fun main() {
     check(simulateCopy(1000) == simulateLocals(1000))
-    check(simulateCopy(1000) == simulateLocals(1000))
     println("K08 ok")
-    println("K08 ok")
-}
 }
 ```
 
@@ -1645,34 +1034,19 @@ fun main() {
 
 ```kotlin
 // vararg and the spread operator *: spreading an array makes a copy.
-// vararg and the spread operator *: spreading an array makes a copy.
-package k09
 package k09
 
-
-fun sum(vararg xs: Int): Int { var s = 0; for (x in xs) s += x; return s }
 fun sum(vararg xs: Int): Int { var s = 0; for (x in xs) s += x; return s }
 fun identity(vararg xs: Int): IntArray = xs
-fun identity(vararg xs: Int): IntArray = xs
-
 
 fun sumArray(xs: IntArray): Int { var s = 0; for (x in xs) s += x; return s }   // Accept arrays directly on hot paths.
-fun sumArray(xs: IntArray): Int { var s = 0; for (x in xs) s += x; return s }   // Accept arrays directly on hot paths.
-
 
 fun main() {
-fun main() {
-    val a = intArrayOf(1, 2, 3)
     val a = intArrayOf(1, 2, 3)
     check(identity(*a) !== a)            // The spread operator creates a copy.
-    check(identity(*a) !== a)            // The spread operator creates a copy.
-    check(sum(*a) == sumArray(a))
     check(sum(*a) == sumArray(a))
     check(sum(1, 2, 3) == 6)             // Creates a new int[3] for each call.
-    check(sum(1, 2, 3) == 6)             // Creates a new int[3] for each call.
     println("K09 ok")
-    println("K09 ok")
-}
 }
 ```
 
@@ -1684,58 +1058,31 @@ fun main() {
 
 ```kotlin
 // Each suspend function compiles to a state machine and needs a continuation when suspended; launch/async also allocate objects.
-// Each suspend function compiles to a state machine and needs a continuation when suspended; launch/async also allocate objects.
-// Split small CPU-bound tasks into chunks instead of creating one coroutine per element.
 // Split small CPU-bound tasks into chunks instead of creating one coroutine per element.
 package k10
-package k10
-
 
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.runBlocking
-
 
 suspend fun parallelSum(xs: IntArray, chunks: Int = Runtime.getRuntime().availableProcessors()): Long = coroutineScope {
-suspend fun parallelSum(xs: IntArray, chunks: Int = Runtime.getRuntime().availableProcessors()): Long = coroutineScope {
-    val size = (xs.size + chunks - 1) / chunks
     val size = (xs.size + chunks - 1) / chunks
     (0 until chunks).map { c ->
-    (0 until chunks).map { c ->
-        async(Dispatchers.Default) {
         async(Dispatchers.Default) {
             var s = 0L
-            var s = 0L
-            val end = minOf(xs.size, (c + 1) * size)
             val end = minOf(xs.size, (c + 1) * size)
             for (i in c * size until end) s += xs[i]     // A regular loop with no suspension point or allocation inside the chunk.
-            for (i in c * size until end) s += xs[i]     // A regular loop with no suspension point or allocation inside the chunk.
-            s
             s
         }
-        }
-    }.awaitAll().sum()
     }.awaitAll().sum()
 }
-}
-
 
 fun main() = runBlocking {
-fun main() = runBlocking {
-    val xs = IntArray(1_000_000) { 1 }
     val xs = IntArray(1_000_000) { 1 }
     check(parallelSum(xs) == 1_000_000L)
-    check(parallelSum(xs) == 1_000_000L)
     println("K10 ok")
-    println("K10 ok")
-}
 }
 ```
 
@@ -1747,62 +1094,33 @@ fun main() = runBlocking {
 
 ```kotlin
 // Primitive collections in androidx.collection 1.4+ work with Kotlin Multiplatform and regular JVM projects.
-// Primitive collections in androidx.collection 1.4+ work with Kotlin Multiplatform and regular JVM projects.
-package k12
 package k12
 
-
-import androidx.collection.MutableIntIntMap
 import androidx.collection.MutableIntIntMap
 import androidx.collection.MutableIntList
-import androidx.collection.MutableIntList
-import androidx.collection.MutableIntObjectMap
 import androidx.collection.MutableIntObjectMap
 import androidx.collection.SparseArrayCompat
-import androidx.collection.SparseArrayCompat
-import androidx.collection.mutableIntListOf
 import androidx.collection.mutableIntListOf
 
-
-fun main() {
 fun main() {
     val counts = MutableIntIntMap(64)                 // Open addressing; keys and values are ints.
-    val counts = MutableIntIntMap(64)                 // Open addressing; keys and values are ints.
-    for (i in 0 until 1000) counts[i % 10] = counts.getOrDefault(i % 10, 0) + 1
     for (i in 0 until 1000) counts[i % 10] = counts.getOrDefault(i % 10, 0) + 1
     check(counts[3] == 100)
-    check(counts[3] == 100)
-
 
     val ids: MutableIntList = mutableIntListOf()
-    val ids: MutableIntList = mutableIntListOf()
-    for (i in 0 until 100) ids.add(i)
     for (i in 0 until 100) ids.add(i)
     var total = 0
-    var total = 0
-    ids.forEach { total += it }                        // Inline; elements are passed as ints.
     ids.forEach { total += it }                        // Inline; elements are passed as ints.
     check(total == 4950 && ids.size == 100)
-    check(total == 4950 && ids.size == 100)
-
 
     val names = MutableIntObjectMap<String>()
-    val names = MutableIntObjectMap<String>()
-    names[42] = "answer"
     names[42] = "answer"
     check(names[42] == "answer")
-    check(names[42] == "answer")
-
 
     val sparse = SparseArrayCompat<String>()            // Like android.util.SparseArray, uses sorted arrays and binary search.
-    val sparse = SparseArrayCompat<String>()            // Like android.util.SparseArray, uses sorted arrays and binary search.
-    sparse.put(7, "seven")
     sparse.put(7, "seven")
     check(sparse[7] == "seven")
-    check(sparse[7] == "seven")
     println("K12 ok")
-    println("K12 ok")
-}
 }
 ```
 
@@ -1826,84 +1144,44 @@ JDK 22 起正式（JEP 454）。用 `MemoryLayout` 显式描述结构体（没�
 
 ```java
 import java.lang.foreign.Arena;
-import java.lang.foreign.Arena;
-import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemorySegment;
-import java.lang.foreign.MemorySegment;
-import java.lang.foreign.StructLayout;
 import java.lang.foreign.StructLayout;
 import java.lang.foreign.ValueLayout;
-import java.lang.foreign.ValueLayout;
-import java.lang.invoke.VarHandle;
 import java.lang.invoke.VarHandle;
 import java.nio.ByteBuffer;
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 import java.nio.ByteOrder;
 
-
-/** Off-heap memory with the FFM API (final in JDK 22, JEP 454) and direct ByteBuffer. */
 /** Off-heap memory with the FFM API (final in JDK 22, JEP 454) and direct ByteBuffer. */
 public class J06_OffHeapFfm {
-public class J06_OffHeapFfm {
-    // struct Car { int id; byte flags; [3 bytes padding] } -- explicit layout with no object header.
     // struct Car { int id; byte flags; [3 bytes padding] } -- explicit layout with no object header.
     static final StructLayout CAR = MemoryLayout.structLayout(
-    static final StructLayout CAR = MemoryLayout.structLayout(
-            ValueLayout.JAVA_INT.withName("id"),
             ValueLayout.JAVA_INT.withName("id"),
             ValueLayout.JAVA_BYTE.withName("flags"),
-            ValueLayout.JAVA_BYTE.withName("flags"),
-            MemoryLayout.paddingLayout(3));
             MemoryLayout.paddingLayout(3));
     static final VarHandle ID = CAR.varHandle(MemoryLayout.PathElement.groupElement("id"));
-    static final VarHandle ID = CAR.varHandle(MemoryLayout.PathElement.groupElement("id"));
-    static final VarHandle FLAGS = CAR.varHandle(MemoryLayout.PathElement.groupElement("flags"));
     static final VarHandle FLAGS = CAR.varHandle(MemoryLayout.PathElement.groupElement("flags"));
 
-
-    public static void main(String[] args) {
     public static void main(String[] args) {
         check(CAR.byteSize() == 8, "layout size");
-        check(CAR.byteSize() == 8, "layout size");
-        try (Arena arena = Arena.ofConfined()) {               // Deterministic release when the try block ends.
         try (Arena arena = Arena.ofConfined()) {               // Deterministic release when the try block ends.
             MemorySegment cars = arena.allocate(CAR, 1000);    // One contiguous block of 1,000 × 8 bytes.
-            MemorySegment cars = arena.allocate(CAR, 1000);    // One contiguous block of 1,000 × 8 bytes.
-            for (int i = 0; i < 1000; i++) {
             for (int i = 0; i < 1000; i++) {
                 MemorySegment c = cars.asSlice(i * CAR.byteSize(), CAR);
-                MemorySegment c = cars.asSlice(i * CAR.byteSize(), CAR);
-                ID.set(c, 0L, i);
                 ID.set(c, 0L, i);
                 FLAGS.set(c, 0L, (byte) 0b011);
-                FLAGS.set(c, 0L, (byte) 0b011);
-            }
             }
             MemorySegment c42 = cars.asSlice(42 * CAR.byteSize(), CAR);
-            MemorySegment c42 = cars.asSlice(42 * CAR.byteSize(), CAR);
-            check((int) ID.get(c42, 0L) == 42 && (byte) FLAGS.get(c42, 0L) == 3, "segment");
             check((int) ID.get(c42, 0L) == 42 && (byte) FLAGS.get(c42, 0L) == 3, "segment");
             check(cars.byteSize() == 8000, "8000 bytes");
-            check(cars.byteSize() == 8000, "8000 bytes");
-        }
         }
         // Legacy API: GC reclaims direct ByteBuffers through Cleaner; capacity is limited by -XX:MaxDirectMemorySize.
-        // Legacy API: GC reclaims direct ByteBuffers through Cleaner; capacity is limited by -XX:MaxDirectMemorySize.
-        ByteBuffer bb = ByteBuffer.allocateDirect(8 * 1000).order(ByteOrder.nativeOrder());
         ByteBuffer bb = ByteBuffer.allocateDirect(8 * 1000).order(ByteOrder.nativeOrder());
         bb.putInt(42 * 8, 42).put(42 * 8 + 4, (byte) 3);
-        bb.putInt(42 * 8, 42).put(42 * 8 + 4, (byte) 3);
-        check(bb.getInt(42 * 8) == 42, "direct buffer");
         check(bb.getInt(42 * 8) == 42, "direct buffer");
         System.out.println("J06 ok");
-        System.out.println("J06 ok");
-    }
     }
     static void check(boolean ok, String what) { if (!ok) throw new AssertionError(what); }
-    static void check(boolean ok, String what) { if (!ok) throw new AssertionError(what); }
-}
 }
 ```
 
@@ -1925,68 +1203,36 @@ public class J06_OffHeapFfm {
 
 ```java
 import java.io.BufferedWriter;
-import java.io.BufferedWriter;
-import java.io.IOException;
 import java.io.IOException;
 import java.lang.foreign.Arena;
-import java.lang.foreign.Arena;
-import java.lang.foreign.MemorySegment;
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.ValueLayout;
-import java.lang.foreign.ValueLayout;
-import java.nio.channels.FileChannel;
 import java.nio.channels.FileChannel;
 import java.nio.charset.StandardCharsets;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Path;
-import java.nio.file.StandardOpenOption;
 import java.nio.file.StandardOpenOption;
 
-
-/** I/O: buffered writes, line-by-line reads, and mapping to an unrestricted-size MemorySegment. */
 /** I/O: buffered writes, line-by-line reads, and mapping to an unrestricted-size MemorySegment. */
 public class J12_Io {
-public class J12_Io {
-    public static void main(String[] args) throws IOException {
     public static void main(String[] args) throws IOException {
         Path p = Files.createTempFile("jvmperf", ".txt");
-        Path p = Files.createTempFile("jvmperf", ".txt");
-        try (BufferedWriter w = Files.newBufferedWriter(p, StandardCharsets.UTF_8)) {  // 8 KiB buffer by default.
         try (BufferedWriter w = Files.newBufferedWriter(p, StandardCharsets.UTF_8)) {  // 8 KiB buffer by default.
             for (int i = 0; i < 1000; i++) { w.write(Integer.toString(i)); w.newLine(); }
-            for (int i = 0; i < 1000; i++) { w.write(Integer.toString(i)); w.newLine(); }
-        }
         }
         long lines;
-        long lines;
-        try (var s = Files.lines(p)) { lines = s.count(); }
         try (var s = Files.lines(p)) { lines = s.count(); }
         if (lines != 1000) throw new AssertionError();
-        if (lines != 1000) throw new AssertionError();
-
 
         try (FileChannel ch = FileChannel.open(p, StandardOpenOption.READ); Arena arena = Arena.ofConfined()) {
-        try (FileChannel ch = FileChannel.open(p, StandardOpenOption.READ); Arena arena = Arena.ofConfined()) {
-            MemorySegment m = ch.map(FileChannel.MapMode.READ_ONLY, 0, ch.size(), arena);  // JDK 22+
             MemorySegment m = ch.map(FileChannel.MapMode.READ_ONLY, 0, ch.size(), arena);  // JDK 22+
             long newlines = 0;
-            long newlines = 0;
-            for (long i = 0; i < m.byteSize(); i++) if (m.get(ValueLayout.JAVA_BYTE, i) == '\n') newlines++;
             for (long i = 0; i < m.byteSize(); i++) if (m.get(ValueLayout.JAVA_BYTE, i) == '\n') newlines++;
             if (newlines != 1000) throw new AssertionError();
-            if (newlines != 1000) throw new AssertionError();
-        }
         }
         Files.delete(p);
-        Files.delete(p);
-        System.out.println("J12 ok");
         System.out.println("J12 ok");
     }
-    }
-}
 }
 ```
 
@@ -2012,54 +1258,29 @@ C2 会分析对象是否"逃出"方法（存进字段/数组、作为返回值�
 
 ```java
 /**
-/**
- * Escape analysis and scalar replacement: C2 may avoid heap allocation for small objects that do not escape.
  * Escape analysis and scalar replacement: C2 may avoid heap allocation for small objects that do not escape.
  * Verify with -XX:-EliminateAllocations or JMH -prof gc; inspect gc.alloc.rate.norm.
- * Verify with -XX:-EliminateAllocations or JMH -prof gc; inspect gc.alloc.rate.norm.
- */
  */
 public class J08_EscapeAnalysis {
-public class J08_EscapeAnalysis {
-    record Vec(double x, double y) {
     record Vec(double x, double y) {
         Vec plus(Vec o) { return new Vec(x + o.x, y + o.y); }
-        Vec plus(Vec o) { return new Vec(x + o.x, y + o.y); }
-        double len2() { return x * x + y * y; }
         double len2() { return x * x + y * y; }
     }
-    }
-    // Vec does not escape and its calls can inline, so C2 may replace it with two local doubles.
     // Vec does not escape and its calls can inline, so C2 may replace it with two local doubles.
     static double sumLen2(double[] xs, double[] ys) {
-    static double sumLen2(double[] xs, double[] ys) {
-        double s = 0;
         double s = 0;
         for (int i = 0; i < xs.length; i++) s += new Vec(xs[i], ys[i]).plus(new Vec(1, 1)).len2();
-        for (int i = 0; i < xs.length; i++) s += new Vec(xs[i], ys[i]).plus(new Vec(1, 1)).len2();
-        return s;
         return s;
     }
-    }
-    static Vec last;                          // Storing into a static field makes the object escape.
     static Vec last;                          // Storing into a static field makes the object escape.
     static void escapes(double x) { last = new Vec(x, x); }
-    static void escapes(double x) { last = new Vec(x, x); }
-
 
     public static void main(String[] args) {
-    public static void main(String[] args) {
-        double[] xs = {0, 1, 2}, ys = {0, 1, 2};
         double[] xs = {0, 1, 2}, ys = {0, 1, 2};
         if (sumLen2(xs, ys) != 2 + 8 + 18) throw new AssertionError();
-        if (sumLen2(xs, ys) != 2 + 8 + 18) throw new AssertionError();
-        escapes(1);
         escapes(1);
         System.out.println("J08 ok");
-        System.out.println("J08 ok");
     }
-    }
-}
 }
 ```
 
@@ -2077,58 +1298,31 @@ public class J08_EscapeAnalysis {
 
 ```java
 /**
-/**
- * JIT-friendly code: sealed types, switch pattern matching, small methods, and intrinsics.
  * JIT-friendly code: sealed types, switch pattern matching, small methods, and intrinsics.
  * Inspect inlining with: java -XX:+UnlockDiagnosticVMOptions -XX:+PrintInlining
- * Inspect inlining with: java -XX:+UnlockDiagnosticVMOptions -XX:+PrintInlining
- */
  */
 public class J09_JitFriendly {
-public class J09_JitFriendly {
-    sealed interface Shape permits Circle, Rect {}
     sealed interface Shape permits Circle, Rect {}
     record Circle(double r) implements Shape {}
-    record Circle(double r) implements Shape {}
-    record Rect(double w, double h) implements Shape {}
     record Rect(double w, double h) implements Shape {}
 
-
-    static double area(Shape s) {
     static double area(Shape s) {
         return switch (s) {                       // Exhaustive switch; no virtual call.
-        return switch (s) {                       // Exhaustive switch; no virtual call.
-            case Circle c -> Math.PI * c.r() * c.r();
             case Circle c -> Math.PI * c.r() * c.r();
             case Rect r -> r.w() * r.h();
-            case Rect r -> r.w() * r.h();
-        };
         };
     }
-    }
-    public static void main(String[] args) {
     public static void main(String[] args) {
         Shape[] shapes = {new Circle(1), new Rect(2, 3)};
-        Shape[] shapes = {new Circle(1), new Rect(2, 3)};
-        double total = 0;
         double total = 0;
         for (Shape s : shapes) total += area(s);
-        for (Shape s : shapes) total += area(s);
-        if (Math.abs(total - (Math.PI + 6)) > 1e-9) throw new AssertionError();
         if (Math.abs(total - (Math.PI + 6)) > 1e-9) throw new AssertionError();
         // These HotSpot intrinsics compile to a small number of specialized instructions.
-        // These HotSpot intrinsics compile to a small number of specialized instructions.
-        if (Integer.bitCount(0b1011) != 3 || Long.numberOfTrailingZeros(8) != 3) throw new AssertionError();
         if (Integer.bitCount(0b1011) != 3 || Long.numberOfTrailingZeros(8) != 3) throw new AssertionError();
         if (Math.fma(2.0, 3.0, 1.0) != 7.0) throw new AssertionError();
-        if (Math.fma(2.0, 3.0, 1.0) != 7.0) throw new AssertionError();
-        if (java.util.Arrays.mismatch(new byte[]{1, 2, 3}, new byte[]{1, 2, 4}) != 2) throw new AssertionError();
         if (java.util.Arrays.mismatch(new byte[]{1, 2, 3}, new byte[]{1, 2, 4}) != 2) throw new AssertionError();
         System.out.println("J09 ok");
-        System.out.println("J09 ok");
     }
-    }
-}
 }
 ```
 
@@ -2144,64 +1338,34 @@ JDK 25 是第 10 轮孵化（JEP 508），JDK 26/27 继续孵化（第 11/12 轮
 
 ```java
 import jdk.incubator.vector.FloatVector;
-import jdk.incubator.vector.FloatVector;
-import jdk.incubator.vector.VectorOperators;
 import jdk.incubator.vector.VectorOperators;
 import jdk.incubator.vector.VectorSpecies;
-import jdk.incubator.vector.VectorSpecies;
-
 
 /**
-/**
- * Vector API (JDK 25, tenth incubator round, JEP 508). Compile and run with --add-modules jdk.incubator.vector.
  * Vector API (JDK 25, tenth incubator round, JEP 508). Compile and run with --add-modules jdk.incubator.vector.
  * javac --add-modules jdk.incubator.vector J07_VectorApi.java
- * javac --add-modules jdk.incubator.vector J07_VectorApi.java
- */
  */
 public class J07_VectorApi {
-public class J07_VectorApi {
-    static final VectorSpecies<Float> S = FloatVector.SPECIES_PREFERRED;   // Select a width supported by the CPU.
     static final VectorSpecies<Float> S = FloatVector.SPECIES_PREFERRED;   // Select a width supported by the CPU.
 
-
-    static float dot(float[] a, float[] b) {
     static float dot(float[] a, float[] b) {
         var acc = FloatVector.zero(S);
-        var acc = FloatVector.zero(S);
-        int i = 0, bound = S.loopBound(a.length);
         int i = 0, bound = S.loopBound(a.length);
         for (; i < bound; i += S.length()) {
-        for (; i < bound; i += S.length()) {
-            var va = FloatVector.fromArray(S, a, i);
             var va = FloatVector.fromArray(S, a, i);
             var vb = FloatVector.fromArray(S, b, i);
-            var vb = FloatVector.fromArray(S, b, i);
-            acc = va.fma(vb, acc);
             acc = va.fma(vb, acc);
         }
-        }
-        float sum = acc.reduceLanes(VectorOperators.ADD);
         float sum = acc.reduceLanes(VectorOperators.ADD);
         for (; i < a.length; i++) sum += a[i] * b[i];                    // Handle the tail with scalar operations.
-        for (; i < a.length; i++) sum += a[i] * b[i];                    // Handle the tail with scalar operations.
-        return sum;
         return sum;
     }
-    }
-    public static void main(String[] args) {
     public static void main(String[] args) {
         float[] a = new float[1003], b = new float[1003];
-        float[] a = new float[1003], b = new float[1003];
-        for (int i = 0; i < a.length; i++) { a[i] = 1; b[i] = 2; }
         for (int i = 0; i < a.length; i++) { a[i] = 1; b[i] = 2; }
         if (dot(a, b) != 2006f) throw new AssertionError(dot(a, b));
-        if (dot(a, b) != 2006f) throw new AssertionError(dot(a, b));
-        System.out.println("J07 ok, lanes=" + S.length());
         System.out.println("J07 ok, lanes=" + S.length());
     }
-    }
-}
 }
 ```
 
@@ -2215,56 +1379,30 @@ public class J07_VectorApi {
 
 ```java
 /** Do not use exceptions for control flow; frequent exceptions can disable writable stack traces. */
-/** Do not use exceptions for control flow; frequent exceptions can disable writable stack traces. */
-public class J14_Exceptions {
 public class J14_Exceptions {
     static final class ParseFailure extends RuntimeException {
-    static final class ParseFailure extends RuntimeException {
-        private static final long serialVersionUID = 1L;
         private static final long serialVersionUID = 1L;
         ParseFailure(String msg) { super(msg, null, false, false); }   // Skips stack capture; cheaper but harder to debug.
-        ParseFailure(String msg) { super(msg, null, false, false); }   // Skips stack capture; cheaper but harder to debug.
-    }
     }
     // Bad: use an exception to check whether a value is numeric.
-    // Bad: use an exception to check whether a value is numeric.
-    static boolean isIntSlow(String s) {
     static boolean isIntSlow(String s) {
         try { Integer.parseInt(s); return true; } catch (NumberFormatException e) { return false; }
-        try { Integer.parseInt(s); return true; } catch (NumberFormatException e) { return false; }
-    }
     }
     // Better: validate before parsing.
-    // Better: validate before parsing.
-    static boolean isIntFast(String s) {
     static boolean isIntFast(String s) {
         if (s.isEmpty() || s.length() > 11) return false;          // "-2147483648" is 11 characters.
-        if (s.isEmpty() || s.length() > 11) return false;          // "-2147483648" is 11 characters.
-        int i = (s.charAt(0) == '-' || s.charAt(0) == '+') ? 1 : 0;
         int i = (s.charAt(0) == '-' || s.charAt(0) == '+') ? 1 : 0;
         if (i == s.length()) return false;
-        if (i == s.length()) return false;
-        for (; i < s.length(); i++) if (!Character.isDigit(s.charAt(i))) return false;
         for (; i < s.length(); i++) if (!Character.isDigit(s.charAt(i))) return false;
         try { Integer.parseInt(s); return true; } catch (NumberFormatException e) { return false; } // Only rare overflow cases reach the exception.
-        try { Integer.parseInt(s); return true; } catch (NumberFormatException e) { return false; } // Only rare overflow cases reach the exception.
-    }
     }
     public static void main(String[] args) {
-    public static void main(String[] args) {
-        for (String s : new String[]{"12", "-3", "x", "", "-", "99999999999", "-2147483648", "+5", "2147483648"})
         for (String s : new String[]{"12", "-3", "x", "", "-", "99999999999", "-2147483648", "+5", "2147483648"})
             if (isIntSlow(s) != isIntFast(s)) throw new AssertionError(s);
-            if (isIntSlow(s) != isIntFast(s)) throw new AssertionError(s);
-        ParseFailure f = new ParseFailure("bad");
         ParseFailure f = new ParseFailure("bad");
         if (f.getStackTrace().length != 0) throw new AssertionError();
-        if (f.getStackTrace().length != 0) throw new AssertionError();
-        System.out.println("J14 ok");
         System.out.println("J14 ok");
     }
-    }
-}
 }
 ```
 
@@ -2284,58 +1422,31 @@ public class J14_Exceptions {
 
 ```java
 import java.util.concurrent.atomic.LongAdder;
-import java.util.concurrent.atomic.LongAdder;
-
 
 /**
-/**
- * False sharing occurs when fields frequently written by different threads share a cache line.
  * False sharing occurs when fields frequently written by different threads share a cache line.
  * - The JDK annotation @jdk.internal.vm.annotation.Contended requires the compile-time --add-exports flag
- * - The JDK annotation @jdk.internal.vm.annotation.Contended requires the compile-time --add-exports flag
- *   and the runtime option -XX:-RestrictContended in user code.
  *   and the runtime option -XX:-RestrictContended in user code.
  * - LongAdder is a ready-made option; its internal Cell counters use @Contended.
- * - LongAdder is a ready-made option; its internal Cell counters use @Contended.
- * - Manual padding avoids JVM flags, but field layout is not guaranteed.
  * - Manual padding avoids JVM flags, but field layout is not guaranteed.
  */
- */
-public class J10_FalseSharing {
 public class J10_FalseSharing {
     static final class PaddedCounter {
-    static final class PaddedCounter {
-        @jdk.internal.vm.annotation.Contended volatile long a;
         @jdk.internal.vm.annotation.Contended volatile long a;
         @jdk.internal.vm.annotation.Contended volatile long b;
-        @jdk.internal.vm.annotation.Contended volatile long b;
-    }
     }
     public static void main(String[] args) throws Exception {
-    public static void main(String[] args) throws Exception {
-        LongAdder adder = new LongAdder();
         LongAdder adder = new LongAdder();
         Thread[] ts = new Thread[4];
-        Thread[] ts = new Thread[4];
-        for (int t = 0; t < ts.length; t++) {
         for (int t = 0; t < ts.length; t++) {
             ts[t] = Thread.ofPlatform().start(() -> { for (int i = 0; i < 100_000; i++) adder.increment(); });
-            ts[t] = Thread.ofPlatform().start(() -> { for (int i = 0; i < 100_000; i++) adder.increment(); });
-        }
         }
         for (Thread t : ts) t.join();
-        for (Thread t : ts) t.join();
-        if (adder.sum() != 400_000) throw new AssertionError();
         if (adder.sum() != 400_000) throw new AssertionError();
         PaddedCounter pc = new PaddedCounter();
-        PaddedCounter pc = new PaddedCounter();
-        pc.a = 1; pc.b = 2;
         pc.a = 1; pc.b = 2;
         System.out.println("J10 ok");
-        System.out.println("J10 ok");
     }
-    }
-}
 }
 ```
 
@@ -2354,40 +1465,22 @@ JDK 21 正式（JEP 444）。适合"大量任务、大部分时间在阻塞 I/O"
 
 ```java
 import java.util.concurrent.Executors;
-import java.util.concurrent.Executors;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.IntStream;
-import java.util.stream.IntStream;
-
 
 /** Virtual threads (JDK 21, JEP 444) suit many blocking I/O tasks, not CPU-bound work. */
-/** Virtual threads (JDK 21, JEP 444) suit many blocking I/O tasks, not CPU-bound work. */
-public class J11_VirtualThreads {
 public class J11_VirtualThreads {
     public static void main(String[] args) {
-    public static void main(String[] args) {
-        AtomicInteger done = new AtomicInteger();
         AtomicInteger done = new AtomicInteger();
         try (var exec = Executors.newVirtualThreadPerTaskExecutor()) {   // One virtual thread per task; do not pool them.
-        try (var exec = Executors.newVirtualThreadPerTaskExecutor()) {   // One virtual thread per task; do not pool them.
-            IntStream.range(0, 10_000).forEach(i -> exec.submit(() -> {
             IntStream.range(0, 10_000).forEach(i -> exec.submit(() -> {
                 try { Thread.sleep(10); } catch (InterruptedException e) { Thread.currentThread().interrupt(); }
-                try { Thread.sleep(10); } catch (InterruptedException e) { Thread.currentThread().interrupt(); }
-                done.incrementAndGet();
                 done.incrementAndGet();
             }));
-            }));
-        } // close() waits for all tasks to finish.
         } // close() waits for all tasks to finish.
         if (done.get() != 10_000) throw new AssertionError();
-        if (done.get() != 10_000) throw new AssertionError();
-        System.out.println("J11 ok");
         System.out.println("J11 ok");
     }
-    }
-}
 }
 ```
 
@@ -2399,60 +1492,32 @@ TLAB（线程本地分配缓冲）里的分配只是指针碰撞，年轻代回�
 
 ```java
 import java.nio.ByteBuffer;
-import java.nio.ByteBuffer;
-import java.util.ArrayDeque;
 import java.util.ArrayDeque;
 
-
-/**
 /**
  * Pool only expensive resources such as direct ByteBuffers, large arrays, connections, and threads.
- * Pool only expensive resources such as direct ByteBuffers, large arrays, connections, and threads.
- * Pooling small objects is often slower: TLAB allocation is cheap, while pools add synchronization and leak risks.
  * Pooling small objects is often slower: TLAB allocation is cheap, while pools add synchronization and leak risks.
  */
- */
-public class J16_Pool {
 public class J16_Pool {
     static final class BufferPool {                       // Single-threaded; use one per thread or add locking for shared use.
-    static final class BufferPool {                       // Single-threaded; use one per thread or add locking for shared use.
-        private final ArrayDeque<ByteBuffer> free = new ArrayDeque<>();
         private final ArrayDeque<ByteBuffer> free = new ArrayDeque<>();
         private final int size;
-        private final int size;
-        BufferPool(int size, int prealloc) {
         BufferPool(int size, int prealloc) {
             this.size = size;
-            this.size = size;
-            // jvmperf-lint: ignore jp-expensive-alloc-hot -- Pool is preallocated once during construction.
             // jvmperf-lint: ignore jp-expensive-alloc-hot -- Pool is preallocated once during construction.
             for (int i = 0; i < prealloc; i++) free.push(ByteBuffer.allocateDirect(size));
-            for (int i = 0; i < prealloc; i++) free.push(ByteBuffer.allocateDirect(size));
-        }
         }
         ByteBuffer acquire() { ByteBuffer b = free.poll(); return b != null ? b.clear() : ByteBuffer.allocateDirect(size); }
-        ByteBuffer acquire() { ByteBuffer b = free.poll(); return b != null ? b.clear() : ByteBuffer.allocateDirect(size); }
-        void release(ByteBuffer b) { free.push(b); }
         void release(ByteBuffer b) { free.push(b); }
     }
-    }
-    public static void main(String[] args) {
     public static void main(String[] args) {
         BufferPool pool = new BufferPool(64 * 1024, 4);
-        BufferPool pool = new BufferPool(64 * 1024, 4);
-        ByteBuffer b = pool.acquire();
         ByteBuffer b = pool.acquire();
         b.putLong(42L);
-        b.putLong(42L);
-        pool.release(b);
         pool.release(b);
         if (pool.acquire() != b) throw new AssertionError();   // Reuses the same off-heap buffer.
-        if (pool.acquire() != b) throw new AssertionError();   // Reuses the same off-heap buffer.
-        System.out.println("J16 ok");
         System.out.println("J16 ok");
     }
-    }
-}
 }
 ```
 
@@ -2486,19 +1551,14 @@ AOT 缓存：JDK 24 引入（JEP 483），JDK 25 简化命令行并加入方法 
 
 ```sh
 # JDK 25：训练运行并直接生成缓存
-# JDK 25：训练运行并直接生成缓存
-java -XX:AOTCacheOutput=app.aot -jar app.jar
 java -XX:AOTCacheOutput=app.aot -jar app.jar
 # 生产运行
-# 生产运行
-java -XX:AOTCache=app.aot -jar app.jar
 java -XX:AOTCache=app.aot -jar app.jar
 ```
 
 ### 11.4 看 GC 日志
 
 ```sh
-java -Xlog:gc*:file=gc.log:time,uptime,level,tags -jar app.jar
 java -Xlog:gc*:file=gc.log:time,uptime,level,tags -jar app.jar
 ```
 
@@ -2532,86 +1592,45 @@ java -Xlog:gc*:file=gc.log:time,uptime,level,tags -jar app.jar
 
 ```java
 import android.util.ArrayMap;
-import android.util.ArrayMap;
-import android.util.Log;
 import android.util.Log;
 import android.util.LongSparseArray;
-import android.util.LongSparseArray;
-import android.util.SparseArray;
 import android.util.SparseArray;
 import android.util.SparseBooleanArray;
-import android.util.SparseBooleanArray;
-import android.util.SparseIntArray;
 import android.util.SparseIntArray;
 
-
-/**
 /**
  * Android-only collections. Compile against android.jar stubs; this sample cannot run on a desktop JVM.
- * Android-only collections. Compile against android.jar stubs; this sample cannot run on a desktop JVM.
- * javac --release 17 -cp $ANDROID_HOME/platforms/android-34/android.jar A01_AndroidCollections.java
  * javac --release 17 -cp $ANDROID_HOME/platforms/android-34/android.jar A01_AndroidCollections.java
  */
- */
-public class A01_AndroidCollections {
 public class A01_AndroidCollections {
     private static final String TAG = "Perf";
-    private static final String TAG = "Perf";
-
 
     static SparseArray<String> namesById(int[] ids, String[] names) {
-    static SparseArray<String> namesById(int[] ids, String[] names) {
-        SparseArray<String> m = new SparseArray<>(ids.length);   // Replaces HashMap<Integer, String>; no boxing or Entry objects.
         SparseArray<String> m = new SparseArray<>(ids.length);   // Replaces HashMap<Integer, String>; no boxing or Entry objects.
         for (int i = 0; i < ids.length; i++) m.put(ids[i], names[i]);
-        for (int i = 0; i < ids.length; i++) m.put(ids[i], names[i]);
         return m;
-        return m;
-    }
     }
     static SparseIntArray histogram(int[] xs) {                  // Replaces HashMap<Integer, Integer>.
-    static SparseIntArray histogram(int[] xs) {                  // Replaces HashMap<Integer, Integer>.
-        SparseIntArray h = new SparseIntArray();
         SparseIntArray h = new SparseIntArray();
         for (int x : xs) h.put(x, h.get(x, 0) + 1);
-        for (int x : xs) h.put(x, h.get(x, 0) + 1);
-        return h;
         return h;
     }
-    }
-    static ArrayMap<String, String> smallMap() {                 // Saves memory for small maps, but lookup uses binary search.
     static ArrayMap<String, String> smallMap() {                 // Saves memory for small maps, but lookup uses binary search.
         ArrayMap<String, String> m = new ArrayMap<>(4);
-        ArrayMap<String, String> m = new ArrayMap<>(4);
-        m.put("k", "v");
         m.put("k", "v");
         return m;
-        return m;
-    }
     }
     static void process(int[] xs) {
-    static void process(int[] xs) {
-        SparseBooleanArray seen = new SparseBooleanArray();
         SparseBooleanArray seen = new SparseBooleanArray();
         LongSparseArray<Object> byTs = new LongSparseArray<>();
-        LongSparseArray<Object> byTs = new LongSparseArray<>();
-        for (int x : xs) {
         for (int x : xs) {
             seen.put(x, true);
-            seen.put(x, true);
-            byTs.put(x * 1000L, null);
             byTs.put(x * 1000L, null);
             // Check the log level before formatting, or move logging out of the loop.
-            // Check the log level before formatting, or move logging out of the loop.
-            if (Log.isLoggable(TAG, Log.VERBOSE)) Log.v(TAG, "x=" + x);
             if (Log.isLoggable(TAG, Log.VERBOSE)) Log.v(TAG, "x=" + x);
         }
-        }
-        Log.d(TAG, "processed " + xs.length);
         Log.d(TAG, "processed " + xs.length);
     }
-    }
-}
 }
 ```
 
@@ -2623,26 +1642,15 @@ AGP 8.0 起 R8 默认 full mode：删除未用代码、内联、类合并、优�
 
 ```proguard
 # R8 full mode is the default since AGP 8.0. Keep only classes accessed through reflection or JNI.
-# R8 full mode is the default since AGP 8.0. Keep only classes accessed through reflection or JNI.
-# Avoid -keep class com.example.** { *; }; it prevents removal, inlining, and class merging.
 # Avoid -keep class com.example.** { *; }; it prevents removal, inlining, and class merging.
 -keep class com.example.app.jni.NativeBridge { native <methods>; }
--keep class com.example.app.jni.NativeBridge { native <methods>; }
--keepclassmembers class com.example.app.model.** {
 -keepclassmembers class com.example.app.model.** {
     @com.squareup.moshi.Json <fields>;
-    @com.squareup.moshi.Json <fields>;
-}
 }
 # Remove verbose/debug log calls from release builds only when their arguments have no side effects.
-# Remove verbose/debug log calls from release builds only when their arguments have no side effects.
--assumenosideeffects class android.util.Log {
 -assumenosideeffects class android.util.Log {
     public static int v(...);
-    public static int v(...);
     public static int d(...);
-    public static int d(...);
-}
 }
 ```
 
@@ -2654,14 +1662,9 @@ AGP 8.0 起 R8 默认 full mode：删除未用代码、内联、类合并、优�
 
 ```text
 # Baseline Profile 规则示例（通常由 Macrobenchmark 的 BaselineProfileRule 自动生成，放在 src/main/baseline-prof.txt）
-# Baseline Profile 规则示例（通常由 Macrobenchmark 的 BaselineProfileRule 自动生成，放在 src/main/baseline-prof.txt）
-# H = 热方法, S = 启动时调用, P = 启动后调用；L 开头的是类描述符
 # H = 热方法, S = 启动时调用, P = 启动后调用；L 开头的是类描述符
 HSPLcom/example/app/MainActivity;->onCreate(Landroid/os/Bundle;)V
-HSPLcom/example/app/MainActivity;->onCreate(Landroid/os/Bundle;)V
 HSPLcom/example/app/feed/FeedRepository;->**(**)**
-HSPLcom/example/app/feed/FeedRepository;->**(**)**
-Lcom/example/app/feed/FeedItem;
 Lcom/example/app/feed/FeedItem;
 ```
 
@@ -2704,66 +1707,35 @@ JMH 模板（注意 `@Fork`、预热、返回值或 `Blackhole` 防止死代码�
 
 ```java
 import org.openjdk.jmh.annotations.*;
-import org.openjdk.jmh.annotations.*;
-import org.openjdk.jmh.infra.Blackhole;
 import org.openjdk.jmh.infra.Blackhole;
 import java.util.ArrayList;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeUnit;
-
 
 /**
-/**
- * JMH benchmark template. Compilation needs jmh-core and jmh-generator-annprocess to generate benchmark stubs.
  * JMH benchmark template. Compilation needs jmh-core and jmh-generator-annprocess to generate benchmark stubs.
  * After packaging with Maven or Gradle, run: java -jar benchmarks.jar J19_JmhBench -prof gc
- * After packaging with Maven or Gradle, run: java -jar benchmarks.jar J19_JmhBench -prof gc
- */
  */
 @BenchmarkMode(Mode.AverageTime)
-@BenchmarkMode(Mode.AverageTime)
-@OutputTimeUnit(TimeUnit.MICROSECONDS)
 @OutputTimeUnit(TimeUnit.MICROSECONDS)
 @Warmup(iterations = 5, time = 1)
-@Warmup(iterations = 5, time = 1)
-@Measurement(iterations = 5, time = 1)
 @Measurement(iterations = 5, time = 1)
 @Fork(value = 2, jvmArgsAppend = {"-XX:+UseCompactObjectHeaders"})
-@Fork(value = 2, jvmArgsAppend = {"-XX:+UseCompactObjectHeaders"})
-@State(Scope.Benchmark)
 @State(Scope.Benchmark)
 public class J19_JmhBench {
-public class J19_JmhBench {
-    @Param({"1000", "100000"}) int n;
     @Param({"1000", "100000"}) int n;
     int[] prim;
-    int[] prim;
-    // jvmperf-lint: ignore jp-boxed-primitive-collection -- Intentional counterexample.
     // jvmperf-lint: ignore jp-boxed-primitive-collection -- Intentional counterexample.
     List<Integer> boxed;
-    List<Integer> boxed;
-
 
     @Setup public void setup() {
-    @Setup public void setup() {
-        prim = new int[n];
         prim = new int[n];
         boxed = new ArrayList<>(n);
-        boxed = new ArrayList<>(n);
-        for (int i = 0; i < n; i++) { prim[i] = i; boxed.add(i); }
         for (int i = 0; i < n; i++) { prim[i] = i; boxed.add(i); }
     }
-    }
-    @Benchmark public long primitive() { long s = 0; for (int x : prim) s += x; return s; }   // Return the result to prevent dead-code elimination.
     @Benchmark public long primitive() { long s = 0; for (int x : prim) s += x; return s; }   // Return the result to prevent dead-code elimination.
     @Benchmark public long boxedList() { long s = 0; for (Integer x : boxed) s += x; return s; }
-    @Benchmark public long boxedList() { long s = 0; for (Integer x : boxed) s += x; return s; }
     @Benchmark public void consume(Blackhole bh) { for (int x : prim) bh.consume(x); }
-    @Benchmark public void consume(Blackhole bh) { for (int x : prim) bh.consume(x); }
-}
 }
 ```
 
@@ -2778,12 +1750,8 @@ public class J19_JmhBench {
 
 ```sh
 cd jvmperf-lint
-cd jvmperf-lint
-./gradlew jar
 ./gradlew jar
 bin/jvmperf-lint path/to/src          # 文本输出；有发现时退出码 1
-bin/jvmperf-lint path/to/src          # 文本输出；有发现时退出码 1
-bin/jvmperf-lint -f json --disable jp-finalize,jp-ui-text-append src
 bin/jvmperf-lint -f json --disable jp-finalize,jp-ui-text-append src
 ```
 
@@ -2837,20 +1805,12 @@ bin/jvmperf-lint -f json --disable jp-finalize,jp-ui-text-append src
 
 ```text
 $ bin/jvmperf-lint fixtures/bad/jp-regex-hot.java fixtures/bad/jp-value-class-boxing.kt
-$ bin/jvmperf-lint fixtures/bad/jp-regex-hot.java fixtures/bad/jp-value-class-boxing.kt
-fixtures/bad/jp-regex-hot.java:6:17: warning[jp-regex-hot regex-in-loop] 循环内编译正则表达式 / regular expression compiled inside a loop: Pattern.compile(...)
 fixtures/bad/jp-regex-hot.java:6:17: warning[jp-regex-hot regex-in-loop] 循环内编译正则表达式 / regular expression compiled inside a loop: Pattern.compile(...)
     建议: 把 Pattern.compile / Regex(...) 提为 static final / companion 常量；String.replaceAll/replaceFirst/matches 每次都会编译正则，字面替换用 replace(CharSequence)
-    建议: 把 Pattern.compile / Regex(...) 提为 static final / companion 常量；String.replaceAll/replaceFirst/matches 每次都会编译正则，字面替换用 replace(CharSequence)
-fixtures/bad/jp-regex-hot.java:7:18: warning[jp-regex-hot regex-in-loop] ...: .split("\\s+")：非单字符快路径，每次编译正则
 fixtures/bad/jp-regex-hot.java:7:18: warning[jp-regex-hot regex-in-loop] ...: .split("\\s+")：非单字符快路径，每次编译正则
 fixtures/bad/jp-regex-hot.java:8:13: warning[jp-regex-hot regex-in-loop] ...: .replaceAll(...)：每次调用都编译正则
-fixtures/bad/jp-regex-hot.java:8:13: warning[jp-regex-hot regex-in-loop] ...: .replaceAll(...)：每次调用都编译正则
-fixtures/bad/jp-value-class-boxing.kt:4:26: info[jp-value-class-boxing value-class-boxing] ...: UserId?：可空的 value class 被装箱
 fixtures/bad/jp-value-class-boxing.kt:4:26: info[jp-value-class-boxing value-class-boxing] ...: UserId?：可空的 value class 被装箱
 fixtures/bad/jp-value-class-boxing.kt:5:14: info[jp-value-class-boxing value-class-boxing] ...: List<UserId>：泛型参数中的 UserId 被装箱
-fixtures/bad/jp-value-class-boxing.kt:5:14: info[jp-value-class-boxing value-class-boxing] ...: List<UserId>：泛型参数中的 UserId 被装箱
-fixtures/bad/jp-value-class-boxing.kt:5:29: info[jp-value-class-boxing value-class-boxing] ...: Array<UserId>：数组元素被装箱
 fixtures/bad/jp-value-class-boxing.kt:5:29: info[jp-value-class-boxing value-class-boxing] ...: Array<UserId>：数组元素被装箱
 ```
 

@@ -18,16 +18,11 @@ C# 性能笔记、小示例，以及 `csharpperf-lint`。
 
 ```sh
 cd packages/csharpperf/csharpperf-lint
-cd packages/csharpperf/csharpperf-lint
-dotnet build -c Release
 dotnet build -c Release
 dotnet run -c Release --no-build -- path/to/sources
-dotnet run -c Release --no-build -- path/to/sources
-bash ../scripts/smoke-lint.sh
 bash ../scripts/smoke-lint.sh
 bash ../scripts/self-lint.sh
-bash ../scripts/self-lint.sh
-```}
+```
 
 仅在 **错误** 严重性发现时退出 `1`（提示默认退出 `0`，除非使用 `--strict-hints`）。
 
@@ -35,15 +30,9 @@ bash ../scripts/self-lint.sh
 
 ```text
 docs/guide-src/   chapter sources
-docs/guide-src/   chapter sources
-docs/             assembled guide + corpus.md + evidence-policy.md
 docs/             assembled guide + corpus.md + evidence-policy.md
 evidence/         pending stubs until benches land
-evidence/         pending stubs until benches land
-examples/         tiny demos
 examples/         tiny demos
 csharpperf-lint/  checker + fixtures
-csharpperf-lint/  checker + fixtures
 scripts/          smoke-lint.sh, self-lint.sh (both skip when `dotnet` is absent)
-scripts/          smoke-lint.sh, self-lint.sh (both skip when `dotnet` is absent)
-```}
+```

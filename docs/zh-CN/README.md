@@ -49,13 +49,8 @@ GitHub Pages 会渲染此目录及每个工具包的指南。使用 `bash script
 
 ```mermaid
 flowchart TB
-flowchart TB
-  root[xperf]
   root[xperf]
   root --> readme["README.md<br/>family entry"]
-  root --> readme["README.md<br/>family entry"]
   root --> docs["docs/<br/>overview · quickstart · kits<br/>playbook · smell catalog · rule regression<br/>roadmap · release · doc style"]
-  root --> docs["docs/<br/>overview · quickstart · kits<br/>playbook · smell catalog · rule regression<br/>roadmap · release · doc style"]
-  root --> kit["packages/kit/<br/>README · guide · corpus<br/>evidence/ · lint/"]
   root --> kit["packages/kit/<br/>README · guide · corpus<br/>evidence/ · lint/"]
 ```

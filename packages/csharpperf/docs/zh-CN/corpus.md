@@ -4,7 +4,6 @@
 
 ```sh
 cd packages/csharpperf/csharpperf-lint && dotnet run -c Release -- <corpus-dir>/<name> --format json --no-fail
-cd packages/csharpperf/csharpperf-lint && dotnet run -c Release -- <corpus-dir>/<name> --format json --no-fail
 ```
 
 检查器：`csharpperf-lint`。规则 cs-list-add-no-capacity–cs-regex-hot。

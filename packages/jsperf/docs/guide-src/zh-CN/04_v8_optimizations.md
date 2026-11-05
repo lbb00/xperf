@@ -50,16 +50,10 @@ Lint：**jp-delete-array-hole** 标记 `delete arr[i]` 式成员删除（holey �
 
 ```sh
 # 跨 Node 版本优先：
-# 跨 Node 版本优先：
-node --trace-deopt examples/bench/deopt_probe.js
 node --trace-deopt examples/bench/deopt_probe.js
 bash scripts/jit-check.sh   # 写入 examples/bench/out/deopt-sample.txt
-bash scripts/jit-check.sh   # 写入 examples/bench/out/deopt-sample.txt
-
 
 # 可选 / 脆弱：V8 natives（状态码会漂）
-# 可选 / 脆弱：V8 natives（状态码会漂）
-USE_NATIVES=1 node --allow-natives-syntax --trace-deopt examples/bench/deopt_probe.js
 USE_NATIVES=1 node --allow-natives-syntax --trace-deopt examples/bench/deopt_probe.js
 ```
 

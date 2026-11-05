@@ -5,8 +5,6 @@
 
 ```sh
 cd packages/cppperf/cppperf-lint && make
-cd packages/cppperf/cppperf-lint && make
-./cppperf-lint <corpus-dir>/<name> --format json --no-fail
 ./cppperf-lint <corpus-dir>/<name> --format json --no-fail
 ```
 
@@ -38,12 +36,8 @@ r2→r3：将 CX001–CX003 降级 → **关闭**；添加 **CX004**（提示）
 
 ```text
 <corpus-dir>/
-<corpus-dir>/
-  json/
   json/
   fmt/
-  fmt/
-  spdlog/
   spdlog/
 ```
 

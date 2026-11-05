@@ -15,84 +15,44 @@ JDK 22 起正式（JEP 454）。用 `MemoryLayout` 显式描述结构体（没�
 
 ```java
 import java.lang.foreign.Arena;
-import java.lang.foreign.Arena;
-import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemorySegment;
-import java.lang.foreign.MemorySegment;
-import java.lang.foreign.StructLayout;
 import java.lang.foreign.StructLayout;
 import java.lang.foreign.ValueLayout;
-import java.lang.foreign.ValueLayout;
-import java.lang.invoke.VarHandle;
 import java.lang.invoke.VarHandle;
 import java.nio.ByteBuffer;
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 import java.nio.ByteOrder;
 
-
-/** Off-heap memory with the FFM API (final in JDK 22, JEP 454) and direct ByteBuffer. */
 /** Off-heap memory with the FFM API (final in JDK 22, JEP 454) and direct ByteBuffer. */
 public class J06_OffHeapFfm {
-public class J06_OffHeapFfm {
-    // struct Car { int id; byte flags; [3 bytes padding] } -- explicit layout with no object header.
     // struct Car { int id; byte flags; [3 bytes padding] } -- explicit layout with no object header.
     static final StructLayout CAR = MemoryLayout.structLayout(
-    static final StructLayout CAR = MemoryLayout.structLayout(
-            ValueLayout.JAVA_INT.withName("id"),
             ValueLayout.JAVA_INT.withName("id"),
             ValueLayout.JAVA_BYTE.withName("flags"),
-            ValueLayout.JAVA_BYTE.withName("flags"),
-            MemoryLayout.paddingLayout(3));
             MemoryLayout.paddingLayout(3));
     static final VarHandle ID = CAR.varHandle(MemoryLayout.PathElement.groupElement("id"));
-    static final VarHandle ID = CAR.varHandle(MemoryLayout.PathElement.groupElement("id"));
-    static final VarHandle FLAGS = CAR.varHandle(MemoryLayout.PathElement.groupElement("flags"));
     static final VarHandle FLAGS = CAR.varHandle(MemoryLayout.PathElement.groupElement("flags"));
 
-
-    public static void main(String[] args) {
     public static void main(String[] args) {
         check(CAR.byteSize() == 8, "layout size");
-        check(CAR.byteSize() == 8, "layout size");
-        try (Arena arena = Arena.ofConfined()) {               // Deterministic release when the try block ends.
         try (Arena arena = Arena.ofConfined()) {               // Deterministic release when the try block ends.
             MemorySegment cars = arena.allocate(CAR, 1000);    // One contiguous block of 1,000 × 8 bytes.
-            MemorySegment cars = arena.allocate(CAR, 1000);    // One contiguous block of 1,000 × 8 bytes.
-            for (int i = 0; i < 1000; i++) {
             for (int i = 0; i < 1000; i++) {
                 MemorySegment c = cars.asSlice(i * CAR.byteSize(), CAR);
-                MemorySegment c = cars.asSlice(i * CAR.byteSize(), CAR);
-                ID.set(c, 0L, i);
                 ID.set(c, 0L, i);
                 FLAGS.set(c, 0L, (byte) 0b011);
-                FLAGS.set(c, 0L, (byte) 0b011);
-            }
             }
             MemorySegment c42 = cars.asSlice(42 * CAR.byteSize(), CAR);
-            MemorySegment c42 = cars.asSlice(42 * CAR.byteSize(), CAR);
-            check((int) ID.get(c42, 0L) == 42 && (byte) FLAGS.get(c42, 0L) == 3, "segment");
             check((int) ID.get(c42, 0L) == 42 && (byte) FLAGS.get(c42, 0L) == 3, "segment");
             check(cars.byteSize() == 8000, "8000 bytes");
-            check(cars.byteSize() == 8000, "8000 bytes");
-        }
         }
         // Legacy API: GC reclaims direct ByteBuffers through Cleaner; capacity is limited by -XX:MaxDirectMemorySize.
-        // Legacy API: GC reclaims direct ByteBuffers through Cleaner; capacity is limited by -XX:MaxDirectMemorySize.
-        ByteBuffer bb = ByteBuffer.allocateDirect(8 * 1000).order(ByteOrder.nativeOrder());
         ByteBuffer bb = ByteBuffer.allocateDirect(8 * 1000).order(ByteOrder.nativeOrder());
         bb.putInt(42 * 8, 42).put(42 * 8 + 4, (byte) 3);
-        bb.putInt(42 * 8, 42).put(42 * 8 + 4, (byte) 3);
-        check(bb.getInt(42 * 8) == 42, "direct buffer");
         check(bb.getInt(42 * 8) == 42, "direct buffer");
         System.out.println("J06 ok");
-        System.out.println("J06 ok");
-    }
     }
     static void check(boolean ok, String what) { if (!ok) throw new AssertionError(what); }
-    static void check(boolean ok, String what) { if (!ok) throw new AssertionError(what); }
-}
 }
 ```
 
@@ -114,68 +74,36 @@ public class J06_OffHeapFfm {
 
 ```java
 import java.io.BufferedWriter;
-import java.io.BufferedWriter;
-import java.io.IOException;
 import java.io.IOException;
 import java.lang.foreign.Arena;
-import java.lang.foreign.Arena;
-import java.lang.foreign.MemorySegment;
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.ValueLayout;
-import java.lang.foreign.ValueLayout;
-import java.nio.channels.FileChannel;
 import java.nio.channels.FileChannel;
 import java.nio.charset.StandardCharsets;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Path;
-import java.nio.file.StandardOpenOption;
 import java.nio.file.StandardOpenOption;
 
-
-/** I/O: buffered writes, line-by-line reads, and mapping to an unrestricted-size MemorySegment. */
 /** I/O: buffered writes, line-by-line reads, and mapping to an unrestricted-size MemorySegment. */
 public class J12_Io {
-public class J12_Io {
-    public static void main(String[] args) throws IOException {
     public static void main(String[] args) throws IOException {
         Path p = Files.createTempFile("jvmperf", ".txt");
-        Path p = Files.createTempFile("jvmperf", ".txt");
-        try (BufferedWriter w = Files.newBufferedWriter(p, StandardCharsets.UTF_8)) {  // 8 KiB buffer by default.
         try (BufferedWriter w = Files.newBufferedWriter(p, StandardCharsets.UTF_8)) {  // 8 KiB buffer by default.
             for (int i = 0; i < 1000; i++) { w.write(Integer.toString(i)); w.newLine(); }
-            for (int i = 0; i < 1000; i++) { w.write(Integer.toString(i)); w.newLine(); }
-        }
         }
         long lines;
-        long lines;
-        try (var s = Files.lines(p)) { lines = s.count(); }
         try (var s = Files.lines(p)) { lines = s.count(); }
         if (lines != 1000) throw new AssertionError();
-        if (lines != 1000) throw new AssertionError();
-
 
         try (FileChannel ch = FileChannel.open(p, StandardOpenOption.READ); Arena arena = Arena.ofConfined()) {
-        try (FileChannel ch = FileChannel.open(p, StandardOpenOption.READ); Arena arena = Arena.ofConfined()) {
-            MemorySegment m = ch.map(FileChannel.MapMode.READ_ONLY, 0, ch.size(), arena);  // JDK 22+
             MemorySegment m = ch.map(FileChannel.MapMode.READ_ONLY, 0, ch.size(), arena);  // JDK 22+
             long newlines = 0;
-            long newlines = 0;
-            for (long i = 0; i < m.byteSize(); i++) if (m.get(ValueLayout.JAVA_BYTE, i) == '\n') newlines++;
             for (long i = 0; i < m.byteSize(); i++) if (m.get(ValueLayout.JAVA_BYTE, i) == '\n') newlines++;
             if (newlines != 1000) throw new AssertionError();
-            if (newlines != 1000) throw new AssertionError();
-        }
         }
         Files.delete(p);
-        Files.delete(p);
-        System.out.println("J12 ok");
         System.out.println("J12 ok");
     }
-    }
-}
 }
 ```
 
@@ -201,54 +129,29 @@ C2 会分析对象是否"逃出"方法（存进字段/数组、作为返回值�
 
 ```java
 /**
-/**
- * Escape analysis and scalar replacement: C2 may avoid heap allocation for small objects that do not escape.
  * Escape analysis and scalar replacement: C2 may avoid heap allocation for small objects that do not escape.
  * Verify with -XX:-EliminateAllocations or JMH -prof gc; inspect gc.alloc.rate.norm.
- * Verify with -XX:-EliminateAllocations or JMH -prof gc; inspect gc.alloc.rate.norm.
- */
  */
 public class J08_EscapeAnalysis {
-public class J08_EscapeAnalysis {
-    record Vec(double x, double y) {
     record Vec(double x, double y) {
         Vec plus(Vec o) { return new Vec(x + o.x, y + o.y); }
-        Vec plus(Vec o) { return new Vec(x + o.x, y + o.y); }
-        double len2() { return x * x + y * y; }
         double len2() { return x * x + y * y; }
     }
-    }
-    // Vec does not escape and its calls can inline, so C2 may replace it with two local doubles.
     // Vec does not escape and its calls can inline, so C2 may replace it with two local doubles.
     static double sumLen2(double[] xs, double[] ys) {
-    static double sumLen2(double[] xs, double[] ys) {
-        double s = 0;
         double s = 0;
         for (int i = 0; i < xs.length; i++) s += new Vec(xs[i], ys[i]).plus(new Vec(1, 1)).len2();
-        for (int i = 0; i < xs.length; i++) s += new Vec(xs[i], ys[i]).plus(new Vec(1, 1)).len2();
-        return s;
         return s;
     }
-    }
-    static Vec last;                          // Storing into a static field makes the object escape.
     static Vec last;                          // Storing into a static field makes the object escape.
     static void escapes(double x) { last = new Vec(x, x); }
-    static void escapes(double x) { last = new Vec(x, x); }
-
 
     public static void main(String[] args) {
-    public static void main(String[] args) {
-        double[] xs = {0, 1, 2}, ys = {0, 1, 2};
         double[] xs = {0, 1, 2}, ys = {0, 1, 2};
         if (sumLen2(xs, ys) != 2 + 8 + 18) throw new AssertionError();
-        if (sumLen2(xs, ys) != 2 + 8 + 18) throw new AssertionError();
-        escapes(1);
         escapes(1);
         System.out.println("J08 ok");
-        System.out.println("J08 ok");
     }
-    }
-}
 }
 ```
 
@@ -266,58 +169,31 @@ public class J08_EscapeAnalysis {
 
 ```java
 /**
-/**
- * JIT-friendly code: sealed types, switch pattern matching, small methods, and intrinsics.
  * JIT-friendly code: sealed types, switch pattern matching, small methods, and intrinsics.
  * Inspect inlining with: java -XX:+UnlockDiagnosticVMOptions -XX:+PrintInlining
- * Inspect inlining with: java -XX:+UnlockDiagnosticVMOptions -XX:+PrintInlining
- */
  */
 public class J09_JitFriendly {
-public class J09_JitFriendly {
-    sealed interface Shape permits Circle, Rect {}
     sealed interface Shape permits Circle, Rect {}
     record Circle(double r) implements Shape {}
-    record Circle(double r) implements Shape {}
-    record Rect(double w, double h) implements Shape {}
     record Rect(double w, double h) implements Shape {}
 
-
-    static double area(Shape s) {
     static double area(Shape s) {
         return switch (s) {                       // Exhaustive switch; no virtual call.
-        return switch (s) {                       // Exhaustive switch; no virtual call.
-            case Circle c -> Math.PI * c.r() * c.r();
             case Circle c -> Math.PI * c.r() * c.r();
             case Rect r -> r.w() * r.h();
-            case Rect r -> r.w() * r.h();
-        };
         };
     }
-    }
-    public static void main(String[] args) {
     public static void main(String[] args) {
         Shape[] shapes = {new Circle(1), new Rect(2, 3)};
-        Shape[] shapes = {new Circle(1), new Rect(2, 3)};
-        double total = 0;
         double total = 0;
         for (Shape s : shapes) total += area(s);
-        for (Shape s : shapes) total += area(s);
-        if (Math.abs(total - (Math.PI + 6)) > 1e-9) throw new AssertionError();
         if (Math.abs(total - (Math.PI + 6)) > 1e-9) throw new AssertionError();
         // These HotSpot intrinsics compile to a small number of specialized instructions.
-        // These HotSpot intrinsics compile to a small number of specialized instructions.
-        if (Integer.bitCount(0b1011) != 3 || Long.numberOfTrailingZeros(8) != 3) throw new AssertionError();
         if (Integer.bitCount(0b1011) != 3 || Long.numberOfTrailingZeros(8) != 3) throw new AssertionError();
         if (Math.fma(2.0, 3.0, 1.0) != 7.0) throw new AssertionError();
-        if (Math.fma(2.0, 3.0, 1.0) != 7.0) throw new AssertionError();
-        if (java.util.Arrays.mismatch(new byte[]{1, 2, 3}, new byte[]{1, 2, 4}) != 2) throw new AssertionError();
         if (java.util.Arrays.mismatch(new byte[]{1, 2, 3}, new byte[]{1, 2, 4}) != 2) throw new AssertionError();
         System.out.println("J09 ok");
-        System.out.println("J09 ok");
     }
-    }
-}
 }
 ```
 
@@ -333,64 +209,34 @@ JDK 25 是第 10 轮孵化（JEP 508），JDK 26/27 继续孵化（第 11/12 轮
 
 ```java
 import jdk.incubator.vector.FloatVector;
-import jdk.incubator.vector.FloatVector;
-import jdk.incubator.vector.VectorOperators;
 import jdk.incubator.vector.VectorOperators;
 import jdk.incubator.vector.VectorSpecies;
-import jdk.incubator.vector.VectorSpecies;
-
 
 /**
-/**
- * Vector API (JDK 25, tenth incubator round, JEP 508). Compile and run with --add-modules jdk.incubator.vector.
  * Vector API (JDK 25, tenth incubator round, JEP 508). Compile and run with --add-modules jdk.incubator.vector.
  * javac --add-modules jdk.incubator.vector J07_VectorApi.java
- * javac --add-modules jdk.incubator.vector J07_VectorApi.java
- */
  */
 public class J07_VectorApi {
-public class J07_VectorApi {
-    static final VectorSpecies<Float> S = FloatVector.SPECIES_PREFERRED;   // Select a width supported by the CPU.
     static final VectorSpecies<Float> S = FloatVector.SPECIES_PREFERRED;   // Select a width supported by the CPU.
 
-
-    static float dot(float[] a, float[] b) {
     static float dot(float[] a, float[] b) {
         var acc = FloatVector.zero(S);
-        var acc = FloatVector.zero(S);
-        int i = 0, bound = S.loopBound(a.length);
         int i = 0, bound = S.loopBound(a.length);
         for (; i < bound; i += S.length()) {
-        for (; i < bound; i += S.length()) {
-            var va = FloatVector.fromArray(S, a, i);
             var va = FloatVector.fromArray(S, a, i);
             var vb = FloatVector.fromArray(S, b, i);
-            var vb = FloatVector.fromArray(S, b, i);
-            acc = va.fma(vb, acc);
             acc = va.fma(vb, acc);
         }
-        }
-        float sum = acc.reduceLanes(VectorOperators.ADD);
         float sum = acc.reduceLanes(VectorOperators.ADD);
         for (; i < a.length; i++) sum += a[i] * b[i];                    // Handle the tail with scalar operations.
-        for (; i < a.length; i++) sum += a[i] * b[i];                    // Handle the tail with scalar operations.
-        return sum;
         return sum;
     }
-    }
-    public static void main(String[] args) {
     public static void main(String[] args) {
         float[] a = new float[1003], b = new float[1003];
-        float[] a = new float[1003], b = new float[1003];
-        for (int i = 0; i < a.length; i++) { a[i] = 1; b[i] = 2; }
         for (int i = 0; i < a.length; i++) { a[i] = 1; b[i] = 2; }
         if (dot(a, b) != 2006f) throw new AssertionError(dot(a, b));
-        if (dot(a, b) != 2006f) throw new AssertionError(dot(a, b));
-        System.out.println("J07 ok, lanes=" + S.length());
         System.out.println("J07 ok, lanes=" + S.length());
     }
-    }
-}
 }
 ```
 
@@ -404,56 +250,30 @@ public class J07_VectorApi {
 
 ```java
 /** Do not use exceptions for control flow; frequent exceptions can disable writable stack traces. */
-/** Do not use exceptions for control flow; frequent exceptions can disable writable stack traces. */
-public class J14_Exceptions {
 public class J14_Exceptions {
     static final class ParseFailure extends RuntimeException {
-    static final class ParseFailure extends RuntimeException {
-        private static final long serialVersionUID = 1L;
         private static final long serialVersionUID = 1L;
         ParseFailure(String msg) { super(msg, null, false, false); }   // Skips stack capture; cheaper but harder to debug.
-        ParseFailure(String msg) { super(msg, null, false, false); }   // Skips stack capture; cheaper but harder to debug.
-    }
     }
     // Bad: use an exception to check whether a value is numeric.
-    // Bad: use an exception to check whether a value is numeric.
-    static boolean isIntSlow(String s) {
     static boolean isIntSlow(String s) {
         try { Integer.parseInt(s); return true; } catch (NumberFormatException e) { return false; }
-        try { Integer.parseInt(s); return true; } catch (NumberFormatException e) { return false; }
-    }
     }
     // Better: validate before parsing.
-    // Better: validate before parsing.
-    static boolean isIntFast(String s) {
     static boolean isIntFast(String s) {
         if (s.isEmpty() || s.length() > 11) return false;          // "-2147483648" is 11 characters.
-        if (s.isEmpty() || s.length() > 11) return false;          // "-2147483648" is 11 characters.
-        int i = (s.charAt(0) == '-' || s.charAt(0) == '+') ? 1 : 0;
         int i = (s.charAt(0) == '-' || s.charAt(0) == '+') ? 1 : 0;
         if (i == s.length()) return false;
-        if (i == s.length()) return false;
-        for (; i < s.length(); i++) if (!Character.isDigit(s.charAt(i))) return false;
         for (; i < s.length(); i++) if (!Character.isDigit(s.charAt(i))) return false;
         try { Integer.parseInt(s); return true; } catch (NumberFormatException e) { return false; } // Only rare overflow cases reach the exception.
-        try { Integer.parseInt(s); return true; } catch (NumberFormatException e) { return false; } // Only rare overflow cases reach the exception.
-    }
     }
     public static void main(String[] args) {
-    public static void main(String[] args) {
-        for (String s : new String[]{"12", "-3", "x", "", "-", "99999999999", "-2147483648", "+5", "2147483648"})
         for (String s : new String[]{"12", "-3", "x", "", "-", "99999999999", "-2147483648", "+5", "2147483648"})
             if (isIntSlow(s) != isIntFast(s)) throw new AssertionError(s);
-            if (isIntSlow(s) != isIntFast(s)) throw new AssertionError(s);
-        ParseFailure f = new ParseFailure("bad");
         ParseFailure f = new ParseFailure("bad");
         if (f.getStackTrace().length != 0) throw new AssertionError();
-        if (f.getStackTrace().length != 0) throw new AssertionError();
-        System.out.println("J14 ok");
         System.out.println("J14 ok");
     }
-    }
-}
 }
 ```
 
@@ -473,58 +293,31 @@ public class J14_Exceptions {
 
 ```java
 import java.util.concurrent.atomic.LongAdder;
-import java.util.concurrent.atomic.LongAdder;
-
 
 /**
-/**
- * False sharing occurs when fields frequently written by different threads share a cache line.
  * False sharing occurs when fields frequently written by different threads share a cache line.
  * - The JDK annotation @jdk.internal.vm.annotation.Contended requires the compile-time --add-exports flag
- * - The JDK annotation @jdk.internal.vm.annotation.Contended requires the compile-time --add-exports flag
- *   and the runtime option -XX:-RestrictContended in user code.
  *   and the runtime option -XX:-RestrictContended in user code.
  * - LongAdder is a ready-made option; its internal Cell counters use @Contended.
- * - LongAdder is a ready-made option; its internal Cell counters use @Contended.
- * - Manual padding avoids JVM flags, but field layout is not guaranteed.
  * - Manual padding avoids JVM flags, but field layout is not guaranteed.
  */
- */
-public class J10_FalseSharing {
 public class J10_FalseSharing {
     static final class PaddedCounter {
-    static final class PaddedCounter {
-        @jdk.internal.vm.annotation.Contended volatile long a;
         @jdk.internal.vm.annotation.Contended volatile long a;
         @jdk.internal.vm.annotation.Contended volatile long b;
-        @jdk.internal.vm.annotation.Contended volatile long b;
-    }
     }
     public static void main(String[] args) throws Exception {
-    public static void main(String[] args) throws Exception {
-        LongAdder adder = new LongAdder();
         LongAdder adder = new LongAdder();
         Thread[] ts = new Thread[4];
-        Thread[] ts = new Thread[4];
-        for (int t = 0; t < ts.length; t++) {
         for (int t = 0; t < ts.length; t++) {
             ts[t] = Thread.ofPlatform().start(() -> { for (int i = 0; i < 100_000; i++) adder.increment(); });
-            ts[t] = Thread.ofPlatform().start(() -> { for (int i = 0; i < 100_000; i++) adder.increment(); });
-        }
         }
         for (Thread t : ts) t.join();
-        for (Thread t : ts) t.join();
-        if (adder.sum() != 400_000) throw new AssertionError();
         if (adder.sum() != 400_000) throw new AssertionError();
         PaddedCounter pc = new PaddedCounter();
-        PaddedCounter pc = new PaddedCounter();
-        pc.a = 1; pc.b = 2;
         pc.a = 1; pc.b = 2;
         System.out.println("J10 ok");
-        System.out.println("J10 ok");
     }
-    }
-}
 }
 ```
 
@@ -543,40 +336,22 @@ JDK 21 正式（JEP 444）。适合"大量任务、大部分时间在阻塞 I/O"
 
 ```java
 import java.util.concurrent.Executors;
-import java.util.concurrent.Executors;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.IntStream;
-import java.util.stream.IntStream;
-
 
 /** Virtual threads (JDK 21, JEP 444) suit many blocking I/O tasks, not CPU-bound work. */
-/** Virtual threads (JDK 21, JEP 444) suit many blocking I/O tasks, not CPU-bound work. */
-public class J11_VirtualThreads {
 public class J11_VirtualThreads {
     public static void main(String[] args) {
-    public static void main(String[] args) {
-        AtomicInteger done = new AtomicInteger();
         AtomicInteger done = new AtomicInteger();
         try (var exec = Executors.newVirtualThreadPerTaskExecutor()) {   // One virtual thread per task; do not pool them.
-        try (var exec = Executors.newVirtualThreadPerTaskExecutor()) {   // One virtual thread per task; do not pool them.
-            IntStream.range(0, 10_000).forEach(i -> exec.submit(() -> {
             IntStream.range(0, 10_000).forEach(i -> exec.submit(() -> {
                 try { Thread.sleep(10); } catch (InterruptedException e) { Thread.currentThread().interrupt(); }
-                try { Thread.sleep(10); } catch (InterruptedException e) { Thread.currentThread().interrupt(); }
-                done.incrementAndGet();
                 done.incrementAndGet();
             }));
-            }));
-        } // close() waits for all tasks to finish.
         } // close() waits for all tasks to finish.
         if (done.get() != 10_000) throw new AssertionError();
-        if (done.get() != 10_000) throw new AssertionError();
-        System.out.println("J11 ok");
         System.out.println("J11 ok");
     }
-    }
-}
 }
 ```
 
@@ -588,60 +363,32 @@ TLAB（线程本地分配缓冲）里的分配只是指针碰撞，年轻代回�
 
 ```java
 import java.nio.ByteBuffer;
-import java.nio.ByteBuffer;
-import java.util.ArrayDeque;
 import java.util.ArrayDeque;
 
-
-/**
 /**
  * Pool only expensive resources such as direct ByteBuffers, large arrays, connections, and threads.
- * Pool only expensive resources such as direct ByteBuffers, large arrays, connections, and threads.
- * Pooling small objects is often slower: TLAB allocation is cheap, while pools add synchronization and leak risks.
  * Pooling small objects is often slower: TLAB allocation is cheap, while pools add synchronization and leak risks.
  */
- */
-public class J16_Pool {
 public class J16_Pool {
     static final class BufferPool {                       // Single-threaded; use one per thread or add locking for shared use.
-    static final class BufferPool {                       // Single-threaded; use one per thread or add locking for shared use.
-        private final ArrayDeque<ByteBuffer> free = new ArrayDeque<>();
         private final ArrayDeque<ByteBuffer> free = new ArrayDeque<>();
         private final int size;
-        private final int size;
-        BufferPool(int size, int prealloc) {
         BufferPool(int size, int prealloc) {
             this.size = size;
-            this.size = size;
-            // jvmperf-lint: ignore jp-expensive-alloc-hot -- Pool is preallocated once during construction.
             // jvmperf-lint: ignore jp-expensive-alloc-hot -- Pool is preallocated once during construction.
             for (int i = 0; i < prealloc; i++) free.push(ByteBuffer.allocateDirect(size));
-            for (int i = 0; i < prealloc; i++) free.push(ByteBuffer.allocateDirect(size));
-        }
         }
         ByteBuffer acquire() { ByteBuffer b = free.poll(); return b != null ? b.clear() : ByteBuffer.allocateDirect(size); }
-        ByteBuffer acquire() { ByteBuffer b = free.poll(); return b != null ? b.clear() : ByteBuffer.allocateDirect(size); }
-        void release(ByteBuffer b) { free.push(b); }
         void release(ByteBuffer b) { free.push(b); }
     }
-    }
-    public static void main(String[] args) {
     public static void main(String[] args) {
         BufferPool pool = new BufferPool(64 * 1024, 4);
-        BufferPool pool = new BufferPool(64 * 1024, 4);
-        ByteBuffer b = pool.acquire();
         ByteBuffer b = pool.acquire();
         b.putLong(42L);
-        b.putLong(42L);
-        pool.release(b);
         pool.release(b);
         if (pool.acquire() != b) throw new AssertionError();   // Reuses the same off-heap buffer.
-        if (pool.acquire() != b) throw new AssertionError();   // Reuses the same off-heap buffer.
-        System.out.println("J16 ok");
         System.out.println("J16 ok");
     }
-    }
-}
 }
 ```
 
@@ -675,19 +422,14 @@ AOT 缓存：JDK 24 引入（JEP 483），JDK 25 简化命令行并加入方法 
 
 ```sh
 # JDK 25：训练运行并直接生成缓存
-# JDK 25：训练运行并直接生成缓存
-java -XX:AOTCacheOutput=app.aot -jar app.jar
 java -XX:AOTCacheOutput=app.aot -jar app.jar
 # 生产运行
-# 生产运行
-java -XX:AOTCache=app.aot -jar app.jar
 java -XX:AOTCache=app.aot -jar app.jar
 ```
 
 ### 11.4 看 GC 日志
 
 ```sh
-java -Xlog:gc*:file=gc.log:time,uptime,level,tags -jar app.jar
 java -Xlog:gc*:file=gc.log:time,uptime,level,tags -jar app.jar
 ```
 

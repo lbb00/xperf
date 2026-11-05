@@ -20,12 +20,8 @@ Objective-C 性能笔记、小示例，以及 `objcperf-lint`。
 
 ```sh
 cd packages/objcperf/objcperf-lint && make
-cd packages/objcperf/objcperf-lint && make
-./objcperf-lint path/to/sources
 ./objcperf-lint path/to/sources
 bash ../scripts/smoke-lint.sh
-bash ../scripts/smoke-lint.sh
-bash ../scripts/self-lint.sh
 bash ../scripts/self-lint.sh
 ```
 
@@ -35,15 +31,9 @@ bash ../scripts/self-lint.sh
 
 ```text
 docs/guide-src/   章节源
-docs/guide-src/   章节源
-docs/             组装后的指南 + corpus.md + evidence-policy.md
 docs/             组装后的指南 + corpus.md + evidence-policy.md
 evidence/         两条实测规则（均 off）；三条待定 hint 笔记；OC001/OC004 墓碑
-evidence/         两条实测规则（均 off）；三条待定 hint 笔记；OC001/OC004 墓碑
-examples/         小演示
 examples/         小演示
 objcperf-lint/    检查器 + 夹具
-objcperf-lint/    检查器 + 夹具
-scripts/          smoke-lint.sh, self-lint.sh
 scripts/          smoke-lint.sh, self-lint.sh
 ```

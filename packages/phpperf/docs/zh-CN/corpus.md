@@ -16,8 +16,6 @@
 
 ```sh
 php packages/phpperf/phpperf-lint/phpperf-lint.php \
-php packages/phpperf/phpperf-lint/phpperf-lint.php \
-  <corpus-dir>/<name> --format json --no-fail
   <corpus-dir>/<name> --format json --no-fail
 ```
 

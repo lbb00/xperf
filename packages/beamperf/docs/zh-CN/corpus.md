@@ -5,8 +5,6 @@
 
 ```sh
 elixir packages/beamperf/beamperf-lint/beamperf_lint.exs \
-elixir packages/beamperf/beamperf-lint/beamperf_lint.exs \
-  <corpus-dir>/<name> --format json --no-fail
   <corpus-dir>/<name> --format json --no-fail
 ```
 

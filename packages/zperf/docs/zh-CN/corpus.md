@@ -4,8 +4,6 @@
 
 ```sh
 cd packages/zperf/zperf-lint && zig build -Doptimize=fast
-cd packages/zperf/zperf-lint && zig build -Doptimize=fast
-./zig-out/bin/zperf-lint --no-fail -f json <corpus-dir>/<tree>
 ./zig-out/bin/zperf-lint --no-fail -f json <corpus-dir>/<tree>
 ```
 
@@ -57,14 +55,9 @@ G3 + r4 降级完成。全 r4 剩余样本 **n=26**：TP **73.1%**，OK-idiom **
 
 ```text
 <corpus-dir>/
-<corpus-dir>/
-  zig/            # symlink → zig-corpus/zig
   zig/            # symlink → zig-corpus/zig
   tigerbeetle/    # symlink
-  tigerbeetle/    # symlink
   ghostty/        # symlink
-  ghostty/        # symlink
-  http.zig/       # symlink (secondary)
   http.zig/       # symlink (secondary)
 ```
 

@@ -4,7 +4,6 @@
 
 ```sh
 ruby packages/rubyperf/rubyperf-lint/rubyperf-lint.rb <corpus-dir>/<name> --format json --no-fail
-ruby packages/rubyperf/rubyperf-lint/rubyperf-lint.rb <corpus-dir>/<name> --format json --no-fail
 ```
 
 检查器：`rubyperf-lint`。2026-10-22 的分类覆盖了 rb-string-plus-hot–rb-hash-merge-in-loop。`rb-hash-merge-in-loop` 于 2026-10-23 被移除。

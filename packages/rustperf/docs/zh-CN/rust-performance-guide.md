@@ -19,10 +19,7 @@
 
 ```rust
 // prefer: pre-sized or reused buffer
-// prefer: pre-sized or reused buffer
 let mut v = Vec::with_capacity(n);
-let mut v = Vec::with_capacity(n);
-for i in 0..n { v.push(i); }
 for i in 0..n { v.push(i); }
 ```
 

@@ -18,12 +18,8 @@ PHP 性能笔记、小示例，以及 `phpperf-lint`。
 
 ```sh
 cd packages/phpperf
-cd packages/phpperf
-php phpperf-lint/phpperf-lint.php path/to/sources
 php phpperf-lint/phpperf-lint.php path/to/sources
 bash scripts/smoke-lint.sh
-bash scripts/smoke-lint.sh
-bash scripts/self-lint.sh
 bash scripts/self-lint.sh
 ```
 
@@ -33,15 +29,9 @@ bash scripts/self-lint.sh
 
 ```text
 docs/guide-src/   章节源
-docs/guide-src/   章节源
-docs/             组装后的指南 + corpus.md + evidence-policy.md
 docs/             组装后的指南 + corpus.md + evidence-policy.md
 evidence/         ph-array-merge-rebind 已测（error）；ph-string-dot-hot 已测（off）；ph-echo-hot 已测（hint）
-evidence/         ph-array-merge-rebind 已测（error）；ph-string-dot-hot 已测（off）；ph-echo-hot 已测（hint）
-examples/         小演示
 examples/         小演示
 phpperf-lint/     检查器 + 夹具
-phpperf-lint/     检查器 + 夹具
-scripts/          smoke-lint.sh, self-lint.sh
 scripts/          smoke-lint.sh, self-lint.sh
 ```

@@ -16,10 +16,7 @@
 
 ```sh
 bash scripts/sync-check.sh
-bash scripts/sync-check.sh
 bash scripts/doc-check.sh && bash scripts/build-guides.sh --check   # Markdown 或指南变更
-bash scripts/doc-check.sh && bash scripts/build-guides.sh --check   # Markdown 或指南变更
-bash scripts/privacy-check.sh --history
 bash scripts/privacy-check.sh --history
 ```
 
@@ -28,7 +25,6 @@ bash scripts/privacy-check.sh --history
 改 `site-app/` 或 `mkdocs.yml` 时的文档站：
 
 ```sh
-bash scripts/build-pages.sh serve
 bash scripts/build-pages.sh serve
 ```
 

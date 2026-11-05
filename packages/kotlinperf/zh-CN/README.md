@@ -20,14 +20,10 @@ Kotlin 性能笔记、小示例，以及 `kotlinperf-lint`。
 
 ```sh
 cd packages/kotlinperf/kotlinperf-lint && bash build.sh
-cd packages/kotlinperf/kotlinperf-lint && bash build.sh
-./kotlinperf-lint path/to/sources
 ./kotlinperf-lint path/to/sources
 bash ../scripts/smoke-lint.sh
-bash ../scripts/smoke-lint.sh
 bash ../scripts/self-lint.sh
-bash ../scripts/self-lint.sh
-```}
+```
 
 仅在 **错误** 严重性发现时退出 `1`（提示默认退出 `0`，除非使用 `--strict-hints`）。
 
@@ -35,15 +31,9 @@ bash ../scripts/self-lint.sh
 
 ```text
 docs/guide-src/   chapter sources
-docs/guide-src/   chapter sources
-docs/             assembled guide + corpus.md + evidence-policy.md
 docs/             assembled guide + corpus.md + evidence-policy.md
 evidence/         pending stubs until benches land
-evidence/         pending stubs until benches land
-examples/         tiny demos
 examples/         tiny demos
 kotlinperf-lint/  checker + fixtures
-kotlinperf-lint/  checker + fixtures
 scripts/          smoke-lint.sh, self-lint.sh
-scripts/          smoke-lint.sh, self-lint.sh
-```}
+```

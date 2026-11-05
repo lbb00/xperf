@@ -18,12 +18,8 @@
 
 ```lua
 local t = {}
-local t = {}
-for i = 1, n do
 for i = 1, n do
   t[i] = i
-  t[i] = i
-end
 end
 ```
 

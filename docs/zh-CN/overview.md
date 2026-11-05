@@ -6,16 +6,10 @@
 
 ```mermaid
 flowchart TB
-flowchart TB
-  method["docs/ shared method<br/>playbook · smell catalog<br/>rule regression · roadmap"]
   method["docs/ shared method<br/>playbook · smell catalog<br/>rule regression · roadmap"]
   kits["19 kits<br/>zperf · cperf · jsperf · jvmperf · goperf<br/>pyperf · swiftperf · arktsperf · cppperf · csharpperf<br/>phpperf · rubyperf · rustperf · kotlinperf · objcperf<br/>dartperf · luaperf · beamperf · nimperf"]
-  kits["19 kits<br/>zperf · cperf · jsperf · jvmperf · goperf<br/>pyperf · swiftperf · arktsperf · cppperf · csharpperf<br/>phpperf · rubyperf · rustperf · kotlinperf · objcperf<br/>dartperf · luaperf · beamperf · nimperf"]
-  evidence["evidence/<br/>JSONL before and after"]
   evidence["evidence/<br/>JSONL before and after"]
   outside["out of tree, not in git<br/>corpora · STATIC-VS correlates"]
-  outside["out of tree, not in git<br/>corpora · STATIC-VS correlates"]
-  method --> kits --> evidence --> outside
   method --> kits --> evidence --> outside
 ```
 
