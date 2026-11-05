@@ -2,16 +2,12 @@
 
 Fewer table resizes, fewer quadratic string joins, quieter hot loops.
 
-> **Scope: Lua 5.1–5.4 / LuaJIT-shaped patterns.** Claims that assert speedups name a local example or are provisional. **Corpus lint counts are heuristic dogfood**, not benchmarks.
+> **Scope: Lua 5.1–5.4 / LuaJIT-shaped patterns.** Speedup claims cite a local bench, an upstream source, or are marked provisional. Corpus residual counts are lint hit counts, not wall-time savings.
 
-## How to read this
-
-1. **Measure first** (LuaJIT `-jv`, simple wall timers).
-2. Treat each chapter as a checklist, not a rewrite mandate.
+Profile first (LuaJIT `-jv`, simple wall timers). Treat chapters as checklists, not rewrite mandates.
 
 ## Contents
 
-- [0. Scope and method](#0-scope-and-method)
 - [1. Tables](#1-tables)
 - [2. Strings and hot I/O](#2-strings-and-hot-io)
 - [Lint map](#lint-map)
@@ -27,9 +23,13 @@ for i = 1, n do
 end
 ```
 
+Lint: `lu-table-insert-hot` (default off).
+
 ## 2. Strings and hot I/O
 
 `a .. b` in a loop builds many temporaries. Prefer collecting parts then `table.concat`. Keep `print` out of tight loops (gate or buffer).
+
+Lint: `lu-string-concat-hot` (default error); `lu-print-hot` (default hint).
 
 ## Lint map
 
@@ -39,7 +39,7 @@ end
 | lu-string-concat-hot | string `..` in loop | error |
 | lu-print-hot | `print` in loop | hint |
 
-Escalate only with `evidence/lu-*.jsonl` — see [evidence-policy.md](evidence-policy.md). lu-print-hot has measured evidence but stays **hint** (I/O sink–dependent).
+Escalate only with `evidence/lu-*.jsonl` — see [evidence-policy.md](evidence-policy.md). `lu-print-hot` has measured evidence but stays hint (I/O sink–dependent).
 
 ## References
 

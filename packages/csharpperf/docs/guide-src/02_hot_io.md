@@ -2,5 +2,5 @@
 
 `Console.Write` / `WriteLine` in a tight loop is expensive. Gate debug output or buffer.
 
-Companion lint: **cs-console-hot**.
+Lint: `cs-console-hot` (default off).
 

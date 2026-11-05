@@ -1,18 +1,14 @@
 # Kotlin performance guide (v0)
 
-Kotlin-first collection / string / I/O checklists. For measured JVM evidence (JMH/JOL), see sibling **jvmperf**.
+Kotlin-first collection, string, and I/O checklists. For measured JVM evidence (JMH/JOL), see sibling [jvmperf](../../jvmperf/).
 
-> **Scope: Kotlin 1.9+ on JVM.** This kit does **not** replace [jvmperf](../../jvmperf/). Do not invent JMH ratios here — link or re-bench.
+> **Scope: Kotlin 1.9+ on JVM.** This kit does not replace [jvmperf](../../jvmperf/). Do not invent JMH ratios here — link or re-bench.
+> Speedup claims cite a local bench, an upstream source, or are marked provisional. Corpus residual counts are lint hit counts, not wall-time savings.
 
-## How to read this
-
-1. **Measure first** (JMH via jvmperf, or simple wall timers).
-2. Treat each chapter as a checklist, not a rewrite mandate.
-3. Coroutine `launch` in a tight loop is often a correctness/load smell — profile before rewriting.
+Profile first (JMH via jvmperf, or simple wall timers). Coroutine `launch` in a tight loop is often a correctness or load smell — profile before rewriting.
 
 ## Contents
 
-- [How to read this](#how-to-read-this)
 - [1. Collections](#1-collections)
 - [2. Strings and hot I/O](#2-strings-and-hot-io)
 - [Lint map](#lint-map)

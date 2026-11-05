@@ -2,5 +2,5 @@
 
 `print` in a tight loop flushes and formats. Gate debug output or buffer.
 
-Companion lint: **pp-print-hot**.
+Lint: `pp-print-hot` (default off after G3).
 

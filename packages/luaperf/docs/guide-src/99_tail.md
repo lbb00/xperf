@@ -6,7 +6,7 @@
 | lu-string-concat-hot | string `..` in loop | error |
 | lu-print-hot | `print` in loop | hint |
 
-Escalate only with `evidence/lu-*.jsonl` — see [evidence-policy.md](evidence-policy.md). lu-print-hot has measured evidence but stays **hint** (I/O sink–dependent).
+Escalate only with `evidence/lu-*.jsonl` — see [evidence-policy.md](evidence-policy.md). `lu-print-hot` has measured evidence but stays hint (I/O sink–dependent).
 
 ## References
 
