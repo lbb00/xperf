@@ -6,6 +6,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { bundledLanguages } from 'shiki';
+import { slug as githubSlug } from 'github-slugger';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const CONTENT = path.join(ROOT, 'site-app', 'content', 'docs');
@@ -80,15 +81,35 @@ function shikiLangs() {
 
 const KNOWN_LANGS = shikiLangs();
 
+// Match Fumadocs heading ids (remark-heading → github-slugger).
+// Keep Unicode letters so zh-CN TOC fragments like #0-范围与方法 survive assembly.
 function siteAnchor(frag) {
   const body = frag.startsWith('#') ? frag.slice(1) : frag;
-  const slug = body
-    .toLowerCase()
-    .replace(/[^a-z0-9-]+/g, '')
-    .replace(/-{2,}/g, '-')
-    .replace(/^-+|-+$/g, '');
-  if (!slug) return frag.startsWith('#') ? frag : `#${frag}`;
-  return `#${slug}`;
+  let decoded = body;
+  try {
+    decoded = decodeURIComponent(body);
+  } catch {
+    // keep the raw fragment when it is not percent-encoded
+  }
+  const next = githubSlug(decoded);
+  if (!next) return frag.startsWith('#') ? frag : `#${frag}`;
+  return `#${next}`;
+}
+
+function assertSiteAnchors() {
+  const cases = [
+    ['#0-范围与方法', '#0-范围与方法'],
+    ['#2-热路径-io', '#2-热路径-io'],
+    ['#0-scope-and-method', '#0-scope-and-method'],
+    ['#2-Hot-path-I/O', '#2-hot-path-io'],
+    ['#lint对照表', '#lint对照表'],
+  ];
+  for (const [input, want] of cases) {
+    const got = siteAnchor(input);
+    if (got !== want) {
+      throw new Error(`siteAnchor(${JSON.stringify(input)}) => ${JSON.stringify(got)}, want ${JSON.stringify(want)}`);
+    }
+  }
 }
 
 function normRel(base, urlPath) {
@@ -588,6 +609,7 @@ function skip(filePath) {
 }
 
 function assemble() {
+  assertSiteAnchors();
   fs.rmSync(CONTENT, { recursive: true, force: true });
   fs.rmSync(PUBLIC, { recursive: true, force: true });
   fs.mkdirSync(CONTENT, { recursive: true });
@@ -700,8 +722,13 @@ function checkNav(copied) {
 }
 
 const cmd = process.argv[2] ?? 'build';
+if (cmd === 'check-anchors') {
+  assertSiteAnchors();
+  console.log('assemble: siteAnchor checks OK');
+  process.exit(0);
+}
 if (cmd !== 'build' && cmd !== 'serve') {
-  console.error('usage: node assemble.js [build|serve]');
+  console.error('usage: node assemble.js [build|serve|check-anchors]');
   process.exit(1);
 }
 assemble();
