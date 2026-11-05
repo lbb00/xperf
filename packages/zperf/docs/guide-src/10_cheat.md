@@ -23,7 +23,7 @@
 | Read a large file | `File.createMemoryMap` + zero-copy slices |
 | Growable ring | `Deque` (uses `Allocator.remap` when possible) |
 
-**Compute faster**
+Compute faster
 
 | Goal | Use |
 |---|---|

@@ -286,7 +286,7 @@ test "buffer pool tryAlloc / release" {
 
 ### 2.5 Static allocation (TigerStyle)
 
-TigerBeetle's rule: **allocate everything at startup; after init, do not allocate or free.** That removes allocation latency jitter and use-after-free from the steady state. Fix limits for queues, loops, and connection counts.
+TigerBeetle's rule: allocate everything at startup; after init, do not allocate or free. That removes allocation latency jitter and use-after-free from the steady state. Fix limits for queues, loops, and connection counts.
 
 > Example: `examples/m11_static.zig` (checked with Zig 0.17.0 using `zig test`).
 
@@ -414,7 +414,7 @@ test "phase allocator: alloc only in init" {
 
 #### Size the object / message pool from concurrency
 
-Static allocation only works if the pool is **large enough to always make progress**. TigerBeetle's `MessagePool` sizes from worst-case concurrent holders: journal read/write IOPS, pipeline depth, connection send queues, grid repair reads, plus a small burst (+1) so a parse or ping cannot deadlock the replica. For any fixed-size frame pool:
+Static allocation only works if the pool is large enough to always make progress. TigerBeetle's `MessagePool` sizes from worst-case concurrent holders: journal read/write IOPS, pipeline depth, connection send queues, grid repair reads, plus a small burst (+1) so a parse or ping cannot deadlock the replica. For any fixed-size frame pool:
 
 1. List every concurrent holder (connections × in-flight, disk IOPS, pipelines, loops).
 2. Add one for “holding a message while allocating the next”.
@@ -1109,9 +1109,9 @@ test "delta + varint" {
 
 ### 2.16 Fragmentation, huge pages, and other notes
 
-- **Fragmentation:** Mixing many small objects with different sizes and lifetimes in one general-purpose heap can fragment memory. Group allocations by lifetime (arena), by size (`MemoryPool` / size-class pools), or use static allocation.
-- **Huge pages:** TLB misses can limit large, randomly accessed data such as hash tables and arrays. On Linux, `madvise(MADV_HUGEPAGE)` can request transparent huge pages for an `mmap` region. Measure the result with `perf stat -e dTLB-load-misses`.
-- **ArrayList growth:** Since 0.14, the Allocator has `remap`, and `page_allocator` supports `mremap`. Large ArrayList growth may therefore remap pages instead of copying them.
+- Fragmentation: Mixing many small objects with different sizes and lifetimes in one general-purpose heap can fragment memory. Group allocations by lifetime (arena), by size (`MemoryPool` / size-class pools), or use static allocation.
+- Huge pages: TLB misses can limit large, randomly accessed data such as hash tables and arrays. On Linux, `madvise(MADV_HUGEPAGE)` can request transparent huge pages for an `mmap` region. Measure the result with `perf stat -e dTLB-load-misses`.
+- ArrayList growth: Since 0.14, the Allocator has `remap`, and `page_allocator` supports `mremap`. Large ArrayList growth may therefore remap pages instead of copying them.
 - **`Deque` + `remap`:** `std.Deque` grows with `Allocator.remap` when the ring can stay in place; only then splits head/tail for a moving grow (`lib/std/deque.zig`). Prefer remap-friendly allocators behind large rings.
 
 ### 2.17 Relocatable slabs and idle physical reclaim (advanced)

@@ -1,18 +1,31 @@
 # Nim performance guide (v0)
 
-Assembled from `docs/guide-src/`. Scaffold — not a measured handbook. Heuristic kit — measure before escalating lint to error.
+Assembled from `docs/guide-src/`. Scaffold checklist — not a measured handbook. Measure before escalating lint to error.
 
-## Sequences
+> **Scope: Nim (heuristic kit).** Speedup claims cite a local bench, an upstream source, or are marked provisional. Corpus residual counts are lint hit counts, not wall-time savings.
 
-Prefer `newSeqOfCap` / `setLen` + index writes when the length or iteration count is known. Repeated `.add` in hot loops reallocates. Companion: **nm-seq-no-capacity**.
+## Contents
 
-## Strings
+- [1. Sequences](#1-sequences)
+- [2. Strings](#2-strings)
+- [3. I/O](#3-io)
+- [Lint map](#lint-map)
+
+## 1. Sequences
+
+Prefer `newSeqOfCap` / `setLen` + index writes when the length or iteration count is known. Repeated `.add` in hot loops reallocates.
+
+Lint: `nm-seq-add-hot` (default off after G3); `nm-seq-no-capacity` (empty seq + `.add` size-hinted; default hint).
+
+## 2. Strings
 
 On Nim 2.2.12, `-d:release`, `&=` of 20000 pieces was faster than `newSeq` plus `join` (about 0.79×). The lint that suggested `join` was removed. See `evidence/_removed/nm-string-amp-in-loop.REMOVED.md`.
 
-## IO
+## 3. I/O
 
 Keep `echo` out of hot loops; gate or buffer.
+
+Lint: `nm-echo-hot` (default off after G3).
 
 ## Lint map
 

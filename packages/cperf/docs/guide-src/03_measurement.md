@@ -19,7 +19,7 @@ Record compiler (`cc -v`), flags (`-O2` / `-O3` / `-flto`), OS, and CPU model. C
 
 ASan / TSan / UBSan find bugs. They inflate time and RSS. Use them on the same change set that touches allocators or races; quote numbers from **unsanitized** Release builds only.
 
-### 3.4 Measured gates vs dogfood
+### 3.4 Measured gates vs corpus hits
 
 In-tree JSONL under `evidence/` (see [evidence-policy.md](evidence-policy.md)):
 
@@ -38,4 +38,4 @@ In-tree JSONL under `evidence/` (see [evidence-policy.md](evidence-policy.md)):
 | cp-alloca-hot | **hint** | stack 1280000 vs 64 bytes; wall clock about 1×; not corpus-triaged |
 | cp-struct-by-value | **hint** | JSONL about 12.3× cross-TU; same TU about 1×; not corpus-triaged |
 
-Corpus residual counts (§2.3) remain lint dogfood only. Pattern demos (`examples/m01_arena.c`) still illustrate APIs without replacing the JSONL gate.
+Corpus residual counts (§2.3) remain lint hit counts only. Pattern demos (`examples/m01_arena.c`) still illustrate APIs without replacing the JSONL gate.

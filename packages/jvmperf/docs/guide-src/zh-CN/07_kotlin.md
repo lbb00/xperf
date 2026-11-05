@@ -323,7 +323,7 @@ fun main() {
 
 ### 7.9 协程
 
-每个 `suspend` 函数编译成状态机，真正挂起时需要续体（continuation）对象；每个 `launch`/`async` 也是对象。CPU 密集任务要分块，**不要每个元素开一个协程**。
+每个 `suspend` 函数编译成状态机，真正挂起时需要续体（continuation）对象；每个 `launch`/`async` 也是对象。CPU 密集任务要分块，不要每个元素开一个协程。
 
 `examples/kotlin/K10_Coroutines.kt`
 
@@ -398,4 +398,3 @@ fun main() {
 来源：[Kotlin inline value classes](https://kotlinlang.org/docs/inline-classes.html) · [Inline functions](https://kotlinlang.org/docs/inline-functions.html) · [Kotlin 2.0：invokedynamic 生成 lambda](https://kotlinlang.org/docs/whatsnew20.html) · [Sequences](https://kotlinlang.org/docs/sequences.html) · [lazy](https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/lazy.html) · [Java 互操作：@JvmField / const](https://kotlinlang.org/docs/java-to-kotlin-interop.html) · [Coroutines 基础](https://kotlinlang.org/docs/coroutines-basics.html) · [androidx.collection 版本说明](https://developer.android.com/jetpack/androidx/releases/collection)
 
 ---
-

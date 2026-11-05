@@ -1,4 +1,4 @@
-### Lint map
+## Lint map
 
 | ID | Topic | Severity | Evidence / note |
 |----|--------|----------|-----------------|
@@ -15,9 +15,9 @@
 | jp-clock-hot | `Date.now` / `performance.now` | **hint** | Node 26 about 70× / 110× with no `await`; sample once when fresh time is not required |
 | *(none)* | module resolution / eager graph / barrels | — | §5 — use `--cpu-prof` |
 
-Severities above are the default `app` preset. Matching scope defaults to **`--scope all`** (everywhere); `--scope loop` restores in-loop-only matching. Policy: [`evidence-policy.md`](evidence-policy.md). Fixtures: `jsperf-lint/fixtures/{bad,good}/`.
+Severities above are the default `app` preset. Matching scope defaults to `--scope all` (everywhere); `--scope loop` restores in-loop-only matching. Policy: [`evidence-policy.md`](evidence-policy.md). Fixtures: `jsperf-lint/fixtures/{bad,good}/`.
 
-### References
+## References
 
 - [corpus.md](corpus.md)
 - `examples/bench/` · `scripts/run-v8-benches.sh` · `scripts/jit-check.sh` · `scripts/run-static-vs-v8.sh` · `scripts/regen-evidence.sh` · `examples/bench/require_cost_sketch.js`

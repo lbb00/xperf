@@ -4,8 +4,8 @@
 > Last reviewed: 2026-10-21.
 >
 > - Every code sample comes from a standalone file under `examples/`. The Java samples were compiled with `javac --release 25` and run with self-checks; Kotlin samples were compiled with `kotlinc 2.4.21 -jvm-target 25` and run with self-checks. Android samples were compiled against `android-34/android.jar`. Logs are in `research/*-check.log`. Files under `research/` that this guide names (`*.txt`, `*.log`, `bench-results/`, `benches/`) are local run output and are not committed.
-> - Values marked **Measured locally** were measured with JOL 0.17 on x86_64 Linux with 8 cores, JDK 25.0.4.1, G1, and compressed pointers enabled. Raw output is in `research/jol-jdk25.txt`, `research/jol-kotlin-jdk25.txt`, `research/ea-probe.txt`, and `research/jvm-flags-jdk25.txt`. Results vary across JDKs, pointer settings, and ART.
-> - This guide does not invent speedup numbers. Use the JMH template in Chapter 14 to measure on your machine.
+> - Values marked Measured locally were measured with JOL 0.17 on x86_64 Linux with 8 cores, JDK 25.0.4.1, G1, and compressed pointers enabled. Raw output is in `research/jol-jdk25.txt`, `research/jol-kotlin-jdk25.txt`, `research/ea-probe.txt`, and `research/jvm-flags-jdk25.txt`. Results vary across JDKs, pointer settings, and ART.
+> - Speedup claims cite a local bench, an upstream source, or are marked provisional. Corpus residual counts are lint hit counts, not wall-time savings. This guide does not invent speedup numbers; use the JMH template in Chapter 14 to measure on your machine.
 > - Each section links to its sources and explains when its recommendations do not apply.
 
 ## Contents
@@ -39,9 +39,9 @@
 | JDK 22 | Foreign Function & Memory API (`MemorySegment`/`Arena`) finalized (JEP 454). |
 | JDK 23 | Generational mode became the default for ZGC (JEP 474). |
 | JDK 24 | Compact object headers preview (JEP 450); non-generational ZGC removed (JEP 490); `synchronized` no longer pins virtual threads (JEP 491); AOT class-loading cache (JEP 483). |
-| **JDK 25 (LTS)** | Compact object headers finalized but **disabled by default** (JEP 519, `-XX:+UseCompactObjectHeaders`); generational Shenandoah finalized (JEP 521); Vector API incubator, 10th round (JEP 508); Stable Values preview (JEP 502); simplified AOT commands and method profiles (JEP 514/515); JFR CPU-time sampling experimental (JEP 509). |
+| JDK 25 (LTS) | Compact object headers finalized but disabled by default (JEP 519, `-XX:+UseCompactObjectHeaders`); generational Shenandoah finalized (JEP 521); Vector API incubator, 10th round (JEP 508); Stable Values preview (JEP 502); simplified AOT commands and method profiles (JEP 514/515); JFR CPU-time sampling experimental (JEP 509). |
 | JDK 26 (2026-03) | G1 reduces synchronization to improve throughput (JEP 522); AOT object caching available with any GC (JEP 516); Stable Values renamed Lazy Constants (JEP 526, preview); Vector API incubator, 11th round. |
-| JDK 27 (2026-09, non-LTS) | **Compact object headers enabled by default** (JEP 534); G1 is the default GC in all environments (JEP 523); Vector API incubator, 12th round (JEP 537, no API change). |
+| JDK 27 (2026-09, non-LTS) | Compact object headers enabled by default (JEP 534); G1 is the default GC in all environments (JEP 523); Vector API incubator, 12th round (JEP 537, no API change). |
 | JDK 28 (planned 2027-03) | Valhalla value classes (JEP 401) are expected to enter the mainline as a preview, according to InfoQ; the Vector API is expected to move from incubator to preview later. |
 | Kotlin 2.0 | K2 compiler; lambdas use `invokedynamic` by default (`-Xlambdas=indy`). |
 | Kotlin 2.4 (2026-06, current 2.4.21) | Context parameters and other features stabilized; Java 26 target supported; `-language-version 1.9` can no longer select K1. |
@@ -53,10 +53,10 @@ Sources: [JDK 25](https://openjdk.org/projects/jdk/25/) · [JDK 26](https://open
 
 ## 1. Method: estimate, then measure
 
-1. **Estimate first.** JVM memory for an object is roughly its header, fields, and alignment padding, plus every object it references. Chapter 2 gives formulas and local measurements so you can estimate the cost of a million objects before changing code.
-2. **Measure next.** Use JOL (`ClassLayout`/`GraphLayout`) for object sizes; JMH `-prof gc` and `gc.alloc.rate.norm`, or `ThreadMXBean.getThreadAllocatedBytes`, for allocation rates; async-profiler or JFR for CPU hotspots; and JMH for throughput and latency. Do not wrap a loop in `System.nanoTime()` and call it a benchmark: JIT warmup, dead-code elimination, and constant folding can invalidate the result.
-3. **Optimize hotspots only.** Bit-packing a configuration object created a few dozen times is usually wasted effort. Replacing a `List<Integer>` with ten million entries by an `int[]` can make a large difference (see the measurements in Chapter 3).
-4. **Measure again after the change.** Keep the benchmark and its correctness checks.
+1. Estimate first. JVM memory for an object is roughly its header, fields, and alignment padding, plus every object it references. Chapter 2 gives formulas and local measurements so you can estimate the cost of a million objects before changing code.
+2. Measure next. Use JOL (`ClassLayout`/`GraphLayout`) for object sizes; JMH `-prof gc` and `gc.alloc.rate.norm`, or `ThreadMXBean.getThreadAllocatedBytes`, for allocation rates; async-profiler or JFR for CPU hotspots; and JMH for throughput and latency. Do not wrap a loop in `System.nanoTime()` and call it a benchmark: JIT warmup, dead-code elimination, and constant folding can invalidate the result.
+3. Optimize hotspots only. Bit-packing a configuration object created a few dozen times is usually wasted effort. Replacing a `List<Integer>` with ten million entries by an `int[]` can make a large difference (see the measurements in Chapter 3).
+4. Measure again after the change. Keep the benchmark and its correctness checks.
 
 Chapter 14 explains how to use the measurement tools.
 
@@ -267,7 +267,7 @@ public class J01_Boxing {
 
 Key points:
 
-- `Integer.valueOf` caches values from −128 through 127 (the upper bound can be raised with `-XX:AutoBoxCacheMax`; it was 128 by default on the measurement machine). **Never compare wrapper objects with `==`.**
+- `Integer.valueOf` caches values from −128 through 127 (the upper bound can be raised with `-XX:AutoBoxCacheMax`; it was 128 by default on the measurement machine). Never compare wrapper objects with `==`.
 - For streams, use `mapToInt(...).sum()` instead of `map(...).reduce(0, Integer::sum)`, which boxes each intermediate value.
 - C2 has `EliminateAutoBox` enabled by default on the measurement machine. It can remove some local boxing and unboxing, but cannot remove objects stored in a collection.
 
@@ -325,11 +325,11 @@ Sources: [`Integer.valueOf`](https://docs.oracle.com/en/java/javase/25/docs/api/
 
 ## 4. Case study: memory used by a hybrid car
 
-A popular C/C++ example models whether a car has an electric motor or a gasoline engine. Two `int` fields use 8 bytes; one `int` bit field uses 4; a `uint8_t` uses 1. The JVM behaves differently because **an object's size is determined by its header and 8-byte alignment**.
+A popular C/C++ example models whether a car has an electric motor or a gasoline engine. Two `int` fields use 8 bytes; one `int` bit field uses 4; a `uint8_t` uses 1. The JVM behaves differently because an object's size is determined by its header and 8-byte alignment.
 
 ### 4.1 A single object: packing still leaves 16 bytes
 
-**Measured locally with JOL 0.17 on JDK 25.0.4.1** (`research/jol-jdk25.txt`, `research/jol-kotlin-jdk25.txt`):
+Measured locally with JOL 0.17 on JDK 25.0.4.1 (`research/jol-jdk25.txt`, `research/jol-kotlin-jdk25.txt`):
 
 | Representation | Size in C | Default JVM | `+UseCompactObjectHeaders` |
 |---|---:|---:|---:|
@@ -342,7 +342,7 @@ A popular C/C++ example models whether a car has an electric motor or a gasoline
 | Kotlin `data class HybridInts(Int, Int)` | — | 24 | 16 |
 | Kotlin `class Car(val fuels: FuelFlags)` (`FuelFlags` is a value class wrapping `Byte`) | — | 16 | 16 |
 
-The default header is 12 bytes, so up to 4 bytes of fields still fit in a 16-byte object. Changing `int` to `byte` only creates more padding. Two `int` fields need 20 bytes before alignment, so the object occupies 24 bytes. Compact headers reduce it to 16 bytes; **that flag can save more than manually packing fields**. `EnumSet` is convenient, but it is a separate object containing a `long` and adds another object when stored as a field.
+The default header is 12 bytes, so up to 4 bytes of fields still fit in a 16-byte object. Changing `int` to `byte` only creates more padding. Two `int` fields need 20 bytes before alignment, so the object occupies 24 bytes. Compact headers reduce it to 16 bytes; that flag can save more than manually packing fields. `EnumSet` is convenient, but it is a separate object containing a `long` and adds another object when stored as a field.
 
 ### 4.2 One thousand cars: avoid one object per car
 
@@ -358,7 +358,7 @@ The default header is 12 bytes, so up to 4 bytes of fields still fit in a 16-byt
 On the JVM:
 
 1. Packing flags inside one object rarely saves memory unless it crosses an 8-byte alignment boundary.
-2. The large saving comes from replacing an **array of objects** with **primitive arrays** (Structure of Arrays; see Chapter 5). The example drops from 20 KB to 1 KB and removes 1,000 pointer chases.
+2. The large saving comes from replacing an array of objects with primitive arrays (Structure of Arrays; see Chapter 5). The example drops from 20 KB to 1 KB and removes 1,000 pointer chases.
 3. Bit encodings (`byte` operations, `EnumSet`, `BitSet`) matter more at the array level. Prefer readable fields for individual objects.
 
 Java version:
@@ -1066,7 +1066,7 @@ fun main() {
 
 ### 7.9 Coroutines
 
-Each `suspend` function compiles to a state machine and needs a continuation object when it actually suspends. Each `launch` or `async` also creates an object. Split CPU-heavy work into chunks; **do not launch one coroutine per element**.
+Each `suspend` function compiles to a state machine and needs a continuation object when it actually suspends. Each `launch` or `async` also creates an object. Split CPU-heavy work into chunks; do not launch one coroutine per element.
 
 `examples/kotlin/K10_Coroutines.kt`
 
@@ -1206,7 +1206,7 @@ Avoid it for ordinary business objects. Off-heap data needs manual serialization
 
 ### 8.2 Direct `ByteBuffer`
 
-This older API is limited by `-XX:MaxDirectMemorySize` (zero by default means the maximum heap size) and is indirectly freed by a `Cleaner` during GC. Allocation and release cost more than heap memory, so **reuse direct buffers** (see Chapter 10) instead of creating one per request. A `ByteBuffer` is limited to 2 GB because it uses `int` indexes; `MemorySegment` has no such limit.
+This older API is limited by `-XX:MaxDirectMemorySize` (zero by default means the maximum heap size) and is indirectly freed by a `Cleaner` during GC. Allocation and release cost more than heap memory, so reuse direct buffers (see Chapter 10) instead of creating one per request. A `ByteBuffer` is limited to 2 GB because it uses `int` indexes; `MemorySegment` has no such limit.
 
 ### 8.3 I/O
 
@@ -1261,7 +1261,7 @@ Sources: [JEP 454: FFM API](https://openjdk.org/jeps/454) · [`Arena`](https://d
 
 ### 9.1 Escape analysis and scalar replacement
 
-C2 checks whether an object escapes a method (for example, by being stored in a field or array, returned, or passed to a method that is not inlined). A non-escaping object can be **scalar-replaced**: its fields become local variables and the object is never allocated on the heap.
+C2 checks whether an object escapes a method (for example, by being stored in a field or array, returned, or passed to a method that is not inlined). A non-escaping object can be scalar-replaced: its fields become local variables and the object is never allocated on the heap.
 
 **Measured locally** with `research/EaProbe.java`, which uses `ThreadMXBean.getThreadAllocatedBytes` to measure 1,000 iterations of `new Vec(...).plus(new Vec(1,1))`:
 
@@ -1301,7 +1301,7 @@ public class J08_EscapeAnalysis {
 }
 ```
 
-For escape-analysis-friendly code, keep methods small enough to inline, do not store short-lived objects in fields or collections, and avoid complex control-flow merges. Small arrays can also be scalar-replaced, up to a limit (64 elements on the measurement machine: `EliminateAllocationArraySizeLimit`). **Do not rely on this optimization:** escape analysis takes effect only after C2 compilation, not during interpretation or C1. Android ART uses different AOT/JIT optimizations.
+For escape-analysis-friendly code, keep methods small enough to inline, do not store short-lived objects in fields or collections, and avoid complex control-flow merges. Small arrays can also be scalar-replaced, up to a limit (64 elements on the measurement machine: `EliminateAllocationArraySizeLimit`). Do not rely on this optimization: escape analysis takes effect only after C2 compilation, not during interpretation or C1. Android ART uses different AOT/JIT optimizations.
 
 **Evidence (correlate):** Static JP smells vs HotSpot wall-clock/B/op — `scripts/run-static-vs-hotspot.sh` output `research/benches/static-vs-hotspot.jsonl` (cases 4 EA, 6 Vector control; JP rules never observe C1/C2 or call-site type profile). Package gate: `docs/evidence-policy.md`.
 
@@ -1347,7 +1347,7 @@ public class J09_JitFriendly {
 
 ### 9.3 Intrinsics
 
-HotSpot intrinsics such as `Integer.bitCount`, `Long.numberOfTrailingZeros`, `Math.fma`, `System.arraycopy`, `Arrays.equals`/`mismatch`, `String.indexOf`, and CRC32 compile to specialized instruction sequences. **Prefer JDK methods over hand-written bit tricks intended to optimize them.**
+HotSpot intrinsics such as `Integer.bitCount`, `Long.numberOfTrailingZeros`, `Math.fma`, `System.arraycopy`, `Arrays.equals`/`mismatch`, `String.indexOf`, and CRC32 compile to specialized instruction sequences. Prefer JDK methods over hand-written bit tricks intended to optimize them.
 
 ### 9.4 Vector API (still incubating)
 
@@ -1479,7 +1479,7 @@ Do not add padding without real write contention; it can waste 256 bytes per fie
 
 Virtual threads were finalized in JDK 21 (JEP 444). They suit services with many tasks that spend most of their time blocked on I/O.
 
-- Use one virtual thread per task; **do not pool virtual threads**. Use a `Semaphore` to limit access to downstream resources.
+- Use one virtual thread per task; do not pool virtual threads. Use a `Semaphore` to limit access to downstream resources.
 - Since JDK 24, `synchronized` no longer pins a virtual thread to its carrier (JEP 491). Native and foreign-function calls can still pin it.
 - CPU-bound tasks do not benefit; use a platform-thread pool or `ForkJoinPool`.
 - `ThreadLocal` memory adds up across millions of virtual threads. Replace `ThreadLocal` caches of large objects such as `SimpleDateFormat`; consider Scoped Values for shared data (finalized in JDK 25, JEP 506).
@@ -1512,7 +1512,7 @@ public class J11_VirtualThreads {
 
 ### 10.3 Object pools: when to use them
 
-Allocation in a thread-local allocation buffer (TLAB) is a pointer bump, and collecting short-lived young-generation objects is very cheap. Pooling small objects is often **slower**: they may be promoted to the old generation, need clearing or resetting, require synchronization, and can leak. Pool only genuinely expensive resources such as direct `ByteBuffer`s, large arrays, database connections, threads, or costly non-thread-safe objects such as `MessageDigest` and `Cipher`.
+Allocation in a thread-local allocation buffer (TLAB) is a pointer bump, and collecting short-lived young-generation objects is very cheap. Pooling small objects is often slower: they may be promoted to the old generation, need clearing or resetting, require synchronization, and can leak. Pool only genuinely expensive resources such as direct `ByteBuffer`s, large arrays, database connections, threads, or costly non-thread-safe objects such as `MessageDigest` and `Cipher`.
 
 **Evidence (local):** JMH 1.37 on JDK 25 (`J24_PoolVsAlloc`) — batch of small escaping `Point` objects via TLAB `new` + `Blackhole` vs thread-local `ArrayDeque` pool reuse (`-prof gc`). JSONL: `research/bench-results/J24_PoolVsAlloc.jsonl` (re-run before citing). Pool cuts B/op near zero; wall time is often worse than TLAB for this size.
 
@@ -1600,7 +1600,7 @@ Sources: [HotSpot GC tuning guide for JDK 25](https://docs.oracle.com/en/java/ja
 
 ### 12.1 ART vs HotSpot
 
-- ART has no C2 compiler or HotSpot-style escape analysis and scalar replacement. It combines interpretation, JIT compilation, and profile-guided AOT compilation (`dex2oat`). **Do not assume the JIT will remove allocations on Android**; avoid them in hot paths such as `onDraw`, scroll callbacks, and animation frames.
+- ART has no C2 compiler or HotSpot-style escape analysis and scalar replacement. It combines interpretation, JIT compilation, and profile-guided AOT compilation (`dex2oat`). Do not assume the JIT will remove allocations on Android; avoid them in hot paths such as `onDraw`, scroll callbacks, and animation frames.
 - References are already 32-bit and object headers are 8 bytes (`mirror::Object` has 32-bit class and monitor fields). ART has no compressed-reference or compact-header switch.
 - Since Android 14, ART Mainline updates use Concurrent Mark Compact (CMC), based on `userfaultfd`, by default. Android 16 QPR2 adds generational CMC, which collects recently allocated objects first.
 
@@ -1776,7 +1776,7 @@ Sources: [JMH samples](https://github.com/openjdk/jmh/tree/master/jmh-samples/sr
 
 ## 15. jvmperf-lint: find patterns automatically
 
-`jvmperf-lint/` is the guide's static checker. It is written in Java and uses tree-sitter via the JVM bindings (`io.github.bonede:tree-sitter` with `tree-sitter-java` and `tree-sitter-kotlin`) to inspect `.java`, `.kt`, and `.kts` files. It reads syntax only and **does not resolve types**. This keeps it fast and configuration-free, but it can report false positives or miss issues; each rule documents its risk. See [`jvmperf-lint/README.md`](../../jvmperf-lint/README.md) for installation and usage.
+`jvmperf-lint/` is the guide's static checker. It is written in Java and uses tree-sitter via the JVM bindings (`io.github.bonede:tree-sitter` with `tree-sitter-java` and `tree-sitter-kotlin`) to inspect `.java`, `.kt`, and `.kts` files. It reads syntax only and does not resolve types. This keeps it fast and configuration-free, but it can report false positives or miss issues; each rule documents its risk. See [`jvmperf-lint/README.md`](../../jvmperf-lint/README.md) for installation and usage.
 
 ```sh
 cd jvmperf-lint
@@ -1798,8 +1798,8 @@ Default severity is `error`, `hint`, or `off`, as printed by `bin/jvmperf-lint -
 | jp-unpresized-collection | `unpresized-collection` | off | Java/Kotlin | A collection or `StringBuilder` is filled in a loop without initial capacity | 5.2 |
 | jp-boxed-stream | `boxed-stream` | error | Java | `reduce(0, Integer::sum)` or `Collectors.summingInt` on `Stream<Integer>` | 3.1 |
 | jp-exception-control-flow | `exception-control-flow` | off | Java/Kotlin | A loop catches parse exceptions to make a decision | 9.5 |
-| jp-legacy-synchronized-type | — | **removed** | — | measured ~1.08×; see `evidence/_removed/` | — |
-| jp-many-boolean-fields | — | **removed** | — | COH no win; see `evidence/_removed/` | — |
+| jp-legacy-synchronized-type | — | removed | — | measured ~1.08×; see `evidence/_removed/` | — |
+| jp-many-boolean-fields | — | removed | — | COH no win; see `evidence/_removed/` | — |
 | jp-enum-key-hash-collection | `enum-key-hash-collection` | error | Java/Kotlin | `HashMap` keyed by an enum or `HashSet` of enum values | 5.3 |
 | jp-collection-chain | `collection-chain` | off | Kotlin | A chain of 3+ `map`/`filter` operations, or 2 operations plus short-circuiting such as `first`, `take`, or `any` | 7.4 |
 | jp-value-class-boxing | `value-class-boxing` | hint | Kotlin | A value class used as a nullable value, generic argument, or array element | 7.2 |

@@ -3,7 +3,9 @@
 #   bash scripts/build-guides.sh [kit...]           write the guides (default: all kits)
 #   bash scripts/build-guides.sh --check [kit...]   exit 1 if a committed guide differs
 # Layouts: docs/guide-src/*.md -> docs/*-performance-guide.md
-#          docs/guide-src/<lang>/*.md -> docs/<lang>/performance-guide.md
+#          docs/guide-src/<lang>/*.md -> docs/<lang>/<matching-stem>.md
+# For locale pairing, zh-CN output reuses the English *-performance-guide.md basename
+# when present; otherwise performance-guide.md (jvmperf-style en/zh-CN layout).
 set -euo pipefail
 export LC_ALL=C
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
@@ -16,6 +18,7 @@ build() { # shard_dir out
   local dir="$1" out="$2"
   local shards=("$dir"/*.md)
   [[ -e "${shards[0]}" ]] || return 0
+  mkdir -p "$(dirname "$out")"
   if [[ "$MODE" == check ]]; then
     if ! cat "${shards[@]}" | cmp -s - "$out"; then
       echo "build-guides: ${out#"$ROOT"/} differs from ${dir#"$ROOT"/}/*.md" >&2
@@ -23,6 +26,16 @@ build() { # shard_dir out
     fi
   else
     cat "${shards[@]}" > "$out"
+  fi
+}
+
+lang_out() { # docs_dir lang -> stdout path
+  local d="$1" lang="$2"
+  local eng=("$d"/*-performance-guide.md)
+  if [[ "$lang" == zh-CN && -e "${eng[0]}" ]]; then
+    echo "$d/$lang/$(basename "${eng[0]}")"
+  else
+    echo "$d/$lang/performance-guide.md"
   fi
 }
 
@@ -34,7 +47,8 @@ for kit in "$ROOT"/packages/*/; do
   outs=("$d"/*-performance-guide.md)
   [[ -e "${outs[0]}" ]] && build "$d/guide-src" "${outs[0]}"
   for lang in en zh-CN; do
-    [[ -d "$d/guide-src/$lang" ]] && build "$d/guide-src/$lang" "$d/$lang/performance-guide.md"
+    [[ -d "$d/guide-src/$lang" ]] || continue
+    build "$d/guide-src/$lang" "$(lang_out "$d" "$lang")"
   done
 done
 

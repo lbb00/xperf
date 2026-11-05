@@ -1,6 +1,6 @@
 ## 6. Constructors, JSON, DOM queries, and date formats
 
-Each hint below is one measured shape. The hint line states that premise. A call that only looks similar is not given that rewrite. Default **`--scope all`** reports these smells everywhere — extreme stacks treat drip-by-drip cost as in-scope even off a loop. Opt in to **`--scope loop`** for the former in-loop-only match. Messages do not tell readers or models that non-loop sites can be ignored.
+Each hint below is one measured shape. The hint line states that premise. A call that only looks similar is not given that rewrite. Default `--scope all` reports these smells everywhere — extreme stacks treat drip-by-drip cost as in-scope even off a loop. Opt in to `--scope loop` for the former in-loop-only match. Messages do not tell readers or models that non-loop sites can be ignored.
 
 `new RegExp(pattern)` compiles on every call when the pattern stays the same. A regex literal is cached. If the pattern is the loop variable, or `parts[i]`, the checker does not say to compile once. The bench compiled one fixed pattern, about 4.4× on Node 26.
 
@@ -12,8 +12,8 @@ Each hint below is one measured shape. The hint line states that premise. A call
 
 `Date.now` was about 26× and `performance.now` about 19× versus one sample, in a tight loop that did not wait. A loop that contains `await`, or a `for await` loop, is not reported for the clock rule. Sample once when a fresh time is not required each call. A rate limiter that must read the clock each pass has nothing to move.
 
-**jp-regex-ctor-hot** and **jp-json-hot** stay **hint** on the app and engine presets. JSONL exists for those two, and the 2026-10-22 verdict does not cover them. **jp-dom-query-hot** (about 16× on Node 26, a tiny linkedom document) and **jp-intl-datetimeformat-hot** (about 36× on Node 26, both sides still format) have JSONL and stay **hint**. They are outside that verdict. `--preset all` is error for every rule that still exists.
+`jp-regex-ctor-hot` and `jp-json-hot` stay hint on the app and engine presets. JSONL exists for those two, and the 2026-10-22 verdict does not cover them. `jp-dom-query-hot` (about 16× on Node 26, a tiny linkedom document) and `jp-intl-datetimeformat-hot` (about 36× on Node 26, both sides still format) have JSONL and stay hint. They are outside that verdict. `--preset all` is error for every rule that still exists.
 
 `Reflect.get` was about 8× and was not given a rule.
 
-Companion lint: **jp-regex-ctor-hot**, **jp-json-hot**, **jp-dom-query-hot**, **jp-intl-datetimeformat-hot**, **jp-readfile-sync-hot**, **jp-clock-hot**.
+Lint: `jp-regex-ctor-hot`, `jp-json-hot`, `jp-dom-query-hot`, `jp-intl-datetimeformat-hot`, `jp-readfile-sync-hot`, `jp-clock-hot` (default hint).

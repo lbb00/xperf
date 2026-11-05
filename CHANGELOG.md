@@ -8,6 +8,12 @@ Versions apply to the whole repository and are git tags (see [docs/release.md](d
 Kits are not released separately and carry no version of their own.
 
 ## [Unreleased]
+- **Docs guides (en + zh):** plain-docs pass on performance guides — drop How-to-read / Scope-and-method coaching lists where the lead already says measure-first; replace heuristic-dogfood scope wording with lint-hit vs wall-time framing; prefer `Lint: id (default …)` lines; soften coaching bold; sync zh-CN guide-src (and zperf hand `zh-CN/zig-performance-guide.md`) to the English structure and voice.
+
+- **Docs zh-CN:** site Markdown Chinese coverage for shared docs, kit guides (`guide-src/zh-CN` + build-guides stem pairing), package landings, corpus/evidence-policy/rule-ids, active evidence notes, and root pages published as `*.zh.md` via `zh-CN/` parents. Tombstone evidence under `evidence/_removed/` intentionally left English-only.
+
+- **Docs SEO / GEO (en + zh):** description, Open Graph (`og:locale` + `alternateLocale`), Twitter Card, canonical and hreflang; static export forces blocking metadata into HTML (`htmlLimitedBots`); `sitemap.xml` pairs en/zh with language alternates; `robots.txt` allows common AI crawlers; `llms.txt` + `llms.zh.txt`; locale-aware JSON-LD (`WebSite` / `WebPage` / `SoftwareApplication`); post-build sets `<html lang="zh-CN">` under `/zh/` for crawlers; 1200×630 `og.png`. README opens with an English-only value-prop hook.
+
 - **Docs site:** page links no longer keep a trailing `.md` (that 404s on GitHub Pages). Assemble rewrites them to trailing-slash directory URLs relative to the page directory, fails the build if any `.md` hrefs remain, emits static files as root-absolute paths so the `/zh/` locale works, and publishes `LICENSE` / `NOTICE` as directories so `trailingSlash` can open them.
 
 - **All kits:** default matching is **`--scope all`** where the kit CLI supports it (opt in to **`--scope loop`** for the former in-loop-only match). Finding messages no longer imply non-loop sites are out of scope. Rule slugs containing `in-loop` were **renamed** to `*-hot` (including leftover `rs-map-new-in-loop` → `rs-map-new-hot`; see per-kit Renamed tables); old slugs are tombstoned under each kit `evidence/_removed/*.REMOVED.md` and must never be reused. See each kit `docs/rule-ids.md` Renamed table. jsperf also keeps adopter FP cuts + new hints from earlier commits on this branch. No severity escalations.

@@ -2,8 +2,8 @@
 
 ### 5.1 `comptime`: move work to compile time
 
-- **Lookup tables:** Build them in a `comptime` block so they live in read-only data and require no runtime initialization. For large loops, raise the compile-time branch quota with `@setEvalBranchQuota`.
-- **Generic specialization:** A `comptime N: usize` parameter generates specialized code for each N. `inline for` unrolls the loop at compile time.
+- Lookup tables: Build them in a `comptime` block so they live in read-only data and require no runtime initialization. For large loops, raise the compile-time branch quota with `@setEvalBranchQuota`.
+- Generic specialization: A `comptime N: usize` parameter generates specialized code for each N. `inline for` unrolls the loop at compile time.
 - Assert relationships between constants at compile time with `comptime std.debug.assert(...)`, as TigerStyle recommends.
 
 > Example: `examples/p01_comptime_lut.zig` (checked with Zig 0.17.0 using `zig test`).
@@ -279,7 +279,7 @@ Sources: [0.14 `@branchHint`](https://ziglang.org/download/0.14.0/release-notes.
 - **Use multiple accumulators or unroll loops** when measurements show a dependency chain is limiting throughput. `inline for` can create a fixed number of independent accumulators. Unrolling increases code size and instruction-cache pressure.
 - **`inline fn` is a language guarantee, not a hint.** The language reference calls it “semantic inlining”; compile-time-known arguments are compile-time-known inside the function. It can increase binary size and compile time, and can even hurt runtime performance. Usually let the compiler decide; use it when compile-time propagation or a specific stack-frame shape is required.
 - Pass large structs as `*const T` when they exceed 16 bytes and copying is not intended (TigerStyle). “Push ifs up, fors down”: move branches outside loops and move loops into batch-processing functions.
-- **Initialize large structs in place:** `fn init(self: *Big) void { self.* = .{...}; }` avoids constructing a temporary on the stack and copying it (TigerStyle).
+- Initialize large structs in place: `fn init(self: *Big) void { self.* = .{...}; }` avoids constructing a temporary on the stack and copying it (TigerStyle).
 
 > Example: `examples/p09_hot_loop.zig` (checked with Zig 0.17.0 using `zig test`).
 

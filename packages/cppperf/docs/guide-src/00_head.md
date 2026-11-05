@@ -2,20 +2,16 @@
 
 Fewer reallocating containers, quieter hot paths.
 
-> **Scope: C++17.** Claims that assert speedups name a local example or are marked provisional. **Corpus lint counts are heuristic dogfood**, not benchmarks.
+> **Scope: C++17.** Speedup claims cite a local bench, an upstream source, or are marked provisional. Corpus residual counts are lint hit counts, not wall-time savings.
 >
 > **cppperf vs cperf:** this kit is dedicated C++. Sibling **cperf** covers C11/C17 (+ light C++). Prefer this package for `std::vector` / `std::string` / iostream smells.
 
-## How to read this
-
-1. **Measure first** (`perf`, Tracy, `std::chrono`).
-2. Treat each chapter as a checklist.
-3. libstdc++ and libc++ differ — re-bench.
+Profile first (`perf`, Tracy, `std::chrono`). libstdc++ and libc++ differ — re-bench.
 
 ## Contents
 
-- [How to read this](#how-to-read-this)
 - [1. Containers and strings](#1-containers-and-strings)
 - [2. Hot I/O](#2-hot-io)
+- [3. Regex, flush, and the clock](#3-regex-flush-and-the-clock)
 - [Lint map](#lint-map)
 

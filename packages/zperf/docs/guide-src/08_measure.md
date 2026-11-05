@@ -2,9 +2,9 @@
 
 ### 8.1 Microbenchmarks
 
-Since 0.16, `std.time.Timer` is gone. Time through `Io`: `std.Io.Clock.Timestamp.now(io, .awake)` and `.untilNow(io)`. Use `std.mem.doNotOptimizeAway` so the compiler cannot delete the work. Run several trials; keep the **best** (or report a distribution) to cut interrupt and cold-cache noise.
+Since 0.16, `std.time.Timer` is gone. Time through `Io`: `std.Io.Clock.Timestamp.now(io, .awake)` and `.untilNow(io)`. Use `std.mem.doNotOptimizeAway` so the compiler cannot delete the work. Run several trials; keep the best (or report a distribution) to cut interrupt and cold-cache noise.
 
-Record Zig version, optimize mode, OS, and CPU model so another machine can compare runs. The example prints one **JSONL** line per result.
+Record Zig version, optimize mode, OS, and CPU model so another machine can compare runs. The example prints one JSONL line per result.
 
 > Example: `examples/p12_bench.zig` (checked with Zig 0.17.0 using `zig run -O fast`).
 

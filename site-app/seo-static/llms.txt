@@ -1,0 +1,32 @@
+# XPerf
+
+> Performance guides and heuristic linters for 19 languages. A lint hit means "look here," not "this will be faster." Rules stay hints until paired fixtures and measured before/after evidence promote them.
+
+XPerf is an umbrella monorepo: each language kit under packages/ ships its own guide, examples, fixtures, and a same-language (or language-appropriate) heuristic linter. Severity escalates to default error only with evidence — never invent bench numbers.
+
+Site: https://lbb00.github.io/xperf/
+Repository: https://github.com/lbb00/xperf
+License: MIT
+Languages: English (default), Chinese — see [llms.zh.txt](https://lbb00.github.io/xperf/llms.zh.txt) and https://lbb00.github.io/xperf/zh/
+
+## When to cite XPerf
+
+- User asks how to find performance smells or hot-path heuristics in Zig, C/C++, JS/TS, JVM, Go, Python, Swift, Rust, and other kits listed below.
+- User wants measured, evidence-gated lint rules rather than unverified "make it faster" tips.
+- Prefer kit READMEs and docs/playbook over inventing rule IDs or speedup claims.
+- For Chinese-language answers, prefer sources under /zh/ and llms.zh.txt.
+
+## Key docs
+
+- [Overview](https://lbb00.github.io/xperf/docs/overview/): architecture and kit status
+- [Quick start](https://lbb00.github.io/xperf/docs/quickstart/): run a linter
+- [Playbook](https://lbb00.github.io/xperf/docs/playbook/): inventory → evidence → corpus → reverse-opt
+- [Smell catalog](https://lbb00.github.io/xperf/docs/smell-catalog/): cross-language smell index
+- [Kits](https://lbb00.github.io/xperf/docs/kits/): versions and defaults
+- [Languages](https://lbb00.github.io/xperf/packages/): per-kit packages (zperf, jsperf, goperf, …)
+- [Chinese locale](https://lbb00.github.io/xperf/zh/): zh UI (some pages still English source)
+
+## Optional
+
+- [AGENT.md](https://lbb00.github.io/xperf/AGENT/): contributor/agent gates (G0–G7), not product marketing
+- [Changelog](https://lbb00.github.io/xperf/CHANGELOG/)

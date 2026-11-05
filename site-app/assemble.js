@@ -6,6 +6,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { bundledLanguages } from 'shiki';
+import { slug as githubSlug } from 'github-slugger';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const CONTENT = path.join(ROOT, 'site-app', 'content', 'docs');
@@ -80,15 +81,54 @@ function shikiLangs() {
 
 const KNOWN_LANGS = shikiLangs();
 
+// Match Fumadocs heading ids (remark-heading → github-slugger).
+// Keep Unicode letters so zh-CN TOC fragments like #0-范围与方法 survive assembly.
 function siteAnchor(frag) {
   const body = frag.startsWith('#') ? frag.slice(1) : frag;
-  const slug = body
-    .toLowerCase()
-    .replace(/[^a-z0-9-]+/g, '')
-    .replace(/-{2,}/g, '-')
-    .replace(/^-+|-+$/g, '');
-  if (!slug) return frag.startsWith('#') ? frag : `#${frag}`;
-  return `#${slug}`;
+  let decoded = body;
+  try {
+    decoded = decodeURIComponent(body);
+  } catch {
+    // keep the raw fragment when it is not percent-encoded
+  }
+  const next = githubSlug(decoded);
+  if (!next) return frag.startsWith('#') ? frag : `#${frag}`;
+  return `#${next}`;
+}
+
+function assertSiteAnchors() {
+  const cases = [
+    ['#0-范围与方法', '#0-范围与方法'],
+    ['#2-热路径-io', '#2-热路径-io'],
+    ['#0-scope-and-method', '#0-scope-and-method'],
+    ['#2-Hot-path-I/O', '#2-hot-path-io'],
+    ['#lint对照表', '#lint对照表'],
+  ];
+  for (const [input, want] of cases) {
+    const got = siteAnchor(input);
+    if (got !== want) {
+      throw new Error(`siteAnchor(${JSON.stringify(input)}) => ${JSON.stringify(got)}, want ${JSON.stringify(want)}`);
+    }
+  }
+}
+
+function assertPageHrefs() {
+  const cases = [
+    ['docs/zh-CN/index.md', 'docs/zh-CN/quickstart.md', 'quickstart/'],
+    ['docs/zh-CN/index.md', 'packages/jsperf/docs/zh-CN/js-performance-guide.md', '../packages/jsperf/docs/js-performance-guide/'],
+    ['packages/jsperf/docs/zh-CN/js-performance-guide.md', 'packages/jsperf/evidence/zh-CN/jp-alloc-hot.md', '../../evidence/jp-alloc-hot/'],
+    ['docs/index.md', 'docs/quickstart.md', 'quickstart/'],
+    ['packages/jsperf/docs/js-performance-guide.md', 'packages/jsperf/evidence/jp-alloc-hot.md', '../../evidence/jp-alloc-hot/'],
+    ['docs/zh-CN/quickstart.md', 'docs/zh-CN/index.md', '../'],
+  ];
+  for (const [from, dest, want] of cases) {
+    const got = pageHref(from, dest);
+    if (got !== want) {
+      throw new Error(
+        `pageHref(${JSON.stringify(from)}, ${JSON.stringify(dest)}) => ${JSON.stringify(got)}, want ${JSON.stringify(want)}`,
+      );
+    }
+  }
 }
 
 function normRel(base, urlPath) {
@@ -117,11 +157,17 @@ function relLink(fromLogical, toPath) {
   return path.posix.relative(origin, toPath);
 }
 
+// Published files may be `guide.zh.md` (fumadocs dot-locale). Public URL
+// slugs drop the locale marker; the `/zh/` prefix carries the language.
+function publicLogical(published) {
+  return published.replace(/\.zh\.md$/i, '.md');
+}
+
 // Fumadocs serves pages as directories (trailingSlash), not as `.md` files.
-// Map a content logical path to that URL path (always with a trailing slash,
+// Map a published content path to that URL path (always with a trailing slash,
 // except the site root which is `./` from nested pages and `` from root).
 function sitePath(destLogical) {
-  let dest = destLogical.replaceAll('\\', '/');
+  let dest = publicLogical(destLogical.replaceAll('\\', '/'));
   if (dest === 'index.md') return '';
   if (dest.endsWith('/index.md')) dest = dest.slice(0, -'index.md'.length);
   else if (dest.endsWith('.md')) dest = `${dest.slice(0, -3)}/`;
@@ -588,6 +634,8 @@ function skip(filePath) {
 }
 
 function assemble() {
+  assertSiteAnchors();
+  assertPageHrefs();
   fs.rmSync(CONTENT, { recursive: true, force: true });
   fs.rmSync(PUBLIC, { recursive: true, force: true });
   fs.mkdirSync(CONTENT, { recursive: true });
@@ -640,6 +688,15 @@ function assemble() {
   }
   writeSidebar();
   checkNav(copied);
+  const seoStatic = path.join(ROOT, 'site-app', 'seo-static');
+  if (fs.existsSync(seoStatic)) {
+    for (const name of fs.readdirSync(seoStatic)) {
+      if (name.startsWith('.')) continue;
+      const src = path.join(seoStatic, name);
+      if (!fs.statSync(src).isFile()) continue;
+      fs.copyFileSync(src, path.join(PUBLIC, name));
+    }
+  }
   console.log(
     `build-pages: assembled ${mdFiles.length} pages, ${files.length} files, rewrote ${rewritten} links`,
   );
@@ -648,6 +705,7 @@ function assemble() {
     process.exit(1);
   }
   const mdHrefs = [];
+  const localeHrefs = [];
   for (const [, , published] of mdFiles) {
     const body = fs.readFileSync(path.join(CONTENT, published), 'utf8');
     let fence = false;
@@ -665,12 +723,22 @@ function assemble() {
         if (/^[A-Za-z][A-Za-z0-9+.-]*:/.test(raw)) continue;
         const pathOnly = raw.split('#', 1)[0].split('?', 1)[0];
         if (pathOnly.endsWith('.md')) mdHrefs.push(`${published}: ${raw}`);
+        // Locale markers belong in content filenames, not public URL slugs.
+        if (/(?:^|\/)[^/]*\.zh(?:\/|$)/.test(pathOnly)) {
+          localeHrefs.push(`${published}: ${raw}`);
+        }
       }
     }
   }
   if (mdHrefs.length) {
     console.error(
       `build-pages: ${mdHrefs.length} page links still end in .md (Pages will 404)\n${mdHrefs.slice(0, 40).join('\n')}`,
+    );
+    process.exit(1);
+  }
+  if (localeHrefs.length) {
+    console.error(
+      `build-pages: ${localeHrefs.length} page links still carry a .zh locale slug\n${localeHrefs.slice(0, 40).join('\n')}`,
     );
     process.exit(1);
   }
@@ -691,8 +759,18 @@ function checkNav(copied) {
 }
 
 const cmd = process.argv[2] ?? 'build';
+if (cmd === 'check-anchors') {
+  assertSiteAnchors();
+  console.log('assemble: siteAnchor checks OK');
+  process.exit(0);
+}
+if (cmd === 'check-hrefs') {
+  assertPageHrefs();
+  console.log('assemble: pageHref checks OK');
+  process.exit(0);
+}
 if (cmd !== 'build' && cmd !== 'serve') {
-  console.error('usage: node assemble.js [build|serve]');
+  console.error('usage: node assemble.js [build|serve|check-anchors|check-hrefs]');
   process.exit(1);
 }
 assemble();

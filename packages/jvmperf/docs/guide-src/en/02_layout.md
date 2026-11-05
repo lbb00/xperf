@@ -203,7 +203,7 @@ public class J01_Boxing {
 
 Key points:
 
-- `Integer.valueOf` caches values from −128 through 127 (the upper bound can be raised with `-XX:AutoBoxCacheMax`; it was 128 by default on the measurement machine). **Never compare wrapper objects with `==`.**
+- `Integer.valueOf` caches values from −128 through 127 (the upper bound can be raised with `-XX:AutoBoxCacheMax`; it was 128 by default on the measurement machine). Never compare wrapper objects with `==`.
 - For streams, use `mapToInt(...).sum()` instead of `map(...).reduce(0, Integer::sum)`, which boxes each intermediate value.
 - C2 has `EliminateAutoBox` enabled by default on the measurement machine. It can remove some local boxing and unboxing, but cannot remove objects stored in a collection.
 

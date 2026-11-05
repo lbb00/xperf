@@ -2,19 +2,15 @@
 
 Fewer quadratic builders, quieter hot paths.
 
-> **Scope: MRI Ruby 3+.** Claims that assert speedups name a local example or are marked provisional. **Corpus lint counts are heuristic dogfood**, not benchmarks.
+> **Scope: MRI Ruby 3+.** Speedup claims cite a local bench, an upstream source, or are marked provisional. Corpus residual counts are lint hit counts, not wall-time savings.
 
-## 0. Scope and method
-
-1. **Measure first** (`benchmark`, stackprof).
-2. Treat each chapter as a checklist.
-3. JRuby / TruffleRuby differ — re-bench.
+Profile first (`benchmark`, stackprof). JRuby and TruffleRuby differ — re-bench.
 
 ## Contents
 
-- [0. Scope and method](#0-scope-and-method)
 - [1. Strings, arrays, and hashes](#1-strings-arrays-and-hashes)
 - [2. Hot I/O](#2-hot-io)
+- [3. Compile and parse](#3-compile-and-parse)
 - [Lint map](#lint-map)
 
 ## 1. Strings, arrays, and hashes
@@ -23,21 +19,22 @@ Fewer quadratic builders, quieter hot paths.
 
 `Hash#merge` in a loop was removed. On Ruby 4.0.8 the suggested literal build was slower than `merge` (~0.78×, and again ~0.65×) and allocated about twice as many objects. See `evidence/_removed/rb-hash-merge-in-loop.REMOVED.md`.
 
-Companion lint: **rb-string-plus-hot**, **rb-array-plus-rebind**.
+Lint: `rb-string-plus-hot`, `rb-array-plus-rebind` (default off).
 
 ## 2. Hot I/O
 
 `puts` / `print` in a tight loop flushes. Gate debug output or buffer.
 
-Companion lint: **rb-puts-hot**.
+Lint: `rb-puts-hot` (default off).
 
 ## 3. Compile and parse
 
-`Regexp.new` compiles on every call. A regexp literal is cached. `JSON.parse` / `generate` on a fixed payload repeats the parse. A changing payload cannot be hoisted. These lints are **hint** and have a microbench. `Date.parse` / `Time.parse` / `DateTime.parse` was removed for the same reason as a fixed-string parse: the after side only wins by not parsing.
+`Regexp.new` compiles on every call. A regexp literal is cached. `JSON.parse` / `generate` on a fixed payload repeats the parse. A changing payload cannot be hoisted. These lints are hint and have a microbench. `Date.parse` / `Time.parse` / `DateTime.parse` was removed for the same reason as a fixed-string parse: the after side only wins by not parsing.
 
 `File.read` of one path was about 346× versus reading once. `File.open` is the same lint. A path that changes every iteration cannot be hoisted. `Process.clock_gettime` was about 2.3× and `send` about 1.9×; those were checked and not given a rule.
 
-Companion lint: **rb-regexp-new-hot**, **rb-json-hot**, **rb-file-read-hot**.
+Lint: `rb-regexp-new-hot`, `rb-json-hot`, `rb-file-read-hot` (default hint).
+
 ## Lint map
 
 | ID | Smell | Default |

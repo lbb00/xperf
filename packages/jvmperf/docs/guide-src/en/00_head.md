@@ -4,8 +4,8 @@
 > Last reviewed: 2026-10-21.
 >
 > - Every code sample comes from a standalone file under `examples/`. The Java samples were compiled with `javac --release 25` and run with self-checks; Kotlin samples were compiled with `kotlinc 2.4.21 -jvm-target 25` and run with self-checks. Android samples were compiled against `android-34/android.jar`. Logs are in `research/*-check.log`. Files under `research/` that this guide names (`*.txt`, `*.log`, `bench-results/`, `benches/`) are local run output and are not committed.
-> - Values marked **Measured locally** were measured with JOL 0.17 on x86_64 Linux with 8 cores, JDK 25.0.4.1, G1, and compressed pointers enabled. Raw output is in `research/jol-jdk25.txt`, `research/jol-kotlin-jdk25.txt`, `research/ea-probe.txt`, and `research/jvm-flags-jdk25.txt`. Results vary across JDKs, pointer settings, and ART.
-> - This guide does not invent speedup numbers. Use the JMH template in Chapter 14 to measure on your machine.
+> - Values marked Measured locally were measured with JOL 0.17 on x86_64 Linux with 8 cores, JDK 25.0.4.1, G1, and compressed pointers enabled. Raw output is in `research/jol-jdk25.txt`, `research/jol-kotlin-jdk25.txt`, `research/ea-probe.txt`, and `research/jvm-flags-jdk25.txt`. Results vary across JDKs, pointer settings, and ART.
+> - Speedup claims cite a local bench, an upstream source, or are marked provisional. Corpus residual counts are lint hit counts, not wall-time savings. This guide does not invent speedup numbers; use the JMH template in Chapter 14 to measure on your machine.
 > - Each section links to its sources and explains when its recommendations do not apply.
 
 ## Contents
@@ -39,9 +39,9 @@
 | JDK 22 | Foreign Function & Memory API (`MemorySegment`/`Arena`) finalized (JEP 454). |
 | JDK 23 | Generational mode became the default for ZGC (JEP 474). |
 | JDK 24 | Compact object headers preview (JEP 450); non-generational ZGC removed (JEP 490); `synchronized` no longer pins virtual threads (JEP 491); AOT class-loading cache (JEP 483). |
-| **JDK 25 (LTS)** | Compact object headers finalized but **disabled by default** (JEP 519, `-XX:+UseCompactObjectHeaders`); generational Shenandoah finalized (JEP 521); Vector API incubator, 10th round (JEP 508); Stable Values preview (JEP 502); simplified AOT commands and method profiles (JEP 514/515); JFR CPU-time sampling experimental (JEP 509). |
+| JDK 25 (LTS) | Compact object headers finalized but disabled by default (JEP 519, `-XX:+UseCompactObjectHeaders`); generational Shenandoah finalized (JEP 521); Vector API incubator, 10th round (JEP 508); Stable Values preview (JEP 502); simplified AOT commands and method profiles (JEP 514/515); JFR CPU-time sampling experimental (JEP 509). |
 | JDK 26 (2026-03) | G1 reduces synchronization to improve throughput (JEP 522); AOT object caching available with any GC (JEP 516); Stable Values renamed Lazy Constants (JEP 526, preview); Vector API incubator, 11th round. |
-| JDK 27 (2026-09, non-LTS) | **Compact object headers enabled by default** (JEP 534); G1 is the default GC in all environments (JEP 523); Vector API incubator, 12th round (JEP 537, no API change). |
+| JDK 27 (2026-09, non-LTS) | Compact object headers enabled by default (JEP 534); G1 is the default GC in all environments (JEP 523); Vector API incubator, 12th round (JEP 537, no API change). |
 | JDK 28 (planned 2027-03) | Valhalla value classes (JEP 401) are expected to enter the mainline as a preview, according to InfoQ; the Vector API is expected to move from incubator to preview later. |
 | Kotlin 2.0 | K2 compiler; lambdas use `invokedynamic` by default (`-Xlambdas=indy`). |
 | Kotlin 2.4 (2026-06, current 2.4.21) | Context parameters and other features stabilized; Java 26 target supported; `-language-version 1.9` can no longer select K1. |
@@ -53,10 +53,10 @@ Sources: [JDK 25](https://openjdk.org/projects/jdk/25/) · [JDK 26](https://open
 
 ## 1. Method: estimate, then measure
 
-1. **Estimate first.** JVM memory for an object is roughly its header, fields, and alignment padding, plus every object it references. Chapter 2 gives formulas and local measurements so you can estimate the cost of a million objects before changing code.
-2. **Measure next.** Use JOL (`ClassLayout`/`GraphLayout`) for object sizes; JMH `-prof gc` and `gc.alloc.rate.norm`, or `ThreadMXBean.getThreadAllocatedBytes`, for allocation rates; async-profiler or JFR for CPU hotspots; and JMH for throughput and latency. Do not wrap a loop in `System.nanoTime()` and call it a benchmark: JIT warmup, dead-code elimination, and constant folding can invalidate the result.
-3. **Optimize hotspots only.** Bit-packing a configuration object created a few dozen times is usually wasted effort. Replacing a `List<Integer>` with ten million entries by an `int[]` can make a large difference (see the measurements in Chapter 3).
-4. **Measure again after the change.** Keep the benchmark and its correctness checks.
+1. Estimate first. JVM memory for an object is roughly its header, fields, and alignment padding, plus every object it references. Chapter 2 gives formulas and local measurements so you can estimate the cost of a million objects before changing code.
+2. Measure next. Use JOL (`ClassLayout`/`GraphLayout`) for object sizes; JMH `-prof gc` and `gc.alloc.rate.norm`, or `ThreadMXBean.getThreadAllocatedBytes`, for allocation rates; async-profiler or JFR for CPU hotspots; and JMH for throughput and latency. Do not wrap a loop in `System.nanoTime()` and call it a benchmark: JIT warmup, dead-code elimination, and constant folding can invalidate the result.
+3. Optimize hotspots only. Bit-packing a configuration object created a few dozen times is usually wasted effort. Replacing a `List<Integer>` with ten million entries by an `int[]` can make a large difference (see the measurements in Chapter 3).
+4. Measure again after the change. Keep the benchmark and its correctness checks.
 
 Chapter 14 explains how to use the measurement tools.
 

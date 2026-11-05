@@ -1,6 +1,6 @@
 ## 15. jvmperf-lint：自动找出反模式
 
-`jvmperf-lint/` 是本指南配套的静态检查器：Java + tree-sitter（JVM 绑定 `io.github.bonede:tree-sitter`，以及 `tree-sitter-java` / `tree-sitter-kotlin`），同时支持 `.java`、`.kt`、`.kts`。它只看语法树，**不做类型解析**，所以快、零配置、不需要编译项目，但会有误报/漏报（每条规则都写明了误报风险）。完整说明见 [`jvmperf-lint/README.md`](../../jvmperf-lint/README.md)。
+`jvmperf-lint/` 是本指南配套的静态检查器：Java + tree-sitter（JVM 绑定 `io.github.bonede:tree-sitter`，以及 `tree-sitter-java` / `tree-sitter-kotlin`），同时支持 `.java`、`.kt`、`.kts`。它只看语法树，不做类型解析，所以快、零配置、不需要编译项目，但会有误报/漏报（每条规则都写明了误报风险）。完整说明见 [`jvmperf-lint/README.md`](../../jvmperf-lint/README.md)。
 
 ```sh
 cd jvmperf-lint
@@ -158,4 +158,3 @@ good 夹具上 detekt 只报了一处 `EmptyFunctionBlock`（`close() {}`）。�
 交叉验证：`scripts/run-static-vs-hotspot.sh` 的输出写在 `research/benches/`。**静态 lint 不等于 HotSpot 的判断**：不能只看源码就断言 C2 的编译层级或逃逸分析失败，也不要用 PrintCompilation 的行数当作“一致/不一致”的判据。
 
 ---
-

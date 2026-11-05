@@ -3,7 +3,7 @@
 Less memory, more throughput.
 
 > **Target: Zig 0.17.0.** Examples under `examples/` are checked with Zig 0.17.0 on x86_64 Linux (`zig test` Debug and `-O fast`, or `zig build-exe`). Reproduce with `cd examples && zig build test`.
-> Numbers come from release notes, original PRs, or are labeled as local measurements. Nothing is invented.
+> Speedup claims cite a local bench, an upstream source, or are marked provisional. Corpus residual counts are lint hit counts, not wall-time savings. Numbers come from release notes, original PRs, or are labeled as local measurements. Nothing is invented.
 >
 > Companion: `zperf-lint/` — static checks for performance and memory anti-patterns (Chapter 9).
 

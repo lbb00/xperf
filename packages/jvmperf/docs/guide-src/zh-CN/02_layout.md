@@ -202,7 +202,7 @@ public class J01_Boxing {
 ```
 
 要点：
-- `Integer.valueOf` 只缓存 −128..127（`-XX:AutoBoxCacheMax` 可以调大上限，本机默认值 128）。**永远不要用 `==` 比较包装类型**。
+- `Integer.valueOf` 只缓存 −128..127（`-XX:AutoBoxCacheMax` 可以调大上限，本机默认值 128）。永远不要用 `==` 比较包装类型。
 - 流：用 `mapToInt(...).sum()`，不要 `map(...).reduce(0, Integer::sum)`（每一步都装箱）。
 - C2 有 `EliminateAutoBox`（本机默认开启），能消除部分局部的装箱/拆箱，但对放进集合里的对象无能为力。
 
@@ -253,4 +253,3 @@ public class J02_PrimitiveCollections {
 来源：[Integer.valueOf](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Integer.html#valueOf(int)) · [fastutil](https://fastutil.di.unimi.it/) · [Eclipse Collections](https://eclipse.dev/collections/) · [Koloboke 提交历史](https://github.com/leventov/Koloboke/commits/master/)
 
 ---
-

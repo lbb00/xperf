@@ -1,10 +1,10 @@
 ## 4. Case study: memory used by a hybrid car
 
-A popular C/C++ example models whether a car has an electric motor or a gasoline engine. Two `int` fields use 8 bytes; one `int` bit field uses 4; a `uint8_t` uses 1. The JVM behaves differently because **an object's size is determined by its header and 8-byte alignment**.
+A popular C/C++ example models whether a car has an electric motor or a gasoline engine. Two `int` fields use 8 bytes; one `int` bit field uses 4; a `uint8_t` uses 1. The JVM behaves differently because an object's size is determined by its header and 8-byte alignment.
 
 ### 4.1 A single object: packing still leaves 16 bytes
 
-**Measured locally with JOL 0.17 on JDK 25.0.4.1** (`research/jol-jdk25.txt`, `research/jol-kotlin-jdk25.txt`):
+Measured locally with JOL 0.17 on JDK 25.0.4.1 (`research/jol-jdk25.txt`, `research/jol-kotlin-jdk25.txt`):
 
 | Representation | Size in C | Default JVM | `+UseCompactObjectHeaders` |
 |---|---:|---:|---:|
@@ -17,7 +17,7 @@ A popular C/C++ example models whether a car has an electric motor or a gasoline
 | Kotlin `data class HybridInts(Int, Int)` | — | 24 | 16 |
 | Kotlin `class Car(val fuels: FuelFlags)` (`FuelFlags` is a value class wrapping `Byte`) | — | 16 | 16 |
 
-The default header is 12 bytes, so up to 4 bytes of fields still fit in a 16-byte object. Changing `int` to `byte` only creates more padding. Two `int` fields need 20 bytes before alignment, so the object occupies 24 bytes. Compact headers reduce it to 16 bytes; **that flag can save more than manually packing fields**. `EnumSet` is convenient, but it is a separate object containing a `long` and adds another object when stored as a field.
+The default header is 12 bytes, so up to 4 bytes of fields still fit in a 16-byte object. Changing `int` to `byte` only creates more padding. Two `int` fields need 20 bytes before alignment, so the object occupies 24 bytes. Compact headers reduce it to 16 bytes; that flag can save more than manually packing fields. `EnumSet` is convenient, but it is a separate object containing a `long` and adds another object when stored as a field.
 
 ### 4.2 One thousand cars: avoid one object per car
 
@@ -33,7 +33,7 @@ The default header is 12 bytes, so up to 4 bytes of fields still fit in a 16-byt
 On the JVM:
 
 1. Packing flags inside one object rarely saves memory unless it crosses an 8-byte alignment boundary.
-2. The large saving comes from replacing an **array of objects** with **primitive arrays** (Structure of Arrays; see Chapter 5). The example drops from 20 KB to 1 KB and removes 1,000 pointer chases.
+2. The large saving comes from replacing an array of objects with primitive arrays (Structure of Arrays; see Chapter 5). The example drops from 20 KB to 1 KB and removes 1,000 pointer chases.
 3. Bit encodings (`byte` operations, `EnumSet`, `BitSet`) matter more at the array level. Prefer readable fields for individual objects.
 
 Java version:

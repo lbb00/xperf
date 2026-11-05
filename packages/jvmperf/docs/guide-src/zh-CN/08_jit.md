@@ -62,7 +62,7 @@ public class J06_OffHeapFfm {
 
 ### 8.2 direct `ByteBuffer`
 
-老 API，容量受 `-XX:MaxDirectMemorySize` 限制（默认 0 表示与最大堆相同），由 `Cleaner` 随 GC 间接释放——分配/释放都比堆内贵，**适合长期复用**（见第 10 章对象池），不适合每个请求新建。单个 `ByteBuffer` 最大 2 GB（`int` 索引），`MemorySegment` 没有此限制。
+老 API，容量受 `-XX:MaxDirectMemorySize` 限制（默认 0 表示与最大堆相同），由 `Cleaner` 随 GC 间接释放——分配/释放都比堆内贵，适合长期复用（见第 10 章对象池），不适合每个请求新建。单个 `ByteBuffer` 最大 2 GB（`int` 索引），`MemorySegment` 没有此限制。
 
 ### 8.3 I/O
 
@@ -115,9 +115,9 @@ public class J12_Io {
 
 ### 9.1 逃逸分析与标量替换
 
-C2 会分析对象是否"逃出"方法（存进字段/数组、作为返回值、传给未内联的方法）。不逃逸的对象可以被**标量替换**——拆成几个局部变量，根本不在堆上分配。
+C2 会分析对象是否"逃出"方法（存进字段/数组、作为返回值、传给未内联的方法）。不逃逸的对象可以被标量替换——拆成几个局部变量，根本不在堆上分配。
 
-**【本机实测】**（`research/EaProbe.java`，`ThreadMXBean.getThreadAllocatedBytes` 统计 1000 次循环中每次 `new Vec(...).plus(new Vec(1,1))` 的分配量）：
+【本机实测】（`research/EaProbe.java`，`ThreadMXBean.getThreadAllocatedBytes` 统计 1000 次循环中每次 `new Vec(...).plus(new Vec(1,1))` 的分配量）：
 
 | 运行参数 | 每次调用分配 |
 |---|---|
@@ -155,7 +155,7 @@ public class J08_EscapeAnalysis {
 }
 ```
 
-写出 EA 友好代码的要点：小方法（能被内联）、对象不存入字段/集合、不跨越 `synchronized` 以外的复杂控制流合并点。小数组同样可以被标量替换，但有上限（本机 `EliminateAllocationArraySizeLimit = 64` 个元素）。**不要依赖它**：EA 只在 C2 编译后生效，解释执行与 C1 阶段照样分配；Android ART 的 AOT/JIT 编译器做的优化不同。
+写出 EA 友好代码的要点：小方法（能被内联）、对象不存入字段/集合、不跨越 `synchronized` 以外的复杂控制流合并点。小数组同样可以被标量替换，但有上限（本机 `EliminateAllocationArraySizeLimit = 64` 个元素）。不要依赖它：EA 只在 C2 编译后生效，解释执行与 C1 阶段照样分配；Android ART 的 AOT/JIT 编译器做的优化不同。
 
 ### 9.2 内联与调用点形态
 
@@ -199,7 +199,7 @@ public class J09_JitFriendly {
 
 ### 9.3 intrinsic
 
-`Integer.bitCount`、`Long.numberOfTrailingZeros`、`Math.fma`、`System.arraycopy`、`Arrays.equals/mismatch`、`String.indexOf`、CRC32 等是 HotSpot intrinsic，编译成专门的指令序列。**优先用 JDK 方法，不要手写位技巧去"优化"它们**。
+`Integer.bitCount`、`Long.numberOfTrailingZeros`、`Math.fma`、`System.arraycopy`、`Arrays.equals/mismatch`、`String.indexOf`、CRC32 等是 HotSpot intrinsic，编译成专门的指令序列。优先用 JDK 方法，不要手写位技巧去“优化”它们。
 
 ### 9.4 Vector API（仍在孵化）
 
@@ -327,7 +327,7 @@ public class J10_FalseSharing {
 
 JDK 21 正式（JEP 444）。适合"大量任务、大部分时间在阻塞 I/O"的服务。要点：
 
-- 每个任务一个虚拟线程，**不要池化虚拟线程**；用 `Semaphore` 限制并发访问下游资源。
+- 每个任务一个虚拟线程，不要池化虚拟线程；用 `Semaphore` 限制并发访问下游资源。
 - JDK 24 起 `synchronized` 不再把虚拟线程钉在载体线程上（JEP 491）；调用本地方法/外部函数时仍会钉住。
 - CPU 密集任务没有收益，用平台线程池 / `ForkJoinPool`。
 - `ThreadLocal` 在百万虚拟线程下会放大内存，缓存大对象（如 `SimpleDateFormat`）的 `ThreadLocal` 写法要改掉；共享数据考虑 Scoped Values（JDK 25 正式，JEP 506）。
@@ -357,7 +357,7 @@ public class J11_VirtualThreads {
 
 ### 10.3 对象池：何时用、何时不用
 
-TLAB（线程本地分配缓冲）里的分配只是指针碰撞，年轻代回收短命对象几乎免费。池化小对象通常**更慢**：对象会被提升到老年代、需要清零/重置、需要并发控制、容易泄漏。只池化真正昂贵的东西：direct `ByteBuffer`、大数组、数据库连接、线程、`MessageDigest`/`Cipher` 之类初始化昂贵且非线程安全的对象。
+TLAB（线程本地分配缓冲）里的分配只是指针碰撞，年轻代回收短命对象几乎免费。池化小对象通常更慢：对象会被提升到老年代、需要清零/重置、需要并发控制、容易泄漏。只池化真正昂贵的东西：direct `ByteBuffer`、大数组、数据库连接、线程、`MessageDigest`/`Cipher` 之类初始化昂贵且非线程安全的对象。
 
 `examples/java/J16_Pool.java`
 
@@ -438,4 +438,3 @@ java -Xlog:gc*:file=gc.log:time,uptime,level,tags -jar app.jar
 来源：[HotSpot GC 调优指南（JDK 25）](https://docs.oracle.com/en/java/javase/25/gctuning/) · [JEP 474](https://openjdk.org/jeps/474) · [JEP 490](https://openjdk.org/jeps/490) · [JEP 521](https://openjdk.org/jeps/521) · [JEP 522](https://openjdk.org/jeps/522) · [JEP 523](https://openjdk.org/jeps/523) · [JEP 318 Epsilon](https://openjdk.org/jeps/318) · [JEP 483](https://openjdk.org/jeps/483) · [JEP 514](https://openjdk.org/jeps/514) · [JEP 515](https://openjdk.org/jeps/515) · [JEP 516](https://openjdk.org/jeps/516)
 
 ---
-

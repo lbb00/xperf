@@ -2,7 +2,7 @@
 
 ### 12.1 ART vs HotSpot
 
-- ART has no C2 compiler or HotSpot-style escape analysis and scalar replacement. It combines interpretation, JIT compilation, and profile-guided AOT compilation (`dex2oat`). **Do not assume the JIT will remove allocations on Android**; avoid them in hot paths such as `onDraw`, scroll callbacks, and animation frames.
+- ART has no C2 compiler or HotSpot-style escape analysis and scalar replacement. It combines interpretation, JIT compilation, and profile-guided AOT compilation (`dex2oat`). Do not assume the JIT will remove allocations on Android; avoid them in hot paths such as `onDraw`, scroll callbacks, and animation frames.
 - References are already 32-bit and object headers are 8 bytes (`mirror::Object` has 32-bit class and monitor fields). ART has no compressed-reference or compact-header switch.
 - Since Android 14, ART Mainline updates use Concurrent Mark Compact (CMC), based on `userfaultfd`, by default. Android 16 QPR2 adds generational CMC, which collects recently allocated objects first.
 

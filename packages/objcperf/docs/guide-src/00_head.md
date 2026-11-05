@@ -1,17 +1,13 @@
 # Objective-C performance guide (v0)
 
-Foundation collection / string / logging checklists. Distinct from **swiftperf**.
+Foundation collection, string, and logging checklists. Distinct from [swiftperf](../../swiftperf/).
 
-> **Scope: Objective-C (ARC or MRC).** Lint is a line-window scan of `.m`/`.h`. Measure on device/macOS before escalating.
+> **Scope: Objective-C (ARC or MRC).** Lint is a line-window scan of `.m`/`.h`. Speedup claims cite a local bench, an upstream source, or are marked provisional. Corpus residual counts are lint hit counts, not wall-time savings.
 
-## How to read this
-
-1. **Measure first** (Instruments Time Profiler / Allocations).
-2. Treat each chapter as a checklist, not a rewrite mandate.
+Profile first (Instruments Time Profiler / Allocations). Measure on device or macOS before escalating.
 
 ## Contents
 
-- [0. Scope and method](#0-scope-and-method)
 - [1. Collections](#1-collections)
 - [2. Strings and hot I/O](#2-strings-and-hot-io)
 - [3. Formatters, JSON, and regular expressions](#3-formatters-json-and-regular-expressions)

@@ -9,3 +9,5 @@ for i = 1, n do
 end
 ```
 
+Lint: `lu-table-insert-hot` (default off).
+
