@@ -4,7 +4,7 @@
 |----|-------|------|
 | rs-alloc-hot | 循环内 alloc/clone | off（G3 OK-idiom；G4 有测量） |
 | rs-println-hot | 循环内 println! / eprintln! | hint |
-| rs-format-rebind-hot | 循环内 `format!` 重绑定累加 | **error**（G4：相对 `write!` 约 99×） |
+| rs-format-rebind-hot | 循环内 `format!` 重绑定累加 | error（G4：相对 `write!` 约 99×） |
 | rs-collect-vec-hot | 循环内 collect::<Vec> | hint |
 | rs-regex-new-hot | 循环内 `Regex::new` | hint（短 haystack 上 JSONL 约 963×） |
 

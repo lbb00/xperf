@@ -4,4 +4,4 @@
 
 每轮调用静态 `Regex.IsMatch` / `Regex.Match` 并传入模式字符串，都会在静态正则缓存里查找；优先复用一个 `Regex` 实例（热模式可用 `RegexOptions.Compiled`）。
 
-配套 lint：**cs-list-add-no-capacity**、**cs-string-plus-hot**、**cs-regex-hot**。
+Lint: `cs-list-add-no-capacity`, `cs-string-plus-hot`（默认 off）; `cs-regex-hot`（默认 hint）

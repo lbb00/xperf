@@ -10,3 +10,5 @@ let mut v = Vec::with_capacity(n);
 for i in 0..n { v.push(i); }
 for i in 0..n { v.push(i); }
 ```
+
+Lint: `rs-alloc-hot`（默认 off，G3 后；G4 有测量）

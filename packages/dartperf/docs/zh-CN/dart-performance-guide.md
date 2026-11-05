@@ -2,29 +2,26 @@
 
 少做 list 扩容，少产生字符串 `+` 临时对象，让热循环更安静。
 
-> **范围：Dart 3.x（VM / Flutter）。** 声称加速的断言会点名本地示例，或标明暂定。**Corpus lint 计数是启发式 dogfood**，不是基准。
+> **范围：Dart 3.x（VM / Flutter）。** 加速数字会标明本地 bench、上游来源，或标为暂定。语料库残留计数是 lint 命中次数，不是墙钟耗时节省。
 
-## 如何阅读
-
-1. 先**测量**（`benchmark_harness`、DevTools CPU profiler）。
-2. 把每一章当核对清单，不是强制重写令。
+先画像（`benchmark_harness`、DevTools CPU profiler）。各章是核对清单，不是强制重写令。
 
 ## 目录
 
-- [如何阅读](#如何阅读)
 - [1. List](#1-list)
 - [2. 字符串与热 I/O](#2-字符串与热-io)
 - [Lint 对照](#lint-对照)
+
 ## 1. List
 
 热循环里的 `List.add` 在容量摊销时可以接受，但每次迭代新建可增长 list 不行。尽可能用 `List.filled` / `List.generate` / 已知长度。
 
-配套 lint：**dt-list-add-empty**、**dt-growable-add-empty**（空的可增长 list + 在有大小提示的循环里 `add`）。
+Lint: `dt-list-add-empty`（默认 off）; `dt-growable-add-empty`（empty growable list + `add` in a size-hinted loop; 默认 hint）
 ## 2. 字符串与热 I/O
 
 循环里的 `s = s + x` 会造出许多字符串。优先 `StringBuffer`。不要把 `print` 放进紧密循环。
 
-配套 lint：**dt-string-plus-hot**、**dt-print-hot**。
+Lint: `dt-string-plus-hot`, `dt-print-hot`（默认 off）
 ## Lint 对照
 
 | ID | Smell | 默认 |

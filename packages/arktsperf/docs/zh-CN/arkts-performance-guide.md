@@ -2,27 +2,23 @@
 
 在嵌入式 / HarmonyOS 热路径上减少 GC 抖动与 shape 污染。
 
-> **范围：面向 HarmonyOS 及类似嵌入环境的 ArkTS（类 TypeScript）。** 声称加速的断言会点名本地或真机 bench，或标明为暂定。**Corpus lint 计数是启发式 dogfood**，不是基准。相关 JS 说明见：[jsperf](../../../jsperf/docs/zh-CN/js-performance-guide.md)。
+> **范围：面向 HarmonyOS 及同类嵌入环境的 ArkTS（类 TypeScript）。** 加速数字会标明本地 bench、上游来源，或标为暂定。语料库残留计数是 lint 命中次数，不是墙钟耗时节省。 相关 JS 说明见 [jsperf](../../../jsperf/docs/zh-CN/js-performance-guide.md)。
 
-## 如何阅读
-
-1. 尽可能先在真机或忠实运行时上**测量**。
-2. 把每一章当作核对清单。
-3. 不要假定 V8 数字能迁移到 ArkTS VM——请重测。
+能在真机或等价运行时上先画像更好（`DevEco` profiler、简单计时）。不要默认 Node / Chrome 的 V8 层级建议成立。
 
 ## 目录
 
-- [如何阅读](#如何阅读)
 - [1. 分配](#1-分配)
 - [2. Shape 与 delete](#2-shape-与-delete)
 - [3. Bridge / console 噪声](#3-bridge--console-噪声)
 - [4. 循环中的查找与 JSON](#4-循环中的查找与-json)
 - [Lint 对照](#lint-对照)
+
 ## 1. 分配
 
 紧密的 UI 或动画循环里的对象 / 数组字面量与 `new` 会加重 GC。画像显示有压力时，复用缓冲区。
 
-配套 lint：**at-alloc-hot**。
+Lint: `at-alloc-hot`（默认 off）
 ## 2. Shape 与 delete
 
 `delete` 与混杂的属性 shape 会走多态路径；更稳妥的是稳定对象布局（与 V8 hidden class 同一思路——请在 ArkTS 上**重测**）。
@@ -32,12 +28,12 @@
 
 热路径上的 `console.log` 以及频繁的同步跨语言 / worker bridge 调用会拖帧。请门控调试 I/O。
 
-配套 lint：**at-console-hot**。
+Lint: `at-console-hot`（默认 off）
 ## 4. 循环中的查找与 JSON
 
 热循环里对列表做 `Array.includes` / `indexOf` 是每次迭代线性扫描；先建一次 `Set` 再用 `has`。短字符串场景下，稠密查找表往往优于 `Map`（短 haystack 上 `Map` 常更慢）。在循环里反复 parse/stringify 许多小 JSON 会重复分配与解析；应解析一整块数组，或复用缓冲区。
 
-配套 lint：**at-includes-hot**、**at-json-hot**（默认均为 **hint**）。其 JSONL 证据是 Node 代理而非 ArkTS VM，因此不能单独抬高严重级别。
+Lint: `at-includes-hot`, `at-json-hot`（both 默认 hint）. Their JSONL evidence is a Node proxy, not an ArkTS VM, so it cannot raise severity on its own.
 ## Lint 对照
 
 | ID | Smell | 默认 |

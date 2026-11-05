@@ -12,3 +12,5 @@ for i = 1, n do
 end
 end
 ```
+
+Lint: `lu-table-insert-hot`（默认 off）

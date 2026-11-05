@@ -22,9 +22,9 @@
 
 当 profile 显示有 GC 时间时，优先 typed array（`examples/p01_typed_array.js`）、对象池或预分配结构——不要默认改掉每一个 `.push`。
 
-**证据（本机）：** [`evidence/jp-alloc-hot`](../../evidence/zh-CN/jp-alloc-hot.md) —— 循环内 `new Uint8Array` 对比一次 **~19×**；`.push({i})` 对比预分配填充 **~6.4×**（Node v20.19.2）。机制是分配/GC（STATIC-VS-V8 对 deopt 为 PARTIAL）。默认严重级别 **off**（`--preset all` 或 `--severity jp-alloc-hot=hint` 开启）——见 [evidence-policy](evidence-policy.md)。默认 **`--scope all`** 在循环外也报；`--scope loop` 恢复仅循环内匹配。
+**证据（本机）：** [`evidence/jp-alloc-hot`](../../evidence/zh-CN/jp-alloc-hot.md) —— 循环内 `new Uint8Array` 对比一次 **~19×**；`.push({i})` 对比预分配填充 **~6.4×**（Node v20.19.2）。机制是分配/GC（STATIC-VS-V8 对 deopt 为 PARTIAL）。默认严重级别 off（`--preset all` 或 `--severity jp-alloc-hot=hint` 开启）——见 [evidence-policy](evidence-policy.md)。默认 **`--scope all`** 在循环外也报；`--scope loop` 恢复仅循环内匹配。
 
-### 1.3 语料 dogfood（启发式）
+### 1.3 语料命中（lint 计数）
 
 下表来自 lint 行窗的较早修订（r1–r3），展示启发式如何收窄；当前语料结果见 [corpus.md](corpus.md)。
 
@@ -73,6 +73,6 @@
 
 3 行 filter-then-map 低于 2×。3 行四趟高于 2×，但 20000 次仍在一毫秒内。35000 行才是单趟明显更快的地方。hint 点名长度。短列表重写可选。
 
-Lint：**jp-map-filter-chain** —— 默认 **hint**。匹配前剥掉 `//` 与块注释。codegen `gen-*.js` 路径跳过。证据：[`jp-map-filter-chain`](../../evidence/zh-CN/jp-map-filter-chain.md)。
+Lint：**jp-map-filter-chain** —— 默认 hint。匹配前剥掉 `//` 与块注释。codegen `gen-*.js` 路径跳过。证据：[`jp-map-filter-chain`](../../evidence/zh-CN/jp-map-filter-chain.md)。
 
 ---

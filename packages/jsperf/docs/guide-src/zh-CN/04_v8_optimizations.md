@@ -1,6 +1,6 @@
 ## 4. V8 优化（Node / Chrome）
 
-本章针对 **V8** 深化 §1。**不**适用于 QuickJS、Hermes 类嵌入或小程序运行时——见 §3。那些引擎共享「稳定 shape / 更少分配」的物理；它们**得不到** Ignition → Maglev/Turbofan 建议、elements-kind 迁移或 `--trace-deopt` 工作流。
+本章针对 **V8** 深化 §1。不适用于 QuickJS、Hermes 类嵌入或小程序运行时——见 §3。那些引擎共享「稳定 shape / 更少分配」的物理；它们**得不到** Ignition → Maglev/Turbofan 建议、elements-kind 迁移或 `--trace-deopt` 工作流。
 
 按 **Node 22+ / 现代 V8 连续体** 标注日期（测于 Node v22.22.3，V8 12.4.x）。流水线层级名与标志会漂；把下面的版本钉当作「我们跑过什么」，不是永远保证。
 
@@ -79,7 +79,7 @@ USE_NATIVES=1 node --allow-natives-syntax --trace-deopt examples/bench/deopt_pro
 2. **Maglev** —— 中层优化编译器（当前 Node 22+ / 近版 V8 有；确切启用可取决于标志与负载）。
 3. **Turbofan** —— 热代码的顶层优化编译器。
 
-代码升温时可能爬层级，deopt 时回落。**不要**过度声称「Node N 上总是 Maglev」或钉死确切层级阈值——它们会动。对没有这条流水线的嵌入（§3），完全跳过层级话术。
+代码升温时可能爬层级，deopt 时回落。不要过度声称「Node N 上总是 Maglev」或钉死确切层级阈值——它们会动。对没有这条流水线的嵌入（§3），完全跳过层级话术。
 
 ### 4.5 jsperf-lint 能看见与不能看见什么
 
@@ -128,6 +128,6 @@ Lint = 分配/shape 味道。JIT 验证 = `jit-check.sh` / `--trace-deopt` / `ex
 
 **不要假装 jp-* 规则等于 JIT 意识。** 对 shape / holey / 热 `delete` 同意最强；用 deopt 行数当神谕，或推销 typed array 总是快于 packed double 时最弱。
 
-**JSONL 门禁（本机 Node v20.19.2，重跑 `scripts/regen-evidence.sh`）：** jp-delete-array-hole 约 **3.2×** → **error**；jp-delete-shape 约 **474×**（语料命中几乎全是 OK 惯用法）→ **off**；jp-alloc-hot 约 **19×**（分配/GC）→ **off**；jp-console-hot 约 **1328×**（丢弃 sink，依赖环境）→ **off**（`app`）/ **hint**（`engine`）。见 [`evidence-policy`](evidence-policy.md) 与 `evidence/jp-*.md`。
+**JSONL 门禁（本机 Node v20.19.2，重跑 `scripts/regen-evidence.sh`）：** jp-delete-array-hole 约 **3.2×** → error；jp-delete-shape 约 **474×**（语料命中几乎全是 OK 惯用法）→ off；jp-alloc-hot 约 **19×**（分配/GC）→ off；jp-console-hot 约 **1328×**（丢弃 sink，依赖环境）→ off（`app`）/ hint（`engine`）。见 [`evidence-policy`](evidence-policy.md) 与 `evidence/jp-*.md`。
 
 ---

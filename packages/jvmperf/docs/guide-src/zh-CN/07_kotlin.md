@@ -545,7 +545,7 @@ fun main() {
 
 ### 7.9 协程
 
-每个 `suspend` 函数编译成状态机，真正挂起时需要续体（continuation）对象；每个 `launch`/`async` 也是对象。CPU 密集任务要分块，**不要每个元素开一个协程**。
+每个 `suspend` 函数编译成状态机，真正挂起时需要续体（continuation）对象；每个 `launch`/`async` 也是对象。CPU 密集任务要分块，不要每个元素开一个协程。
 
 `examples/kotlin/K10_Coroutines.kt`
 

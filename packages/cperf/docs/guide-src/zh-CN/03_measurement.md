@@ -21,23 +21,23 @@ perf record -g -- ./app && perf report   # 尽量保留 frame pointers
 
 ASan / TSan / UBSan 找 bug。它们会放大时间与 RSS。在改动分配器或竞态的同一变更集上用它们；数字只引用**未开 sanitizer** 的 Release 构建。
 
-### 3.4 实测门禁 vs dogfood
+### 3.4 实测门禁与语料命中
 
 树内 `evidence/` 下的 JSONL（见 [evidence-policy.md](evidence-policy.md)）：
 
 | 规则 | 严重级别 | 墙钟（本地运行） |
 |------|----------|------------------|
-| cp-alloc-hot | **error** | 循环 malloc 对比 arena 约 10.8× |
-| cp-realloc-grow-one | **error** | realloc(+1) 对比倍增约 12.6× |
-| cp-printf-hot | **off**（默认） | 热路径无缓冲/缓冲约 4.8×；`#if 0` 约 1.0× → 部分 |
-| cp-strlen-in-cond | **hint** | 字符串可变时约 125×；能提升时约 1× |
-| cp-strcat-hot | **off**（默认） | 约 221×；保持 off |
-| cp-sprintf-hot | **hint** | 有 JSONL；保持 hint；未做语料 triage |
-| cp-fopen-hot | **hint** | 有 JSONL；保持 hint；未做语料 triage |
-| cp-gettime-hot | **hint** | 有 JSONL；保持 hint；未做语料 triage |
-| cp-wide-bool-flags | **hint** | 有 JSONL；保持 hint；未做语料 triage |
-| cp-regex-hot | **hint** | JSONL 约 9.7×；未做语料 triage |
-| cp-alloca-hot | **hint** | 栈 1280000 vs 64 字节；墙钟约 1×；未做语料 triage |
-| cp-struct-by-value | **hint** | JSONL 跨 TU 约 12.3×；同 TU 约 1×；未做语料 triage |
+| cp-alloc-hot | error | 循环 malloc 对比 arena 约 10.8× |
+| cp-realloc-grow-one | error | realloc(+1) 对比倍增约 12.6× |
+| cp-printf-hot | off（默认） | 热路径无缓冲/缓冲约 4.8×；`#if 0` 约 1.0× → 部分 |
+| cp-strlen-in-cond | hint | 字符串可变时约 125×；能提升时约 1× |
+| cp-strcat-hot | off（默认） | 约 221×；保持 off |
+| cp-sprintf-hot | hint | 有 JSONL；保持 hint；未做语料 triage |
+| cp-fopen-hot | hint | 有 JSONL；保持 hint；未做语料 triage |
+| cp-gettime-hot | hint | 有 JSONL；保持 hint；未做语料 triage |
+| cp-wide-bool-flags | hint | 有 JSONL；保持 hint；未做语料 triage |
+| cp-regex-hot | hint | JSONL 约 9.7×；未做语料 triage |
+| cp-alloca-hot | hint | 栈 1280000 vs 64 字节；墙钟约 1×；未做语料 triage |
+| cp-struct-by-value | hint | JSONL 跨 TU 约 12.3×；同 TU 约 1×；未做语料 triage |
 
-语料残留计数（§2.3）仍只是 lint dogfood。模式演示（`examples/m01_arena.c`）仍说明 API，不替代 JSONL 门禁。
+语料残留计数（§2.3）仍只是 lint 命中计数。模式演示（`examples/m01_arena.c`）仍说明 API，不替代 JSONL 门禁。

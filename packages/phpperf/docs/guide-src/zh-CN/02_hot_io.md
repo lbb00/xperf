@@ -2,4 +2,4 @@
 
 紧密循环里的 `echo` / `print` 会刷新输出。门控调试输出或做缓冲。
 
-配套 lint：**ph-echo-hot**。
+Lint: `ph-echo-hot`（默认 hint）

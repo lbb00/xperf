@@ -2,15 +2,12 @@
 
 少一点无谓分配，少一点意外 I/O 卡顿。
 
-> **范围：C11 / C17。** 文中顺带提到的 C++ 备注仅在同一模式适用时成立（例如循环里的 `new` 仍是分配器开销）。凡声称加速的论断，要么有本地示例、要么有上游来源，要么标为暂定。**语料 lint 计数是启发式 dogfood**，不是基准——它告诉你检查器在哪里开火，而不是能省多少墙钟时间。
+> **范围：C11 / C17。** 文中顺带提到的 C++ 备注仅在同一模式适用时成立（例如循环里的 `new` 仍是分配器开销）。加速数字会标明本地 bench、上游来源，或标为暂定。语料库残留计数是 lint 命中次数，不是墙钟耗时节省。
 >
-> 配套：`cperf-lint/` —— 十二条规则的行窗启发式（见 § Lint 对照表）。已在 quickjs、lua、gcc（稀疏）以及 sqlite `src/` 上 dogfood（2026-10-21 Asia/Shanghai）。该次运行未覆盖较晚的 hint 规则；见 [corpus.md](corpus.md)。语料树未 vendored。
+> 配套：`cperf-lint/` —— 十二条行窗规则（见 Lint 对照表）。已在 quickjs、lua、gcc（稀疏）以及 sqlite `src/` 上跑过（2026-10-21 Asia/Shanghai）。该次运行未覆盖较晚的 hint 规则；见 [corpus.md](corpus.md)。语料树未 vendored。
 
-## 怎么读
 
-1. 先在真实负载上**测量**（`perf`、cachegrind；ASan 找 bug，不是测速）。
-2. 把每一章当成检查清单，而不是强制重写。
-3. 当 lint 打在引擎 / 编译器代码上时，先确认调用是调试、代码生成，还是有意的 CLI I/O，再谈「修」。
+先在真实负载上测量（`perf`、cachegrind；ASan 找 bug，不是测速）。当 lint 打在引擎或编译器代码上时，先确认调用是调试、代码生成，还是有意的 CLI I/O，再改。
 
 ## 目录
 
@@ -29,11 +26,11 @@
 
 进攻顺序（与共享 XPerf playbook 相同）：
 
-1. **设计 / 批处理** —— 把网络、磁盘、内存、CPU 摊到批次上。
-2. **分配形态** —— arena、池、容量倍增（§1）。
-3. **热路径 I/O** —— 稳态循环里不要放 `printf` / `fprintf`（§2）。
-4. **布局 / 编译器** —— SoA、`restrict`、LTO：先测；错误的 `restrict` 是 UB。
-5. **验证** —— 计数器与 sanitizer（§3）。
+1. 设计 / 批处理 —— 把网络、磁盘、内存、CPU 摊到批次上。
+2. 分配形态 —— arena、池、容量倍增（§1）。
+3. 热路径 I/O —— 稳态循环里不要放 `printf` / `fprintf`（§2）。
+4. 布局 / 编译器 —— SoA、`restrict`、LTO：先测；错误的 `restrict` 是 UB。
+5. 验证 —— 计数器与 sanitizer（§3）。
 
 机器侧论断应简要记录编译器、`-O` 级别和 CPU。`cp-alloc-hot`、`cp-realloc-grow-one` 与 `cp-printf-hot` 在 `evidence/` 下提供 JSONL 微基准（见 [evidence-policy.md](evidence-policy.md)）；`examples/` 下其余示例仍是模式演示（`cc -std=c17 -O2`）。
 
@@ -57,7 +54,7 @@ Lint：**cp-alloc-hot** —— `for` / `while` / `do` 体内的 `malloc` / `call
 
 **实测证据（error 档）：** [`evidence/cp-alloc-hot.md`](../../evidence/zh-CN/cp-alloc-hot.md) · [`cp-alloc-hot.jsonl`](../../evidence/cp-alloc-hot.jsonl) —— `cc -std=c11 -O2`（Debian gcc 14.2.0），每轮 malloc+free 对比 arena bump 约 **10.8×**（N=2e5，9 次中位数）。策略：[evidence-policy.md](evidence-policy.md)。Harness：`examples/bench/cp001_malloc_vs_arena.c`。
 
-**证据（dogfood，非基准）：** 在成熟 VM 上，跳过后真正的热路径「循环 malloc」很少。r2 包装 / 花括号修复后：quickjs cp-alloc-hot **0**；lua cp-alloc-hot **0**。剩余压力主要在紧凑树与胶水：sqlite `src/` r3 **14**（如 `tclsqlite.c` 行循环里 realloc）；gcc 稀疏 r3 **28**。单行 `return realloc(...)` 包装在 r1 是误报（r2 已清）。把 cp-alloc-hot 命中当作评审提示——按已知 N 只分配一次的初始化循环往往没问题。
+证据（语料命中，非墙钟）： 在成熟 VM 上，跳过后真正的热路径「循环 malloc」很少。r2 包装 / 花括号修复后：quickjs cp-alloc-hot **0**；lua cp-alloc-hot **0**。剩余压力主要在紧凑树与胶水：sqlite `src/` r3 **14**（如 `tclsqlite.c` 行循环里 realloc）；gcc 稀疏 r3 **28**。单行 `return realloc(...)` 包装在 r1 是误报（r2 已清）。把 cp-alloc-hot 命中当作评审提示——按已知 N 只分配一次的初始化循环往往没问题。
 
 ### 1.2 无容量的增长（cp-realloc-grow-one）
 
@@ -65,9 +62,9 @@ Lint：**cp-alloc-hot** —— `for` / `while` / `do` 体内的 `malloc` / `call
 
 Lint：**cp-realloc-grow-one** —— 对 grow-by-one 的尽力正则。
 
-**实测证据（error 档）：** [`evidence/cp-realloc-grow-one.md`](../../evidence/zh-CN/cp-realloc-grow-one.md) · [`cp-realloc-grow-one.jsonl`](../../evidence/cp-realloc-grow-one.jsonl) —— realloc(+1) 对比容量倍增约 **12.6×**（N=1e5）；配套 STATIC-VS-O2 case4 约 **3×**。严重级别 **error**。
+**实测证据（error 档）：** [`evidence/cp-realloc-grow-one.md`](../../evidence/zh-CN/cp-realloc-grow-one.md) · [`cp-realloc-grow-one.jsonl`](../../evidence/cp-realloc-grow-one.jsonl) —— realloc(+1) 对比容量倍增约 **12.6×**（N=1e5）；配套 STATIC-VS-O2 case4 约 **3×**。严重级别 error。
 
-**证据（dogfood）：** 在引擎语料上几乎从不开火——quickjs / lua **0**；gcc 稀疏 **1**；sqlite **1**（r3）。成熟代码里该模式少见；实测门禁仍会让绿地增长在 `--preset app` 下失败。
+证据（语料命中）： 在引擎语料上几乎从不开火——quickjs / lua **0**；gcc 稀疏 **1**；sqlite **1**（r3）。成熟代码里该模式少见；实测门禁仍会让绿地增长在 `--preset app` 下失败。
 
 ### 1.3 语料教给我们的噪声
 
@@ -85,11 +82,11 @@ Lint：**cp-realloc-grow-one** —— 对 grow-by-one 的尽力正则。
 
 ### 1.5 循环条件里的 `strlen`（cp-strlen-in-cond）
 
-`for (i = 0; i < strlen(s); i++)` 每次迭代重算长度（常为 O(n²)）。提升 `size_t n = strlen(s)`（或用已知长度）。Lint：**cp-strlen-in-cond** —— 默认 **hint**。编译器必须重算时约 125×；`-O2` 能提升时约 1×。
+`for (i = 0; i < strlen(s); i++)` 每次迭代重算长度（常为 O(n²)）。提升 `size_t n = strlen(s)`（或用已知长度）。Lint：**cp-strlen-in-cond** —— 默认 hint。编译器必须重算时约 125×；`-O2` 能提升时约 1×。
 
 ### 1.6 循环里的 `strcat`（cp-strcat-hot）
 
-反复 `strcat`/`strncat` 每次从起点扫目标。优先用尾指针 + `memcpy`，或可用时用 `stpcpy`。Lint：**cp-strcat-hot** —— G3 后默认 **off**。本地固定块测试相对尾指针约 221×。用 `--severity cp-strcat-hot=hint` 开启。
+反复 `strcat`/`strncat` 每次从起点扫目标。优先用尾指针 + `memcpy`，或可用时用 `stpcpy`。Lint：**cp-strcat-hot** —— G3 后默认 off。本地固定块测试相对尾指针约 221×。用 `--severity cp-strcat-hot=hint` 开启。
 
 ### 1.7 循环里的 `alloca`（cp-alloca-hot）
 
@@ -97,13 +94,13 @@ Lint：**cp-realloc-grow-one** —— 对 grow-by-one 的尽力正则。
 
 循环体内声明的 VLA 是另一模式，其存储随块结束。本 hint 不匹配 VLA。
 
-**hint**。2026-10-22 语料裁决未覆盖本 slug。本地一次运行让每块地址保持存活：20000 次 × 64 字节覆盖 1280000 字节栈，对比单缓冲 64 字节。每块只碰两字节时约 1×，故不是加速声明。见 [evidence](../../evidence/zh-CN/cp-alloca-hot.md)。
+hint。2026-10-22 语料裁决未覆盖本 slug。本地一次运行让每块地址保持存活：20000 次 × 64 字节覆盖 1280000 字节栈，对比单缓冲 64 字节。每块只碰两字节时约 1×，故不是加速声明。见 [evidence](../../evidence/zh-CN/cp-alloca-hot.md)。
 
 ### 1.8 大结构体按值传递（cp-struct-by-value）
 
 按值参数在调用处复制记录。当同文件定义了该 struct、可理解成员下界至少 512 字节且至少四个字段、参数为无 `*` 的 `struct Name x` 时开火。下界按 LP64 宽度，跳过不理解的成员。数组参数不当作整记录拷贝。
 
-**hint**。不是通用加速。2026-10-22 语料裁决未覆盖。512 字节记录（八个 `int` 加 `unsigned char[480]`）跨翻译单元约 12.3× 对比指针；同翻译单元静态函数约 1×（编译器消拷贝）。更小记录未达阈值。见 [evidence](../../evidence/zh-CN/cp-struct-by-value.md)。
+hint。不是通用加速。2026-10-22 语料裁决未覆盖。512 字节记录（八个 `int` 加 `unsigned char[480]`）跨翻译单元约 12.3× 对比指针；同翻译单元静态函数约 1×（编译器消拷贝）。更小记录未达阈值。见 [evidence](../../evidence/zh-CN/cp-struct-by-value.md)。
 ## 2. 热路径 I/O
 
 ### 2.1 循环里的 `printf` / `fprintf`（cp-printf-hot）
@@ -116,7 +113,7 @@ Lint：**cp-realloc-grow-one** —— 对 grow-by-one 的尽力正则。
 
 Lint：**cp-printf-hot** —— 循环体窗口内的 `printf` / `fprintf` / `puts`（及同类）。
 
-**实测证据（部分同意；默认 off）：** [`evidence/cp-printf-hot.md`](../../evidence/zh-CN/cp-printf-hot.md) · [`cp-printf-hot.jsonl`](../../evidence/cp-printf-hot.jsonl) —— 热路径无缓冲对比缓冲 fprintf 约 **4.8×**（N=8e4）；静默天花板约 **561×**。STATIC-VS-O2 case3 `#if 0` / 死 dump ≈ **1.0×** 却静态开火 → 保持低于 **error**（默认 **off**）。见 [evidence-policy.md](evidence-policy.md)。
+**实测证据（部分同意；默认 off）：** [`evidence/cp-printf-hot.md`](../../evidence/zh-CN/cp-printf-hot.md) · [`cp-printf-hot.jsonl`](../../evidence/cp-printf-hot.jsonl) —— 热路径无缓冲对比缓冲 fprintf 约 **4.8×**（N=8e4）；静默天花板约 **561×**。STATIC-VS-O2 case3 `#if 0` / 死 dump ≈ **1.0×** 却静态开火 → 保持低于 error（默认 off）。见 [evidence-policy.md](evidence-policy.md)。
 
 ### 2.2 有意的 dump / 调试
 
@@ -133,7 +130,7 @@ Lint：**cp-printf-hot** —— 循环体窗口内的 `printf` / `fprintf` / `pu
 
 夹具：`fixtures/good/dump_printf_loop.c`、`ifdef_dump_printf.c`、`dump_file_fprintf.c`。
 
-### 2.3 语料残留（启发式 dogfood）
+### 2.3 语料残留（lint 命中计数）
 
 路径跳过 + 抑制后的计数。**不是**「printf 多少毫秒」。
 
@@ -172,34 +169,34 @@ perf record -g -- ./app && perf report   # 尽量保留 frame pointers
 
 ASan / TSan / UBSan 找 bug。它们会放大时间与 RSS。在改动分配器或竞态的同一变更集上用它们；数字只引用**未开 sanitizer** 的 Release 构建。
 
-### 3.4 实测门禁 vs dogfood
+### 3.4 实测门禁与语料命中
 
 树内 `evidence/` 下的 JSONL（见 [evidence-policy.md](evidence-policy.md)）：
 
 | 规则 | 严重级别 | 墙钟（本地运行） |
 |------|----------|------------------|
-| cp-alloc-hot | **error** | 循环 malloc 对比 arena 约 10.8× |
-| cp-realloc-grow-one | **error** | realloc(+1) 对比倍增约 12.6× |
-| cp-printf-hot | **off**（默认） | 热路径无缓冲/缓冲约 4.8×；`#if 0` 约 1.0× → 部分 |
-| cp-strlen-in-cond | **hint** | 字符串可变时约 125×；能提升时约 1× |
-| cp-strcat-hot | **off**（默认） | 约 221×；保持 off |
-| cp-sprintf-hot | **hint** | 有 JSONL；保持 hint；未做语料 triage |
-| cp-fopen-hot | **hint** | 有 JSONL；保持 hint；未做语料 triage |
-| cp-gettime-hot | **hint** | 有 JSONL；保持 hint；未做语料 triage |
-| cp-wide-bool-flags | **hint** | 有 JSONL；保持 hint；未做语料 triage |
-| cp-regex-hot | **hint** | JSONL 约 9.7×；未做语料 triage |
-| cp-alloca-hot | **hint** | 栈 1280000 vs 64 字节；墙钟约 1×；未做语料 triage |
-| cp-struct-by-value | **hint** | JSONL 跨 TU 约 12.3×；同 TU 约 1×；未做语料 triage |
+| cp-alloc-hot | error | 循环 malloc 对比 arena 约 10.8× |
+| cp-realloc-grow-one | error | realloc(+1) 对比倍增约 12.6× |
+| cp-printf-hot | off（默认） | 热路径无缓冲/缓冲约 4.8×；`#if 0` 约 1.0× → 部分 |
+| cp-strlen-in-cond | hint | 字符串可变时约 125×；能提升时约 1× |
+| cp-strcat-hot | off（默认） | 约 221×；保持 off |
+| cp-sprintf-hot | hint | 有 JSONL；保持 hint；未做语料 triage |
+| cp-fopen-hot | hint | 有 JSONL；保持 hint；未做语料 triage |
+| cp-gettime-hot | hint | 有 JSONL；保持 hint；未做语料 triage |
+| cp-wide-bool-flags | hint | 有 JSONL；保持 hint；未做语料 triage |
+| cp-regex-hot | hint | JSONL 约 9.7×；未做语料 triage |
+| cp-alloca-hot | hint | 栈 1280000 vs 64 字节；墙钟约 1×；未做语料 triage |
+| cp-struct-by-value | hint | JSONL 跨 TU 约 12.3×；同 TU 约 1×；未做语料 triage |
 
-语料残留计数（§2.3）仍只是 lint dogfood。模式演示（`examples/m01_arena.c`）仍说明 API，不替代 JSONL 门禁。
+语料残留计数（§2.3）仍只是 lint 命中计数。模式演示（`examples/m01_arena.c`）仍说明 API，不替代 JSONL 门禁。
 ## 4. 热路径调用
 
-热循环不应每轮格式化新字符串、打开文件、采样时钟或编译正则。写到已有缓冲、流只开一次、时钟读在稳态外、模式只编译一次。这些 lint 是 **hint**。2026-10-22 语料裁决未覆盖它们。
+热循环不应每轮格式化新字符串、打开文件、采样时钟或编译正则。写到已有缓冲、流只开一次、时钟读在稳态外、模式只编译一次。这些 lint 是 hint。2026-10-22 语料裁决未覆盖它们。
 
 - **cp-sprintf-hot** —— 循环体内的 `sprintf` 或 `snprintf`。有 JSONL。保持 hint，未做语料 triage。
 - **cp-fopen-hot** —— 循环体内的 `fopen`。有 JSONL。保持 hint，未做语料 triage。
 - **cp-gettime-hot** —— 循环体内的 `gettimeofday` 或 `clock_gettime`。裸 `time` 不匹配（名字太宽）。有 JSONL。保持 hint，未做语料 triage。
-- **cp-regex-hot** —— 循环体内的 `regcomp`。不匹配 `regexec`。微基准相对「编译一次」约 9.7×。保持 **hint**，未做语料 triage。
+- **cp-regex-hot** —— 循环体内的 `regcomp`。不匹配 `regexec`。微基准相对「编译一次」约 9.7×。保持 hint，未做语料 triage。
 
 夹具命中不等于实测加速。见 [evidence-policy.md](evidence-policy.md)。
 ## 5. 标志布局
@@ -210,25 +207,25 @@ ASan / TSan / UBSan 找 bug。它们会放大时间与 RSS。在改动分配器�
 
 关掉对齐或 packing pragma 是目标选择。有的 CPU 对未对齐加载会故障或变慢。本 hint 不要求那样做。
 
-**cp-wide-bool-flags** 在一个 struct 有四个及以上全宽 `bool` / `_Bool` 成员，或四个及以上名为 `is_` / `has_` / `can_` 的 `int` / `unsigned` 成员、且没有位域时开火。这是 **hint**。有 JSONL。保持 hint；2026-10-22 语料裁决未覆盖。桌面上少量记录可以忽略。JVM 上类似的对象头规则在测量显示无占用收益后已移除；本 C hint 不是那次测量。
+**cp-wide-bool-flags** 在一个 struct 有四个及以上全宽 `bool` / `_Bool` 成员，或四个及以上名为 `is_` / `has_` / `can_` 的 `int` / `unsigned` 成员、且没有位域时开火。这是 hint。有 JSONL。保持 hint；2026-10-22 语料裁决未覆盖。桌面上少量记录可以忽略。JVM 上类似的对象头规则在测量显示无占用收益后已移除；本 C hint 不是那次测量。
 
 夹具命中不等于实测节省。见 [evidence-policy.md](evidence-policy.md)。
 ## Lint 对照表
 
 | ID | 主题 | 严重级别 / 备注 |
 |----|------|-----------------|
-| cp-alloc-hot | 循环内 malloc/calloc/realloc | **error** — 有证据；VM 上少见；sqlite/gcc 十余到数十 |
-| cp-realloc-grow-one | 无容量的 realloc 增长 | **error** — 有证据；成熟树几乎从不开火 |
-| cp-printf-hot | 循环内 printf/fprintf/puts | 默认 **off** — 热路径 YES / 死代码 NEGATIVE；需要 dump 抑制 |
-| cp-strlen-in-cond | 循环条件里的 strlen | **hint** — 重算约 125×，能提升约 1× |
-| cp-strcat-hot | 循环内 strcat/strncat | 默认 **off** — 约 221×；冷 CLI/路径可接受 |
-| cp-sprintf-hot | 循环内格式化写缓冲 | **hint** — 有 JSONL；未做语料 triage |
-| cp-fopen-hot | 循环内打开文件 | **hint** — 有 JSONL；未做语料 triage |
-| cp-gettime-hot | 循环内采样时钟（不含裸 `time`） | **hint** — 有 JSONL；未做语料 triage |
-| cp-wide-bool-flags | 同一 struct 四个及以上全宽布尔标志 | **hint** — 有 JSONL；未做语料 triage |
-| cp-regex-hot | 循环内 `regcomp`（不匹配 `regexec`） | **hint** — JSONL 约 9.7×；未做语料 triage |
-| cp-alloca-hot | 循环内 `alloca` / `__builtin_alloca`（不匹配 VLA） | **hint** — 测过栈覆盖；墙钟约 1×；未做语料 triage |
-| cp-struct-by-value | 可见下界 ≥512 字节且 ≥4 字段的 struct 按值参数 | **hint** — JSONL 跨 TU 约 12.3×；未做语料 triage |
+| cp-alloc-hot | 循环内 malloc/calloc/realloc | error — 有证据；VM 上少见；sqlite/gcc 十余到数十 |
+| cp-realloc-grow-one | 无容量的 realloc 增长 | error — 有证据；成熟树几乎从不开火 |
+| cp-printf-hot | 循环内 printf/fprintf/puts | 默认 off — 热路径 YES / 死代码 NEGATIVE；需要 dump 抑制 |
+| cp-strlen-in-cond | 循环条件里的 strlen | hint — 重算约 125×，能提升约 1× |
+| cp-strcat-hot | 循环内 strcat/strncat | 默认 off — 约 221×；冷 CLI/路径可接受 |
+| cp-sprintf-hot | 循环内格式化写缓冲 | hint — 有 JSONL；未做语料 triage |
+| cp-fopen-hot | 循环内打开文件 | hint — 有 JSONL；未做语料 triage |
+| cp-gettime-hot | 循环内采样时钟（不含裸 `time`） | hint — 有 JSONL；未做语料 triage |
+| cp-wide-bool-flags | 同一 struct 四个及以上全宽布尔标志 | hint — 有 JSONL；未做语料 triage |
+| cp-regex-hot | 循环内 `regcomp`（不匹配 `regexec`） | hint — JSONL 约 9.7×；未做语料 triage |
+| cp-alloca-hot | 循环内 `alloca` / `__builtin_alloca`（不匹配 VLA） | hint — 测过栈覆盖；墙钟约 1×；未做语料 triage |
+| cp-struct-by-value | 可见下界 ≥512 字节且 ≥4 字段的 struct 按值参数 | hint — JSONL 跨 TU 约 12.3×；未做语料 triage |
 
 ## 参考
 

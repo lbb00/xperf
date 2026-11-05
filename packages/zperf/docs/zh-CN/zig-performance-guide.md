@@ -3,7 +3,7 @@
 少占内存，提高吞吐。
 
 > **目标版本：Zig 0.17.0。** 示例在 `examples/`，于 **Zig 0.17.0 / x86_64-linux** 上用 `zig test`（Debug 与 `-O fast`）或 `zig build-exe` 校验（`cd examples && zig build test` 可复现）。
-> 性能数字来自官方 release notes、原始 PR，或标注为本地实测；没有编造的基准。
+> 加速数字会标明本地 bench、上游来源，或标为暂定。语料库残留计数是 lint 命中次数，不是墙钟耗时节省。数字来自发布说明、原始 PR，或标明为本机测量。不编造数字。
 >
 > 配套：`zperf-lint/` —— 性能/内存反模式静态检查（第 9 章）。
 
@@ -59,12 +59,12 @@ Zig 未到 1.0，版本可能破坏 API。面向 0.11–0.13 的教程常常编�
 
 TigerBeetle TigerStyle 的顺序：
 
-1. **设计阶段估算**：网络、磁盘、内存、CPU 的带宽与延迟。最大收益（他们说的“1000×”）往往出现在还无法 profile 的设计阶段。
-2. **先处理最慢的资源**（网络 > 磁盘 > 内存 > CPU），并加权频率：频繁的 cache miss 可以贵到接近一次 `fsync`。
-3. **批处理**：把网络、磁盘、内存、CPU 成本摊到批次上；给 CPU 大块、可预测的工作。
-4. **热点写清楚**：例如把热循环抽成只收原始参数、不带 `self` 的函数（见 §5.6）。
+1. 设计阶段估算：网络、磁盘、内存、CPU 的带宽与延迟。最大收益（他们说的“1000×”）往往出现在还无法 profile 的设计阶段。
+2. 先处理最慢的资源（网络 > 磁盘 > 内存 > CPU），并加权频率：频繁的 cache miss 可以贵到接近一次 `fsync`。
+3. 批处理：把网络、磁盘、内存、CPU 成本摊到批次上；给 CPU 大块、可预测的工作。
+4. 热点写清楚：例如把热循环抽成只收原始参数、不带 `self` 的函数（见 §5.6）。
 
-Andrew Kelley *Practical Data-Oriented Design*：**少用内存可以更快**——分配更少、缓存更友好。本文先讲内存，再讲运算。
+Andrew Kelley *Practical Data-Oriented Design*：少用内存可以更快——分配更少、缓存更友好。本文先讲内存，再讲运算。
 
 来源：[TigerStyle](https://github.com/tigerbeetle/tigerbeetle/blob/main/docs/TIGER_STYLE.md) · [Practical DOD（Handmade Seattle 2021）](https://handmade-seattle.com/media-sub/practical-data-oriented-design) · [Zig PR #7920](https://github.com/ziglang/zig/pull/7920)
 
@@ -513,7 +513,7 @@ test "buffer pool tryAlloc / release" {
 
 ### 2.5 静态分配（TigerStyle）
 
-TigerBeetle 规则：**启动时分配全部内存；初始化之后不再分配或释放。** 去掉稳态分配延迟抖动与 use-after-free。队列、循环、连接数都设固定上限。
+TigerBeetle 规则：启动时分配全部内存；初始化之后不再分配或释放。 去掉稳态分配延迟抖动与 use-after-free。队列、循环、连接数都设固定上限。
 
 > 📄 `examples/m11_static.zig`（Zig 0.17.0 下 `zig test` 通过）
 
@@ -741,7 +741,7 @@ test "phase allocator: alloc only in init" {
 
 #### 按并发给对象 / 消息池定容
 
-静态分配只有在池**大到总能推进**时才安全。TigerBeetle 的 `MessagePool` 按最坏并发占用来计：journal 读写 IOPS、pipeline 深度、连接发送队列、grid 修复读，再加一小段突发（+1），避免 parse/ping 卡死副本。定长帧池可按此素描：
+静态分配只有在池大到总能推进时才安全。TigerBeetle 的 `MessagePool` 按最坏并发占用来计：journal 读写 IOPS、pipeline 深度、连接发送队列、grid 修复读，再加一小段突发（+1），避免 parse/ping 卡死副本。定长帧池可按此素描：
 
 1. 列出每个并发持有者（连接 × 在途、磁盘 IOPS、pipeline、循环）。
 2. 再加一：持有一条消息的同时申请下一条。
@@ -1924,9 +1924,9 @@ test "delta + varint" {
 
 ### 2.16 碎片、大页与其他
 
-- **碎片**：大量不同大小、不同寿命的小对象混在一个通用堆里最容易产生碎片。按生命周期分组（arena）、按大小分组（MemoryPool）、或者静态分配，都能从根上避免。
-- **大页（huge pages）**：大块、随机访问的内存（哈希表、大数组）上 TLB miss 可能是瓶颈。Linux 上可以对 mmap 出来的区域 `madvise(MADV_HUGEPAGE)` 使用透明大页；是否有收益必须实测（`perf stat -e dTLB-load-misses`）。
-- **ArrayList 扩容**：0.14 起 Allocator 有 `remap`，`page_allocator` 支持 `mremap`，所以大 ArrayList 扩容时可能由内核重映射页而不是 memcpy。
+- 碎片：大量不同大小、不同寿命的小对象混在一个通用堆里最容易产生碎片。按生命周期分组（arena）、按大小分组（MemoryPool）、或者静态分配，都能从根上避免。
+- 大页（huge pages）：大块、随机访问的内存（哈希表、大数组）上 TLB miss 可能是瓶颈。Linux 上可以对 mmap 出来的区域 `madvise(MADV_HUGEPAGE)` 使用透明大页；是否有收益必须实测（`perf stat -e dTLB-load-misses`）。
+- ArrayList 扩容：0.14 起 Allocator 有 `remap`，`page_allocator` 支持 `mremap`，所以大 ArrayList 扩容时可能由内核重映射页而不是 memcpy。
 - **`Deque` + `remap`：** `std.Deque` 扩容尽量走 `Allocator.remap`，环能原地长大才拆 head/tail 搬迁（`lib/std/deque.zig`）。大环后面用支持 remap 的分配器更合适。
 
 ---
@@ -2499,8 +2499,8 @@ test "car case study" {
 
 ### 5.1 comptime：把计算挪到编译期
 
-- **查找表**：用 `comptime` 块生成，表直接进只读数据段，运行时零初始化成本。循环次数多时用 `@setEvalBranchQuota` 提高编译期分支配额。
-- **泛型特化**：`comptime N: usize` 参数让每个 N 生成一份专用代码；`inline for` 在编译期完全展开。
+- 查找表：用 `comptime` 块生成，表直接进只读数据段，运行时零初始化成本。循环次数多时用 `@setEvalBranchQuota` 提高编译期分支配额。
+- 泛型特化：`comptime N: usize` 参数让每个 N 生成一份专用代码；`inline for` 在编译期完全展开。
 - 编译期断言常量之间的关系（TigerStyle 强烈推荐）：`comptime std.debug.assert(...)`。
 
 > 📄 `examples/p01_comptime_lut.zig`（Zig 0.17.0 下 `zig test` 通过）
@@ -2963,8 +2963,8 @@ test "hints" {
 - **热循环抽成独立函数，只接受原始参数，不带 `self`**（TigerStyle）：编译器不需要证明 `self.field` 没被别名修改，就能把它放进寄存器；读者也更容易看出冗余计算。
 - **多路累加器 / 循环展开**：`inline for` 生成固定数量的独立累加器，打破加法依赖链。展开会增大代码，i-cache 压力是真实成本。
 - **`inline fn` 不是提示**：语言参考明确说它是"语义上的内联"，编译期已知的实参在被调函数内也视为编译期参数；代价是可能伤害二进制大小、编译速度，甚至运行时性能。一般让编译器自己决定，只在需要编译期传播或确保栈帧形态时才用。
-- **大结构体按 `*const T` 传**（TigerStyle：>16 字节且无意拷贝时），以及"push ifs up, fors down"——把分支提到循环外，把循环下推到批处理函数里。
-- 大结构体**原地初始化**：`fn init(self: *Big) void { self.* = .{...}; }`，避免先在栈上构造再拷贝（TigerStyle）。
+- 大结构体按 `*const T` 传（TigerStyle：>16 字节且无意拷贝时），以及"push ifs up, fors down"——把分支提到循环外，把循环下推到批处理函数里。
+- 大结构体原地初始化：`fn init(self: *Big) void { self.* = .{...}; }`，避免先在栈上构造再拷贝（TigerStyle）。
 
 > 📄 `examples/p09_hot_loop.zig`（Zig 0.17.0 下 `zig test` 通过）
 
@@ -3577,7 +3577,7 @@ pub fn build(b: *std.Build) void {
 
 ### 7.3 PGO
 
-截至本文，Zig **不支持**对用户程序做 profile-guided optimization：相关请求 [#15137](https://github.com/ziglang/zig/issues/15137) 已以 "not planned" 关闭；"基于测试用例的自动 PGO" 的研究性 issue [#237](https://github.com/ziglang/zig/issues/237) 仍开着。替代办法是手动：`@branchHint`、冷热函数分离、布局调整。
+截至本文，Zig 不支持对用户程序做 profile-guided optimization：相关请求 [#15137](https://github.com/ziglang/zig/issues/15137) 已以 "not planned" 关闭；"基于测试用例的自动 PGO" 的研究性 issue [#237](https://github.com/ziglang/zig/issues/237) 仍开着。替代办法是手动：`@branchHint`、冷热函数分离、布局调整。
 
 来源：`zig build-exe --help`（0.17.0）· [0.17 Rename lang.OptimizeMode to lang.Optimize](https://ziglang.org/download/0.17.0/release-notes.html) · [0.16 Lazy Field Analysis / For Loop Safety Checks](https://ziglang.org/download/0.16.0/release-notes.html) · `lib/std/Build/Step/Compile.zig`
 
@@ -3594,7 +3594,7 @@ pub fn build(b: *std.Build) void {
 | 可选 tracy 钩子 | `src/tracy.zig` | 追编译时间时可插桩（**U**） |
 | 内容寻址构建缓存 | `lib/std/Build/Cache.zig` | SipHash 清单做增量产物（邻接 §8.4） |
 
-别把编译器内部生搬进小程序。量过之后再偷**形状**（索引、SoA、分片、ensure 启发式）。
+别把编译器内部照搬进小程序。量过之后再借用形状（索引、SoA、分片、扩容启发式）。
 
 ---
 
@@ -3604,7 +3604,7 @@ pub fn build(b: *std.Build) void {
 
 0.16 起 `std.time.Timer` 已移除。计时走 `Io`：`std.Io.Clock.Timestamp.now(io, .awake)` 与 `.untilNow(io)`。用 `std.mem.doNotOptimizeAway` 防止被测工作被删掉。多跑几轮，取**最佳**（或报分布），减轻中断与冷缓存噪声。
 
-记录 Zig 版本、优化模式、OS、CPU 型号，便于跨机对比。示例每条结果打一行 **JSONL**。
+记录 Zig 版本、优化模式、OS、CPU 型号，便于跨机对比。示例每条结果打一行 JSONL。
 
 > 📄 `examples/p12_bench.zig`（Zig 0.17.0 下 `zig run -O fast` 通过）
 
@@ -3832,7 +3832,7 @@ $ echo $?
 
 另外，Zig 0.16 代码里的 `.{x} ** N` 会先按等长替换再解析（0.17 分词器已去掉 `**`）。
 
-**自举时学到的一条**：`Ast.tokenLocation(0, tok)` 每次都从文件头扫描，是 O(文件长度)。对每条发现、每个函数都调用它，就会变成 O(n²)：zperf-lint v0.3 的规则阶段曾是解析阶段的 4 倍。正确做法是解析后一次扫描，建一张行首偏移表，之后二分查找。再加上每文件 arena `reset(.retain_capacity)`（§2.2）和 `Io.Group` 并行、各写各槽（§6.2），在 Zig 0.17 std（563 个文件）上从 527 ms 降到 41 ms，峰值 RSS 从 64 MiB 降到 17 MiB，输出逐字节不变。详见 `zperf-lint/README.md` 的“自举 / dogfooding”。
+自举时学到的一条：`Ast.tokenLocation(0, tok)` 每次都从文件头扫描，是 O(文件长度)。对每条发现、每个函数都调用它，就会变成 O(n²)：zperf-lint v0.3 的规则阶段曾是解析阶段的 4 倍。正确做法是解析后一次扫描，建一张行首偏移表，之后二分查找。再加上每文件 arena `reset(.retain_capacity)`（§2.2）和 `Io.Group` 并行、各写各槽（§6.2），在 Zig 0.17 std（563 个文件）上从 527 ms 降到 41 ms，峰值 RSS 从 64 MiB 降到 17 MiB，输出逐字节不变。详见 `zperf-lint/README.md` 的“自举 / dogfooding”。
 
 **局限**：它是语法级检查，没有类型信息——结构体大小是按字段类型估算的，"是否是整数除法"无法判断，"所有权是否转移"靠 token 启发式。每条规则的误报风险都写在 README 里；把它当成 code review 的提示，而不是编译器错误。
 

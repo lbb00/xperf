@@ -10,7 +10,7 @@
 
 Lint：**cp-printf-hot** —— 循环体窗口内的 `printf` / `fprintf` / `puts`（及同类）。
 
-**实测证据（部分同意；默认 off）：** [`evidence/cp-printf-hot.md`](../../evidence/zh-CN/cp-printf-hot.md) · [`cp-printf-hot.jsonl`](../../evidence/cp-printf-hot.jsonl) —— 热路径无缓冲对比缓冲 fprintf 约 **4.8×**（N=8e4）；静默天花板约 **561×**。STATIC-VS-O2 case3 `#if 0` / 死 dump ≈ **1.0×** 却静态开火 → 保持低于 **error**（默认 **off**）。见 [evidence-policy.md](evidence-policy.md)。
+**实测证据（部分同意；默认 off）：** [`evidence/cp-printf-hot.md`](../../evidence/zh-CN/cp-printf-hot.md) · [`cp-printf-hot.jsonl`](../../evidence/cp-printf-hot.jsonl) —— 热路径无缓冲对比缓冲 fprintf 约 **4.8×**（N=8e4）；静默天花板约 **561×**。STATIC-VS-O2 case3 `#if 0` / 死 dump ≈ **1.0×** 却静态开火 → 保持低于 error（默认 off）。见 [evidence-policy.md](evidence-policy.md)。
 
 ### 2.2 有意的 dump / 调试
 
@@ -27,7 +27,7 @@ Lint：**cp-printf-hot** —— 循环体窗口内的 `printf` / `fprintf` / `pu
 
 夹具：`fixtures/good/dump_printf_loop.c`、`ifdef_dump_printf.c`、`dump_file_fprintf.c`。
 
-### 2.3 语料残留（启发式 dogfood）
+### 2.3 语料残留（lint 命中计数）
 
 路径跳过 + 抑制后的计数。**不是**「printf 多少毫秒」。
 

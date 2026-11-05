@@ -395,7 +395,7 @@ public class J13_Presize {
 
 ### 5.3 枚举键：EnumMap / EnumSet
 
-`EnumMap` 内部是按 `ordinal()` 索引的数组，`EnumSet`（≤64 个常量）内部是一个 `long` 位向量。**【本机实测】** 3 个枚举常量时，`EnumMap` 自身 + 值数组共 72 字节（紧凑对象头 64 字节），没有 `HashMap.Node`。
+`EnumMap` 内部是按 `ordinal()` 索引的数组，`EnumSet`（≤64 个常量）内部是一个 `long` 位向量。【本机实测】 3 个枚举常量时，`EnumMap` 自身 + 值数组共 72 字节（紧凑对象头 64 字节），没有 `HashMap.Node`。
 
 **不要用的时候**：需要 `null` 键（`EnumMap`/`EnumSet` 不允许）；键类型不止一种枚举。
 
@@ -456,7 +456,7 @@ public class J18_Records {
 
 ### 6.1 Compact Strings 与字符串去重
 
-- JDK 9 起 `String` 内部是 `byte[]` + `coder`（JEP 254）：纯 Latin-1 内容每字符 1 字节，否则 UTF-16 每字符 2 字节。**【本机实测】** 20 个 ASCII 字符的 `String`（含 `byte[]`）64 字节，20 个汉字 80 字节。`-XX:-CompactStrings` 可关闭（本机默认开启），几乎没有理由关。
+- JDK 9 起 `String` 内部是 `byte[]` + `coder`（JEP 254）：纯 Latin-1 内容每字符 1 字节，否则 UTF-16 每字符 2 字节。【本机实测】 20 个 ASCII 字符的 `String`（含 `byte[]`）64 字节，20 个汉字 80 字节。`-XX:-CompactStrings` 可关闭（本机默认开启），几乎没有理由关。
 - `-XX:+UseStringDeduplication`：GC 在后台把**内容相同的 `String` 的底层数组**合并（`String` 对象本身仍各自存在）。最初只有 G1（JEP 192），JDK 18 起 Serial、Parallel、ZGC 也加入了支持（JDK-8272609 / 8267185 / 8267186）。本机默认关闭。适合"大量重复字符串长期存活"的服务（例如反序列化出来的大量相同字段值）。
 - `String.intern()`：返回字符串常量池里的规范实例，之后可以用 `==` 比较、只保留一份对象。只适合**取值少、重复多、长期存活**的场景；对高基数的值调用 `intern()` 会把常量池（本质是一个 native 哈希表）撑大。很多时候用自己的 `HashMap<String,String>` 去重更可控。
 

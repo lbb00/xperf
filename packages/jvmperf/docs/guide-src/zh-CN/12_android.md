@@ -2,7 +2,7 @@
 
 ### 12.1 ART 与 HotSpot 的差别
 
-- 没有 C2，也没有 HotSpot 的逃逸分析/标量替换能力；ART 是"解释器 + JIT + 基于 profile 的 AOT（dex2oat）"混合模式。**在 Android 上"让 JIT 帮你消除分配"的假设不成立**，热路径（`onDraw`、滚动回调、动画帧）里的分配要真正避免。
+- 没有 C2，也没有 HotSpot 的逃逸分析/标量替换能力；ART 是"解释器 + JIT + 基于 profile 的 AOT（dex2oat）"混合模式。在 Android 上“让 JIT 帮你消除分配”的假设不成立，热路径（`onDraw`、滚动回调、动画帧）里的分配要真正避免。
 - 引用本来就是 32 位；对象头 8 字节（`mirror::Object` 只有 class 指针 + monitor 两个 32 位字段），没有压缩指针或紧凑对象头开关。
 - GC：Android 14 起（通过 ART mainline 模块更新）默认是并发标记整理（CMC，基于 userfaultfd）；Android 16 QPR2 起引入分代 CMC，优先回收新分配的对象。
 

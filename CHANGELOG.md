@@ -8,6 +8,8 @@ Versions apply to the whole repository and are git tags (see [docs/release.md](d
 Kits are not released separately and carry no version of their own.
 
 ## [Unreleased]
+- **Docs guides (en + zh):** plain-docs pass on performance guides — drop How-to-read / Scope-and-method coaching lists where the lead already says measure-first; replace heuristic-dogfood scope wording with lint-hit vs wall-time framing; prefer `Lint: id (default …)` lines; soften coaching bold; sync zh-CN guide-src (and zperf hand `zh-CN/zig-performance-guide.md`) to the English structure and voice.
+
 - **Docs zh-CN:** site Markdown Chinese coverage for shared docs, kit guides (`guide-src/zh-CN` + build-guides stem pairing), package landings, corpus/evidence-policy/rule-ids, active evidence notes, and root pages published as `*.zh.md` via `zh-CN/` parents. Tombstone evidence under `evidence/_removed/` intentionally left English-only.
 
 - **Docs SEO / GEO (en + zh):** description, Open Graph (`og:locale` + `alternateLocale`), Twitter Card, canonical and hreflang; static export forces blocking metadata into HTML (`htmlLimitedBots`); `sitemap.xml` pairs en/zh with language alternates; `robots.txt` allows common AI crawlers; `llms.txt` + `llms.zh.txt`; locale-aware JSON-LD (`WebSite` / `WebPage` / `SoftwareApplication`); post-build sets `<html lang="zh-CN">` under `/zh/` for crawlers; 1200×630 `og.png`. README opens with an English-only value-prop hook.

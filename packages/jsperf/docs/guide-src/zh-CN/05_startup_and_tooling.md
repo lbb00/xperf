@@ -7,7 +7,7 @@
 | 关注点 | 章节 | 靠什么发现 |
 |--------|------|------------|
 | 运行时 shape / 分配 / holey / `delete` | §1、§2、§4 | jp-* 规则 + `examples/bench` |
-| 模块解析、急切 `require`、barrel、CLI 开销 | **§5** | `node --cpu-prof` / speedscope、require 图检查 —— **不是** jp-* 规则 |
+| 模块解析、急切 `require`、barrel、CLI 开销 | §5 | `node --cpu-prof` / speedscope、require 图检查 —— **不是** jp-* 规则 |
 
 ### 5.1 先做 profile（工具链）
 
@@ -59,10 +59,10 @@ Marvin 反复使用的方法（[part 1](https://marvinh.dev/blog/speeding-up-jav
 | | 运行时章节（§1–§2、§4） | 本章（§5） |
 |--|------------------------|-----------|
 | 典型收益 | 热循环 IC / GC / elements kind | 冷启动、`npm run`、lint/测试图 |
-| Lint | jp-* 规则（行窗启发式） | **今天没有** —— 仅文档配套 |
+| Lint | jp-* 规则（行窗规则） | **今天没有** —— 仅文档配套 |
 | 证据 | `examples/bench/*`、`--trace-deopt` | `--cpu-prof` + speedscope；require 图大小 |
 
-**不要**把干净的 jsperf-lint 自检解读成「启动没问题」。**不要**在没有本地 profile 的情况下把 Marvin 发表的加速当可迁移结论。
+不要把干净的 jsperf-lint 自检解读成「启动没问题」。不要在没有本地 profile 的情况下把 Marvin 发表的加速当可迁移结论。
 
 ### 5.6 可选素描：急切 vs 惰性 require
 

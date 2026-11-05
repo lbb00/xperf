@@ -2,19 +2,14 @@
 
 稳定的 shape、更少的每轮分配——另有一章讲工具链 / 冷启动。
 
-> **焦点：现代 Node 与 V8 IC / GC。** QuickJS 与小程序类嵌入有专章（§3）——避免只在有 DOM 或完整浏览器 profiler 时才说得通的建议。**§4 深化 V8**（map、elements kind、deopt、Ignition→Maglev/Turbofan）；**不**适用于 §3 运行时。**§5** 覆盖**启动与工具链**（模块解析、急切图、barrel），依据 Marvin Hagemeister 的生态系列——与 jp-* lint 规则正交。
+> **焦点：现代 Node 与 V8（inline cache / GC）。** QuickJS 与小程序类嵌入有专章（§3）——跳过需要 DOM 或完整浏览器 profiler 的建议。§4 只讲 V8（map、elements kind、deopt、Ignition → Maglev/Turbofan），不适用于 §3 运行时。§5 讲启动与工具链（模块解析、急切图、barrel），依据 Marvin Hagemeister 的生态系列；这类成本不在 jp-* 规则里。
 >
-> 凡声称加速的论断，要么有本地示例、要么有上游来源，要么标为暂定。**语料 lint 计数是启发式 dogfood**，不是基准。§4.6 只引用单机微基准中位数。§5 引用 Marvin 的**方法**（URL）；他的计时请在本地重测。
+> 加速数字会标明本地 bench、上游来源，或标为暂定。语料库残留计数是 lint 命中次数，不是墙钟耗时节省。§4.6 只引用单机微基准中位数。§5 引用 Marvin 的方法（URL）；他的计时请在本地重测。
 >
-> 配套：`jsperf-lint/` —— jp-* 规则，见 [Lint 对照表](#lint-对照表)（行窗；非完整解析器）。已在 Node `lib/`、Preact `src/`、quickjs `*.js`（跳过测试）以及 TypeScript `packages/typescript/src` 上 dogfood（2026-10-21 Asia/Shanghai）。见 [corpus.md](corpus.md)。启动 / FS 成本对 jp-* 规则是**带外**的——见 §5。
+> 配套：`jsperf-lint/` —— jp-* 规则，见 [Lint 对照表](#lint-对照表)（行窗；非完整解析器）。已在 Node `lib/`、Preact `src/`、quickjs `*.js`（跳过测试）以及 TypeScript `packages/typescript/src` 上跑过（2026-10-21 Asia/Shanghai）。见 [corpus.md](corpus.md)。启动与 FS 成本对 jp-* 规则是带外的——见 §5。
 
-## 怎么读
 
-1. 先做 profile（`node --prof`、`node --cpu-prof` + speedscope、Chrome Performance、clinic）。Lint 发现是评审提示。
-2. 优先一致的对象 shape 与批量分配，而不是抠单次属性访问。
-3. 嵌入 / 小程序运行时：跳过仅 DOM 的提示；同样盯分配 + `delete`（§3）。**不要**在那里套用 Turbofan/Maglev 建议。
-4. 在 Node/Chrome 上，用 §4 看 elements kind、IC 多态与 deopt 检查——然后测量。
-5. 对 CLI、lint/测试跑手与包冷启动，用 §5（解析、惰性 `require`、barrel）——不要只靠 jp-* 规则。
+先做 profile（`node --prof`、`node --cpu-prof` + speedscope、Chrome Performance、clinic）。优先一致的对象 shape 与批量分配，而不是抠单次属性访问。嵌入 / 小程序跳过 DOM 提示，也不要套用 Turbofan/Maglev。在 Node/Chrome 上用 §4 看 elements kind、IC 多态与 deopt。对 CLI、lint/测试跑手与包冷启动用 §5。
 
 ## 目录
 
@@ -24,6 +19,7 @@
 - [3. 嵌入与小程序](#3-嵌入与小程序)
 - [4. V8 优化（Node / Chrome）](#4-v8-优化node--chrome)
 - [5. 启动与工具链（冷路径）](#5-启动与工具链冷路径)
+- [6. 构造、JSON、DOM 查询与日期格式](#6-构造jsondom-查询与日期格式)
 - [Lint 对照表](#lint-对照表)
 - [参考](#参考)
 
@@ -31,13 +27,13 @@
 
 ## 0. 范围与方法
 
-1. **先管 shape** —— 按同一顺序初始化字段；避免多态热路径（§1、§4.1）。
-2. **分配压力** —— `.push({…})`、`new`、非空对象绑定；默认作用域在循环外也会报（§1）。
-3. **`delete`** —— 热对象上优先墓碑或并行结构（§2）；避免 `delete arr[i]` 打洞（§4.2、jp-delete-array-hole）。
-4. **嵌入** —— 同样的分配/shape 规则，不假设 `window` / DOM 或 V8 分层（§3）。
-5. **V8 Node/Chrome** —— elements kind、IC 状态、deopt、流水线素描（§4）。
-6. **启动 / 工具链** —— 用 `--cpu-prof` profile；削减 FS/解析；惰性加载稀有路径；留意 barrel（§5）。
-7. **测量** —— 重写前用 `--prof` / `--cpu-prof` / `--trace-deopt` / Performance 面板 / `examples/bench`。
+1. 先管 shape —— 按同一顺序初始化字段；避免多态热路径（§1、§4.1）。
+2. 分配压力 —— `.push({…})`、`new`、非空对象绑定；默认作用域在循环外也会报（§1）。
+3. `delete` —— 热对象上优先墓碑或并行结构（§2）；避免 `delete arr[i]` 打洞（§4.2、jp-delete-array-hole）。
+4. 嵌入 —— 同样的分配/shape 规则，不假设 `window` / DOM 或 V8 分层（§3）。
+5. V8 Node/Chrome —— elements kind、IC 状态、deopt、流水线素描（§4）。
+6. 启动 / 工具链 —— 用 `--cpu-prof` profile；削减 FS/解析；惰性加载稀有路径；留意 barrel（§5）。
+7. 测量 —— 重写前用 `--prof` / `--cpu-prof` / `--trace-deopt` / Performance 面板 / `examples/bench`。
 
 来源：[XPerf playbook](../../../../docs/zh-CN/playbook.md) · [corpus.md](corpus.md) · [Marvin 系列](https://marvinh.dev/blog/speeding-up-javascript-ecosystem/)
 
@@ -66,9 +62,9 @@
 
 当 profile 显示有 GC 时间时，优先 typed array（`examples/p01_typed_array.js`）、对象池或预分配结构——不要默认改掉每一个 `.push`。
 
-**证据（本机）：** [`evidence/jp-alloc-hot`](../../evidence/zh-CN/jp-alloc-hot.md) —— 循环内 `new Uint8Array` 对比一次 **~19×**；`.push({i})` 对比预分配填充 **~6.4×**（Node v20.19.2）。机制是分配/GC（STATIC-VS-V8 对 deopt 为 PARTIAL）。默认严重级别 **off**（`--preset all` 或 `--severity jp-alloc-hot=hint` 开启）——见 [evidence-policy](evidence-policy.md)。默认 **`--scope all`** 在循环外也报；`--scope loop` 恢复仅循环内匹配。
+**证据（本机）：** [`evidence/jp-alloc-hot`](../../evidence/zh-CN/jp-alloc-hot.md) —— 循环内 `new Uint8Array` 对比一次 **~19×**；`.push({i})` 对比预分配填充 **~6.4×**（Node v20.19.2）。机制是分配/GC（STATIC-VS-V8 对 deopt 为 PARTIAL）。默认严重级别 off（`--preset all` 或 `--severity jp-alloc-hot=hint` 开启）——见 [evidence-policy](evidence-policy.md)。默认 **`--scope all`** 在循环外也报；`--scope loop` 恢复仅循环内匹配。
 
-### 1.3 语料 dogfood（启发式）
+### 1.3 语料命中（lint 计数）
 
 下表来自 lint 行窗的较早修订（r1–r3），展示启发式如何收窄；当前语料结果见 [corpus.md](corpus.md)。
 
@@ -117,7 +113,7 @@
 
 3 行 filter-then-map 低于 2×。3 行四趟高于 2×，但 20000 次仍在一毫秒内。35000 行才是单趟明显更快的地方。hint 点名长度。短列表重写可选。
 
-Lint：**jp-map-filter-chain** —— 默认 **hint**。匹配前剥掉 `//` 与块注释。codegen `gen-*.js` 路径跳过。证据：[`jp-map-filter-chain`](../../evidence/zh-CN/jp-map-filter-chain.md)。
+Lint：**jp-map-filter-chain** —— 默认 hint。匹配前剥掉 `//` 与块注释。codegen `gen-*.js` 路径跳过。证据：[`jp-map-filter-chain`](../../evidence/zh-CN/jp-map-filter-chain.md)。
 
 ---
 ## 2. `delete` 与 shape
@@ -130,7 +126,7 @@ Lint：**jp-map-filter-chain** —— 默认 **hint**。匹配前剥掉 `//` 与
 - 「是否存在」很常见时，用并行 `Set` / bitset / 稠密旁表。
 - 在冷路径重建新对象，而不是在热循环里 delete。
 
-Lint：**jp-delete-shape** —— 成员表达式上的 `delete`（文件级启发式；默认不限循环）。实测门禁：[`evidence/jp-delete-shape`](../../evidence/zh-CN/jp-delete-shape.md)（相对墓碑约 **474×**，Node v20.19.2）；JSONL 同意，但语料 triage 发现命中几乎全是 OK 惯用法（见 [evidence-policy](evidence-policy.md)），故默认 **off**（`--preset all` 或 `--severity jp-delete-shape=error` 开启）。
+Lint：**jp-delete-shape** —— 成员表达式上的 `delete`（文件级启发式；默认不限循环）。实测门禁：[`evidence/jp-delete-shape`](../../evidence/zh-CN/jp-delete-shape.md)（相对墓碑约 **474×**，Node v20.19.2）；JSONL 同意，但语料 triage 发现命中几乎全是 OK 惯用法（见 [evidence-policy](evidence-policy.md)），故默认 off（`--preset all` 或 `--severity jp-delete-shape=error` 开启）。
 
 ### 2.2 有意的 `delete`（bootstrap / 功能剥离）
 
@@ -138,7 +134,7 @@ Node 的 `lib/internal/bootstrap/**` 用 `delete` 做模块缓存与功能剥离
 
 **jsperf-lint：** 对 jp-delete-shape 与 jp-delete-array-hole 跳过 `internal/bootstrap/` 下文件、匹配 `*bootstrap*` 的文件名，以及 inspect/debugger/test-runner 路径。
 
-**证据（dogfood）：** Node `lib/` jp-delete-shape 在 bootstrap 跳过后 **27 → 21**（r1→r2）；r3 保持 **21**，同时 jp-alloc-hot 在动。剩余 delete 需逐案评审（CLI 拆卸、稀有 map）。
+证据（语料命中）： Node `lib/` jp-delete-shape 在 bootstrap 跳过后 **27 → 21**（r1→r2）；r3 保持 **21**，同时 jp-alloc-hot 在动。剩余 delete 需逐案评审（CLI 拆卸、稀有 map）。
 
 ### 2.3 可选的未来
 
@@ -153,7 +149,7 @@ QuickJS、Hermes 类嵌入与小程序 JS 运行时仍要为这些付钱：
 
 - 每轮对象分配（jp-alloc-hot 模式）。
 - 经 `delete` 或分叉属性顺序导致的 shape 变化。
-- 紧循环里的日志（**jp-console-hot** —— `console.log` / `console.debug`）。证据：[`jp-console-hot`](../../evidence/zh-CN/jp-console-hot.md)（即便丢弃 stdout 仍约 **1300×** 对比安静）——默认 **off**（`app`）/ **hint**（`engine`），不是 CI error。
+- 紧循环里的日志（**jp-console-hot** —— `console.log` / `console.debug`）。证据：[`jp-console-hot`](../../evidence/zh-CN/jp-console-hot.md)（即便丢弃 stdout 仍约 **1300×** 对比安静）——默认 off（`app`）/ hint（`engine`），不是 CI error。
 
 它们往往**没有**浏览器 Performance 面板、DOM 或大 IC 预算。以「打开 DevTools → …」开头的建议迁不过来。优先：
 
@@ -161,11 +157,11 @@ QuickJS、Hermes 类嵌入与小程序 JS 运行时仍要为这些付钱：
 - 宿主暴露批处理 API 时批量工作（`examples/p02_batch_note.js`），而不是每帧 microtask。
 - 用**宿主** profiler 测量（Node `--prof`、QuickJS 计时钩子、厂商小程序 perf 面板）——不是仅 Chrome 工作流。
 
-**不要**把 §4（Maglev/Turbofan、elements-kind 迁移、`--trace-deopt`）套到这些运行时。稳定 shape 与更少分配仍然有用；V8 分层话术没有。
+不要把 §4（Maglev/Turbofan、elements-kind 迁移、`--trace-deopt`）套到这些运行时。稳定 shape 与更少分配仍然有用；V8 分层话术没有。
 
 ### 3.2 共享的 quickjs 树
 
-cperf dogfood **C** 引擎；jsperf dogfood 旁边的 `*.js`（跳过测试与 `gen-*`）。当前规则在那里报 **0**（[corpus.md](corpus.md)）；较早修订报过 2 个 jp-alloc-hot。压力低，但作为邻接嵌入的样本有用。不要指望生成脚本有 Preact 级干净。
+cperf 在 **C** 引擎上跑；jsperf 在 旁边的 `*.js`（跳过测试与 `gen-*`）。当前规则在那里报 **0**（[corpus.md](corpus.md)）；较早修订报过 2 个 jp-alloc-hot。压力低，但作为邻接嵌入的样本有用。不要指望生成脚本有 Preact 级干净。
 
 ### 3.3 这里不该推荐什么
 
@@ -179,7 +175,7 @@ Typed array 与一致 shape 仍然可移植（`examples/p01_typed_array.js`、`m
 ---
 ## 4. V8 优化（Node / Chrome）
 
-本章针对 **V8** 深化 §1。**不**适用于 QuickJS、Hermes 类嵌入或小程序运行时——见 §3。那些引擎共享「稳定 shape / 更少分配」的物理；它们**得不到** Ignition → Maglev/Turbofan 建议、elements-kind 迁移或 `--trace-deopt` 工作流。
+本章针对 **V8** 深化 §1。不适用于 QuickJS、Hermes 类嵌入或小程序运行时——见 §3。那些引擎共享「稳定 shape / 更少分配」的物理；它们**得不到** Ignition → Maglev/Turbofan 建议、elements-kind 迁移或 `--trace-deopt` 工作流。
 
 按 **Node 22+ / 现代 V8 连续体** 标注日期（测于 Node v22.22.3，V8 12.4.x）。流水线层级名与标志会漂；把下面的版本钉当作「我们跑过什么」，不是永远保证。
 
@@ -258,7 +254,7 @@ USE_NATIVES=1 node --allow-natives-syntax --trace-deopt examples/bench/deopt_pro
 2. **Maglev** —— 中层优化编译器（当前 Node 22+ / 近版 V8 有；确切启用可取决于标志与负载）。
 3. **Turbofan** —— 热代码的顶层优化编译器。
 
-代码升温时可能爬层级，deopt 时回落。**不要**过度声称「Node N 上总是 Maglev」或钉死确切层级阈值——它们会动。对没有这条流水线的嵌入（§3），完全跳过层级话术。
+代码升温时可能爬层级，deopt 时回落。不要过度声称「Node N 上总是 Maglev」或钉死确切层级阈值——它们会动。对没有这条流水线的嵌入（§3），完全跳过层级话术。
 
 ### 4.5 jsperf-lint 能看见与不能看见什么
 
@@ -307,7 +303,7 @@ Lint = 分配/shape 味道。JIT 验证 = `jit-check.sh` / `--trace-deopt` / `ex
 
 **不要假装 jp-* 规则等于 JIT 意识。** 对 shape / holey / 热 `delete` 同意最强；用 deopt 行数当神谕，或推销 typed array 总是快于 packed double 时最弱。
 
-**JSONL 门禁（本机 Node v20.19.2，重跑 `scripts/regen-evidence.sh`）：** jp-delete-array-hole 约 **3.2×** → **error**；jp-delete-shape 约 **474×**（语料命中几乎全是 OK 惯用法）→ **off**；jp-alloc-hot 约 **19×**（分配/GC）→ **off**；jp-console-hot 约 **1328×**（丢弃 sink，依赖环境）→ **off**（`app`）/ **hint**（`engine`）。见 [`evidence-policy`](evidence-policy.md) 与 `evidence/jp-*.md`。
+**JSONL 门禁（本机 Node v20.19.2，重跑 `scripts/regen-evidence.sh`）：** jp-delete-array-hole 约 **3.2×** → error；jp-delete-shape 约 **474×**（语料命中几乎全是 OK 惯用法）→ off；jp-alloc-hot 约 **19×**（分配/GC）→ off；jp-console-hot 约 **1328×**（丢弃 sink，依赖环境）→ off（`app`）/ hint（`engine`）。见 [`evidence-policy`](evidence-policy.md) 与 `evidence/jp-*.md`。
 
 ---
 ## 5. 启动与工具链（冷路径）
@@ -319,7 +315,7 @@ Lint = 分配/shape 味道。JIT 验证 = `jit-check.sh` / `--trace-deopt` / `ex
 | 关注点 | 章节 | 靠什么发现 |
 |--------|------|------------|
 | 运行时 shape / 分配 / holey / `delete` | §1、§2、§4 | jp-* 规则 + `examples/bench` |
-| 模块解析、急切 `require`、barrel、CLI 开销 | **§5** | `node --cpu-prof` / speedscope、require 图检查 —— **不是** jp-* 规则 |
+| 模块解析、急切 `require`、barrel、CLI 开销 | §5 | `node --cpu-prof` / speedscope、require 图检查 —— **不是** jp-* 规则 |
 
 ### 5.1 先做 profile（工具链）
 
@@ -371,10 +367,10 @@ Marvin 反复使用的方法（[part 1](https://marvinh.dev/blog/speeding-up-jav
 | | 运行时章节（§1–§2、§4） | 本章（§5） |
 |--|------------------------|-----------|
 | 典型收益 | 热循环 IC / GC / elements kind | 冷启动、`npm run`、lint/测试图 |
-| Lint | jp-* 规则（行窗启发式） | **今天没有** —— 仅文档配套 |
+| Lint | jp-* 规则（行窗规则） | **今天没有** —— 仅文档配套 |
 | 证据 | `examples/bench/*`、`--trace-deopt` | `--cpu-prof` + speedscope；require 图大小 |
 
-**不要**把干净的 jsperf-lint 自检解读成「启动没问题」。**不要**在没有本地 profile 的情况下把 Marvin 发表的加速当可迁移结论。
+不要把干净的 jsperf-lint 自检解读成「启动没问题」。不要在没有本地 profile 的情况下把 Marvin 发表的加速当可迁移结论。
 
 ### 5.6 可选素描：急切 vs 惰性 require
 
@@ -395,26 +391,26 @@ Marvin 反复使用的方法（[part 1](https://marvinh.dev/blog/speeding-up-jav
 
 `Date.now` 约 26×，`performance.now` 约 19×，相对只采样一次，在不 wait 的紧循环里。含 `await` 的循环，或 `for await` 循环，时钟规则不报。不需要每次新鲜时间时采样一次。必须每轮读时钟的限流器没有可搬的东西。
 
-**jp-regex-ctor-hot** 与 **jp-json-hot** 在 app 与 engine preset 上保持 **hint**。两者有 JSONL，2026-10-22 裁决未覆盖。**jp-dom-query-hot**（Node 26、很小 linkedom 约 16×）与 **jp-intl-datetimeformat-hot**（Node 26 约 36×，两边仍 format）有 JSONL 且保持 **hint**。它们在该裁决之外。`--preset all` 对仍存在的每条规则是 error。
+**jp-regex-ctor-hot** 与 **jp-json-hot** 在 app 与 engine preset 上保持 hint。两者有 JSONL，2026-10-22 裁决未覆盖。**jp-dom-query-hot**（Node 26、很小 linkedom 约 16×）与 **jp-intl-datetimeformat-hot**（Node 26 约 36×，两边仍 format）有 JSONL 且保持 hint。它们在该裁决之外。`--preset all` 对仍存在的每条规则是 error。
 
 `Reflect.get` 约 8×，未给规则。
 
-配套 lint：**jp-regex-ctor-hot**、**jp-json-hot**、**jp-dom-query-hot**、**jp-intl-datetimeformat-hot**、**jp-readfile-sync-hot**、**jp-clock-hot**。
+Lint: `jp-regex-ctor-hot`, `jp-json-hot`, `jp-dom-query-hot`, `jp-intl-datetimeformat-hot`, `jp-readfile-sync-hot`, `jp-clock-hot`（默认 hint）
 ### Lint 对照表
 
 | ID | 主题 | 严重级别 | 证据 / 备注 |
 |----|------|----------|-------------|
-| jp-alloc-hot | 对象/数组/`new` 分配 | **off**（`all`：error） | [`jp-alloc-hot`](../../evidence/zh-CN/jp-alloc-hot.md) ~19× / ~6.4× —— GC/分配，非 deopt |
-| jp-console-hot | `console.*` | **hint**（`engine`）/ **off**（`app`） | [`jp-console-hot`](../../evidence/zh-CN/jp-console-hot.md) ~1328× 丢弃 sink —— 依赖环境 |
-| jp-delete-shape | 普通成员上的 `delete` | **off**（`all`：error） | [`jp-delete-shape`](../../evidence/zh-CN/jp-delete-shape.md) 相对墓碑 ~474×；语料命中几乎全是 OK 惯用法 |
-| jp-delete-array-hole | 计算索引上的 `delete`（holey 数组） | **error** | [`jp-delete-array-hole`](../../evidence/zh-CN/jp-delete-array-hole.md) 相对 packed ~3.2× |
-| jp-map-filter-chain | 链式 `.map` / `.filter` / `.flatMap` | **hint** | 长数组约 4.6×–9.8×；3 行 filter+map 为 1.28× |
-| jp-regex-ctor-hot | `new RegExp`，模式非循环绑定 | **hint** | Node 26 固定模式约 4.4×；优先字面量或一次共享编译 |
-| jp-json-hot | `JSON.parse` / `stringify`，文本非循环绑定 | **hint** | Node 26 不变文本约 140×；稳定时复用 |
-| jp-dom-query-hot | DOM 查询，选择器非循环绑定 | **hint** | Node 26、很小 linkedom 上 JSONL 约 16×；未做语料 triage |
-| jp-intl-datetimeformat-hot | `new Intl.DateTimeFormat` | **hint** | Node 26 约 36×；两边仍 format；未做语料 triage |
-| jp-readfile-sync-hot | `readFileSync`，路径非循环绑定 | **hint** | Node 26，不变路径约 114× |
-| jp-clock-hot | `Date.now` / `performance.now` | **hint** | Node 26 无 `await` 时约 70× / 110×；不需要新鲜时间时采样一次 |
+| jp-alloc-hot | 对象/数组/`new` 分配 | off（`all`：error） | [`jp-alloc-hot`](../../evidence/zh-CN/jp-alloc-hot.md) ~19× / ~6.4× —— GC/分配，非 deopt |
+| jp-console-hot | `console.*` | hint（`engine`）/ off（`app`） | [`jp-console-hot`](../../evidence/zh-CN/jp-console-hot.md) ~1328× 丢弃 sink —— 依赖环境 |
+| jp-delete-shape | 普通成员上的 `delete` | off（`all`：error） | [`jp-delete-shape`](../../evidence/zh-CN/jp-delete-shape.md) 相对墓碑 ~474×；语料命中几乎全是 OK 惯用法 |
+| jp-delete-array-hole | 计算索引上的 `delete`（holey 数组） | error | [`jp-delete-array-hole`](../../evidence/zh-CN/jp-delete-array-hole.md) 相对 packed ~3.2× |
+| jp-map-filter-chain | 链式 `.map` / `.filter` / `.flatMap` | hint | 长数组约 4.6×–9.8×；3 行 filter+map 为 1.28× |
+| jp-regex-ctor-hot | `new RegExp`，模式非循环绑定 | hint | Node 26 固定模式约 4.4×；优先字面量或一次共享编译 |
+| jp-json-hot | `JSON.parse` / `stringify`，文本非循环绑定 | hint | Node 26 不变文本约 140×；稳定时复用 |
+| jp-dom-query-hot | DOM 查询，选择器非循环绑定 | hint | Node 26、很小 linkedom 上 JSONL 约 16×；未做语料 triage |
+| jp-intl-datetimeformat-hot | `new Intl.DateTimeFormat` | hint | Node 26 约 36×；两边仍 format；未做语料 triage |
+| jp-readfile-sync-hot | `readFileSync`，路径非循环绑定 | hint | Node 26，不变路径约 114× |
+| jp-clock-hot | `Date.now` / `performance.now` | hint | Node 26 无 `await` 时约 70× / 110×；不需要新鲜时间时采样一次 |
 | *（无）* | 模块解析 / 急切图 / barrel | — | §5 —— 用 `--cpu-prof` |
 
 上表严重级别为默认 `app` preset。匹配作用域默认为 **`--scope all`**（到处）；`--scope loop` 恢复仅循环内匹配。策略：[`evidence-policy.md`](evidence-policy.md)。夹具：`jsperf-lint/fixtures/{bad,good}/`。

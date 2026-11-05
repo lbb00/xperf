@@ -1,6 +1,6 @@
 ## 15. jvmperf-lint：自动找出反模式
 
-`jvmperf-lint/` 是本指南配套的静态检查器：Java + tree-sitter（JVM 绑定 `io.github.bonede:tree-sitter`，以及 `tree-sitter-java` / `tree-sitter-kotlin`），同时支持 `.java`、`.kt`、`.kts`。它只看语法树，**不做类型解析**，所以快、零配置、不需要编译项目，但会有误报/漏报（每条规则都写明了误报风险）。完整说明见 [`jvmperf-lint/README.md`](../../jvmperf-lint/README.md)。
+`jvmperf-lint/` 是本指南配套的静态检查器：Java + tree-sitter（JVM 绑定 `io.github.bonede:tree-sitter`，以及 `tree-sitter-java` / `tree-sitter-kotlin`），同时支持 `.java`、`.kt`、`.kts`。它只看语法树，不做类型解析，所以快、零配置、不需要编译项目，但会有误报/漏报（每条规则都写明了误报风险）。完整说明见 [`jvmperf-lint/README.md`](../../jvmperf-lint/README.md)。
 
 ```sh
 cd jvmperf-lint

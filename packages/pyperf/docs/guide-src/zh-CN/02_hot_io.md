@@ -2,4 +2,4 @@
 
 紧密循环里的 `print` 会刷新并格式化。门控调试输出或做缓冲。
 
-配套 lint：**pp-print-hot**。
+Lint: `pp-print-hot`（默认 off，G3 后）

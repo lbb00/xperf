@@ -12,8 +12,8 @@
 
 `Date.now` 约 26×，`performance.now` 约 19×，相对只采样一次，在不 wait 的紧循环里。含 `await` 的循环，或 `for await` 循环，时钟规则不报。不需要每次新鲜时间时采样一次。必须每轮读时钟的限流器没有可搬的东西。
 
-**jp-regex-ctor-hot** 与 **jp-json-hot** 在 app 与 engine preset 上保持 **hint**。两者有 JSONL，2026-10-22 裁决未覆盖。**jp-dom-query-hot**（Node 26、很小 linkedom 约 16×）与 **jp-intl-datetimeformat-hot**（Node 26 约 36×，两边仍 format）有 JSONL 且保持 **hint**。它们在该裁决之外。`--preset all` 对仍存在的每条规则是 error。
+**jp-regex-ctor-hot** 与 **jp-json-hot** 在 app 与 engine preset 上保持 hint。两者有 JSONL，2026-10-22 裁决未覆盖。**jp-dom-query-hot**（Node 26、很小 linkedom 约 16×）与 **jp-intl-datetimeformat-hot**（Node 26 约 36×，两边仍 format）有 JSONL 且保持 hint。它们在该裁决之外。`--preset all` 对仍存在的每条规则是 error。
 
 `Reflect.get` 约 8×，未给规则。
 
-配套 lint：**jp-regex-ctor-hot**、**jp-json-hot**、**jp-dom-query-hot**、**jp-intl-datetimeformat-hot**、**jp-readfile-sync-hot**、**jp-clock-hot**。
+Lint: `jp-regex-ctor-hot`, `jp-json-hot`, `jp-dom-query-hot`, `jp-intl-datetimeformat-hot`, `jp-readfile-sync-hot`, `jp-clock-hot`（默认 hint）
