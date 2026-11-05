@@ -1,20 +1,14 @@
 # JavaScript performance guide (v0)
 
-Stable shapes, fewer per-iteration allocations — plus a separate chapter on tooling / cold-start.
+Stable shapes, fewer per-iteration allocations — plus a separate chapter on tooling and cold-start.
 
-> **Focus: modern Node and V8 ICs / GC.** QuickJS and 小程序-like embeds get a dedicated chapter (§3) — avoid advice that only makes sense with a DOM or a full browser profiler. **§4 deepens V8** (maps, elements kinds, deopts, Ignition→Maglev/Turbofan); it does **not** apply to §3 runtimes. **§5** covers **startup and tooling** (module resolution, eager graphs, barrels) after Marvin Hagemeister’s ecosystem series — orthogonal to the jp-* lint rules.
+> **Focus: modern Node and V8 (inline caches / GC).** QuickJS and 小程序-like embeds get their own chapter (§3) — skip advice that needs a DOM or a full browser profiler. §4 is V8-only (maps, elements kinds, deopts, Ignition → Maglev/Turbofan) and does not apply to §3 runtimes. §5 covers startup and tooling (module resolution, eager graphs, barrels) after Marvin Hagemeister’s ecosystem series; that cost sits outside the jp-* lint rules.
 >
-> Claims that assert speedups name a local example, an upstream source, or are marked provisional. **Corpus lint counts are heuristic dogfood**, not benchmarks. §4.6 cites single-machine microbench medians only. §5 cites Marvin’s **methods** (URLs); re-measure his timings locally.
+> Speedup claims cite a local bench, an upstream source, or are marked provisional. Corpus residual counts are lint hit counts, not wall-time savings. §4.6 cites single-machine microbench medians only. §5 cites Marvin’s methods (URLs); re-measure his timings locally.
 >
-> Companion: `jsperf-lint/` — the jp-* rules, see the [Lint map](#lint-map) (line windows; not a full parser). Dogfooded on Node `lib/`, Preact `src/`, quickjs `*.js` (tests skipped), and TypeScript `packages/typescript/src` (2026-10-21 Asia/Shanghai). See [corpus.md](corpus.md). Startup/FS cost is **out of band** for the jp-* rules — see §5.
+> Companion: `jsperf-lint/` — the jp-* rules, see the [Lint map](#lint-map) (line windows; not a full parser). Run against Node `lib/`, Preact `src/`, quickjs `*.js` (tests skipped), and TypeScript `packages/typescript/src` (2026-10-21 Asia/Shanghai). See [corpus.md](corpus.md). Startup and FS cost are out of band for the jp-* rules — see §5.
 
-## How to read this
-
-1. Profile first (`node --prof`, `node --cpu-prof` + speedscope, Chrome Performance, clinic). Lint findings are review prompts.
-2. Prefer consistent object shapes and batch allocation over micro-optimizing single property access.
-3. Embed / 小程序 runtimes: skip DOM-only tips; watch alloc + `delete` the same way (§3). Do **not** apply Turbofan/Maglev advice there.
-4. On Node/Chrome, use §4 for elements kinds, IC polymorphism, and deopt checks — then measure.
-5. For CLIs, lint/test runners, and package cold-start, use §5 (resolution, lazy `require`, barrels) — not the jp-* rules alone.
+Profile first (`node --prof`, `node --cpu-prof` + speedscope, Chrome Performance, clinic). Prefer consistent object shapes and batch allocation over micro-optimizing a single property access. On embeds / 小程序, skip DOM tips and do not apply Turbofan/Maglev advice. On Node/Chrome, use §4 for elements kinds, IC polymorphism, and deopt checks. For CLIs, lint/test runners, and package cold-start, use §5.
 
 ## Contents
 
@@ -24,6 +18,7 @@ Stable shapes, fewer per-iteration allocations — plus a separate chapter on to
 - [3. Embed and 小程序](#3-embed-and-小程序)
 - [4. V8 optimizations (Node / Chrome)](#4-v8-optimizations-node--chrome)
 - [5. Startup and tooling (cold paths)](#5-startup-and-tooling-cold-paths)
+- [6. Constructors, JSON, DOM queries, and date formats](#6-constructors-json-dom-queries-and-date-formats)
 - [Lint map](#lint-map)
 - [References](#references)
 
@@ -31,18 +26,15 @@ Stable shapes, fewer per-iteration allocations — plus a separate chapter on to
 
 ## 0. Scope and method
 
-1. **Shapes first** — initialize fields in one order; avoid polymorphic hot paths (§1, §4.1).
-2. **Alloc pressure** — `.push({…})`, `new`, non-empty object binders; default scope reports these outside loops too (§1).
-3. **`delete`** — prefer tombstones or parallel structures on hot objects (§2); avoid `delete arr[i]` holes (§4.2, jp-delete-array-hole).
-4. **Embed** — same alloc/shape rules without assuming `window` / DOM or V8 tiers (§3).
-5. **V8 Node/Chrome** — elements kinds, IC state, deopts, pipeline sketch (§4).
-6. **Startup / tooling** — profile with `--cpu-prof`; cut FS/resolution; lazy-load rare paths; watch barrels (§5).
-7. **Measure** — `--prof` / `--cpu-prof` / `--trace-deopt` / Performance panel / `examples/bench` before rewriting.
+1. Shapes first — initialize fields in one order; avoid polymorphic hot paths (§1, §4.1).
+2. Alloc pressure — `.push({…})`, `new`, non-empty object binders; default scope reports these outside loops too (§1).
+3. `delete` — prefer tombstones or parallel structures on hot objects (§2); avoid `delete arr[i]` holes (§4.2, `jp-delete-array-hole`).
+4. Embed — same alloc/shape rules without assuming `window` / DOM or V8 tiers (§3).
+5. V8 on Node/Chrome — elements kinds, IC state, deopts, pipeline sketch (§4).
+6. Startup / tooling — profile with `--cpu-prof`; cut FS/resolution; lazy-load rare paths; watch barrels (§5).
+7. Measure — `--prof` / `--cpu-prof` / `--trace-deopt` / Performance panel / `examples/bench` before rewriting.
 
 Sources: [XPerf playbook](../../../docs/playbook.md) · [corpus.md](corpus.md) · [Marvin series](https://marvinh.dev/blog/speeding-up-javascript-ecosystem/)
-
----
-
 ## 1. Allocation and shapes
 
 ### 1.1 Hidden classes (shapes)
@@ -69,7 +61,7 @@ Prefer typed arrays (`examples/p01_typed_array.js`), object pools, or preallocat
 
 **Evidence (this machine):** [`evidence/jp-alloc-hot`](../evidence/jp-alloc-hot.md) — `new Uint8Array` in-loop vs once **~19×**; `.push({i})` vs prealloc fill **~6.4×** (Node v20.19.2). Mechanism is alloc/GC (STATIC-VS-V8 PARTIAL for deopt). Default severity is **off** (`--preset all` or `--severity jp-alloc-hot=hint` enables it) — see [evidence-policy](evidence-policy.md). Default **`--scope all`** reports these patterns outside loops too; `--scope loop` keeps the former in-loop-only match.
 
-### 1.3 Corpus dogfood (heuristic)
+### 1.3 Corpus hit counts
 
 Counts below come from earlier line-window revisions of the linter (r1–r3) and show how the heuristics were narrowed; current corpus results are in [corpus.md](corpus.md).
 
@@ -118,7 +110,7 @@ On this machine (same Node as §1.5), both sides build the result array:
 
 The 3-row filter-then-map case is under 2×. Four passes on 3 rows is above 2×, and 20000 calls still finish in under a millisecond. The 35000-row cases are where one pass is clearly faster. The hint names that length. Rewriting a short list is optional.
 
-Lint: **jp-map-filter-chain** — default **hint**. `//` comments and block comments are stripped before the match. Codegen `gen-*.js` files are path-skipped. Evidence: [`jp-map-filter-chain`](../evidence/jp-map-filter-chain.md).
+Lint: `jp-map-filter-chain` — default hint. `//` comments and block comments are stripped before the match. Codegen `gen-*.js` files are path-skipped. Evidence: [`jp-map-filter-chain`](../evidence/jp-map-filter-chain.md).
 
 ---
 
@@ -132,7 +124,7 @@ Lint: **jp-map-filter-chain** — default **hint**. `//` comments and block comm
 - A parallel `Set` / bitset / dense side table for “present?” when absence is common.
 - Rebuild a new object in a cold path instead of deleting in a hot loop.
 
-Lint: **jp-delete-shape** — `delete` on a member expression (file-level heuristic; not loop-only by default). Measured gate: [`evidence/jp-delete-shape`](../evidence/jp-delete-shape.md) (~**474×** vs tombstone on Node v20.19.2); the JSONL agrees, but corpus triage found the hits were almost all OK-idiom (see [evidence-policy](evidence-policy.md)), so the default is **off** (`--preset all` or `--severity jp-delete-shape=error` enables it).
+Lint: `jp-delete-shape` (`delete` on a member expression; file-level heuristic, not loop-only by default). Measured gate: [`evidence/jp-delete-shape`](../evidence/jp-delete-shape.md) (~474× vs tombstone on Node v20.19.2); the JSONL agrees, but corpus triage found the hits were almost all OK-idiom (see [evidence-policy](evidence-policy.md)), so the default is off (`--preset all` or `--severity jp-delete-shape=error` enables it).
 
 ### 2.2 Intentional `delete` (bootstrap / feature stripping)
 
@@ -140,7 +132,7 @@ Node’s `lib/internal/bootstrap/**` uses `delete` for module cache and feature 
 
 **jsperf-lint:** skips files under `internal/bootstrap/`, filenames matching `*bootstrap*`, and inspect/debugger/test-runner paths for jp-delete-shape and jp-delete-array-hole.
 
-**Evidence (dogfood):** Node `lib/` jp-delete-shape **27 → 21** after bootstrap skip (r1→r2); held at **21** in r3 while jp-alloc-hot moved. Remaining deletes need case-by-case review (CLI teardown, rare maps).
+Corpus hits: Node `lib/` jp-delete-shape **27 → 21** after bootstrap skip (r1→r2); held at **21** in r3 while jp-alloc-hot moved. Remaining deletes need case-by-case review (CLI teardown, rare maps).
 
 ### 2.3 Optional future
 
@@ -156,19 +148,19 @@ QuickJS, Hermes-like embeds, and 小程序 JS runtimes still pay for:
 
 - Per-iteration object allocation (jp-alloc-hot patterns).
 - Shape changes via `delete` or divergent property order.
-- Logging in tight loops (**jp-console-hot** — `console.log` / `console.debug`). Evidence: [`jp-console-hot`](../evidence/jp-console-hot.md) (~**1300×** vs quiet even with discarded stdout) — default **off** (`app`) / **hint** (`engine`), not a CI error.
+- Logging in tight loops (`jp-console-hot` — `console.log` / `console.debug`). Evidence: [`jp-console-hot`](../evidence/jp-console-hot.md) (~1300× vs quiet even with discarded stdout) — default off (`app`) / hint (`engine`), not a CI error.
 
 They often **lack** a browser Performance panel, DOM, or large IC budgets. Advice that starts with “open DevTools → …” does not transfer. Prefer:
 
 - Alloc/shape discipline from §1–§2.
 - Batching work (`examples/p02_batch_note.js`) instead of per-item microtasks when the host exposes a batch API.
-- Measuring with the **host** profiler (Node `--prof`, QuickJS timing hooks, vendor 小程序 perf panels) — not Chrome-only workflows.
+- Measuring with the host profiler (Node `--prof`, QuickJS timing hooks, vendor 小程序 perf panels) — not Chrome-only workflows.
 
-**Do not** apply §4 (Maglev/Turbofan, elements-kind transitions, `--trace-deopt`) to these runtimes. Stable shapes and fewer allocs still help; V8 tier talk does not.
+Do not apply §4 (Maglev/Turbofan, elements-kind transitions, `--trace-deopt`) to these runtimes. Stable shapes and fewer allocations still help; V8 tier talk does not.
 
 ### 3.2 Shared quickjs tree
 
-cperf dogfoods the **C** engine; jsperf dogfoods the `*.js` beside it (tests and `gen-*` skipped). The current rules report **0** findings there ([corpus.md](corpus.md)); earlier revisions reported 2 jp-alloc-hot. Low pressure, but useful as an embed-adjacent sample. Do not expect Preact-level cleanliness on generator scripts.
+cperf covers the C engine; jsperf covers the `*.js` beside it (tests and `gen-*` skipped). The current rules report 0 findings there ([corpus.md](corpus.md)); earlier revisions reported 2 jp-alloc-hot. Low pressure, but useful as an embed-adjacent sample. Do not expect Preact-level cleanliness on generator scripts.
 
 ### 3.3 What not to recommend here
 
@@ -183,13 +175,13 @@ Typed arrays and consistent shapes remain portable (`examples/p01_typed_array.js
 
 ## 4. V8 optimizations (Node / Chrome)
 
-This chapter deepens §1 for **V8** specifically. It does **not** apply to QuickJS, Hermes-like embeds, or 小程序 runtimes — see §3. Those engines share “stable shapes / fewer allocs” physics; they do **not** get Ignition → Maglev/Turbofan advice, elements-kind transitions, or `--trace-deopt` workflows.
+This chapter is V8-only. It does not apply to QuickJS, Hermes-like embeds, or 小程序 runtimes — see §3. Those engines still benefit from stable shapes and fewer allocations; they do not get Ignition → Maglev/Turbofan advice, elements-kind transitions, or `--trace-deopt` workflows.
 
-Dated as a **Node 22+ / modern V8 continuum** (measured on Node v22.22.3, V8 12.4.x). Pipeline tier names and flags drift; treat version pins below as “what we ran,” not forever guarantees.
+Measured on Node v22.22.3 (V8 12.4.x). Pipeline tier names and flags drift; treat the pins below as what we ran, not forever guarantees.
 
 ### 4.1 Hidden classes / maps and ICs (extends §1.1)
 
-V8 attaches a **map** (hidden class) to each object. Property addition order and type feedback build a transition tree. Property loads/stores go through **inline caches (ICs)**:
+V8 attaches a map (hidden class) to each object. Property addition order and type feedback build a transition tree. Property loads and stores go through inline caches (ICs):
 
 | IC state | Meaning (practical) |
 |----------|---------------------|
@@ -203,7 +195,7 @@ Microbench: `examples/bench/shape_mono_vs_poly.js` (same-order vs divergent cons
 
 ### 4.2 Elements kinds
 
-Arrays are not one representation. V8 tracks **elements kinds**, roughly:
+Arrays are not one representation. V8 tracks elements kinds, roughly:
 
 | Kind (concept) | Typical contents |
 |----------------|------------------|
@@ -219,13 +211,13 @@ Arrays are not one representation. V8 tracks **elements kinds**, roughly:
 - For numeric hot loops, prefer **typed arrays** (`Float64Array`, `Uint32Array`, …): fixed element type, no holey transition, contiguous storage. Ordinary `number[]` can stay packed, but mixed Smi/double transitions and boxing still cost.
 - Reading past `length` or relying on holes as “optional slots” is a shape smell; use a parallel length, a typed bitmask, or `undefined` tombstones on a **packed** array if you must.
 
-Lint: **jp-delete-array-hole** flags `delete arr[i]`-style member deletes (holey risk); measured gate [`evidence/jp-delete-array-hole`](../evidence/jp-delete-array-hole.md) (~**3.2×**). jp-delete-shape covers `delete obj.key` on ordinary members; it historically missed computed index deletes — jp-delete-array-hole closes that gap.
+Lint: `jp-delete-array-hole` flags `delete arr[i]`-style member deletes (holey risk); measured gate [`evidence/jp-delete-array-hole`](../evidence/jp-delete-array-hole.md) (~3.2×). jp-delete-shape covers `delete obj.key` on ordinary members; it historically missed computed index deletes — jp-delete-array-hole closes that gap.
 
 Microbenches: `examples/bench/elements_packed_vs_holey.js`, `examples/bench/typed_array_vs_number_array.js`.
 
 ### 4.3 Deopts — when they matter; how to check
 
-A **deopt** throws optimized code back to a slower tier because assumptions broke (unexpected map, elements kind, bounds, etc.). Occasional deopts at startup or on rare paths are normal. Deopts **matter** when they sit on a profiled hot function and repeat every iteration.
+A deopt throws optimized code back to a slower tier because assumptions broke (unexpected map, elements kind, bounds, etc.). Occasional deopts at startup or on rare paths are normal. Deopts matter when they sit on a profiled hot function and repeat every iteration.
 
 **Static jsperf-lint cannot detect JIT outcomes.** IC state, deopt, and optimization tier are runtime facts. The jp-* rules only flag allocation/shape *smells*. JIT verification = profile / `--trace-deopt` / bench — never “the linter said so.”
 
@@ -244,7 +236,7 @@ On this machine (Node v22.22.3), `deopt_probe` warmed `hotLoad` monomorphic then
 
 `[bailout … reason: wrong map … JSFunction hotLoad … Code TURBOFAN]`
 
-One-shot `-e` scripts often also print “Insufficient type feedback …” — treat that as **startup noise**, not proof your smell is hot.
+One-shot `-e` scripts often also print “Insufficient type feedback …” — treat that as startup noise, not proof the smell is hot.
 
 **Check (Chrome):** Performance panel → V8 markers where available; correlate with wall-clock before/after. No fake speedup percentages.
 
@@ -252,11 +244,11 @@ One-shot `-e` scripts often also print “Insufficient type feedback …” — 
 
 High level, modern V8/Node:
 
-1. **Ignition** — bytecode interpreter; gathers type feedback.
-2. **Maglev** — mid-tier optimizing compiler (present on current Node 22+ / recent V8 builds; exact enablement can depend on flags and workload).
-3. **Turbofan** — top-tier optimizing compiler for hot code.
+1. Ignition — bytecode interpreter; gathers type feedback.
+2. Maglev — mid-tier optimizing compiler (present on current Node 22+ / recent V8 builds; exact enablement can depend on flags and workload).
+3. Turbofan — top-tier optimizing compiler for hot code.
 
-Code may climb tiers as it heats up and fall back on deopt. **Do not** overclaim “always Maglev on Node N” or pin exact tier thresholds — they move. For embeds without this pipeline (§3), skip tier talk entirely.
+Code may climb tiers as it heats up and fall back on deopt. Do not claim “always Maglev on Node N” or pin exact tier thresholds — they move. For embeds without this pipeline (§3), skip tier talk entirely.
 
 ### 4.5 What jsperf-lint can and cannot see
 
@@ -271,11 +263,11 @@ Code may climb tiers as it heats up and fall back on deopt. **Do not** overclaim
 | jp-string-plus-in-loop | removed | `push` + `join` was not about 2× on the matched `+=` shapes |
 | jp-map-filter-chain | chained `.map` / `.filter` / `.flatMap` on one line | Array length; a 3-row chain and a 35000-row chain are different costs |
 
-Lint = allocation/shape smells. JIT verification = `jit-check.sh` / `--trace-deopt` / `examples/bench`. Polymorphic ICs leave **no** jp-* fingerprint.
+Lint = allocation/shape smells. JIT verification = `jit-check.sh` / `--trace-deopt` / `examples/bench`. Polymorphic ICs leave no jp-* signal.
 
 ### 4.6 Measured on this machine (Node v22.22.3)
 
-Ran 2026-10-21 18:49 Asia/Shanghai via `scripts/run-v8-benches.sh` → `examples/bench/out/`. Node **v22.22.3**, V8 **12.4.254.21-node.56**, linux x64. Warm-up 3 + 9 rounds; medians below. **Single-machine numbers only** — not a cross-machine claim.
+Ran 2026-10-21 18:49 Asia/Shanghai via `scripts/run-v8-benches.sh` → `examples/bench/out/`. Node v22.22.3, V8 12.4.254.21-node.56, linux x64. Warm-up 3 + 9 rounds; medians below. Single-machine numbers only — not a cross-machine claim.
 
 | Bench | Variant | N | Median ms | Ops/s (approx.) |
 |-------|---------|---|-----------|-----------------|
@@ -293,7 +285,7 @@ Full JSONL: `examples/bench/out/results.jsonl` (written by the script).
 
 ### 4.7 Correlation: static smell vs V8 time (PARTIAL)
 
-Experiment: `examples/bench/static_vs_v8_correlate.js` · `scripts/run-static-vs-v8.sh` (Node **v22.22.3**).
+Experiment: `examples/bench/static_vs_v8_correlate.js` · `scripts/run-static-vs-v8.sh` (Node v22.22.3).
 
 | Case | Static smell? | Ratio (smell/clean) | Agree? |
 |------|---------------|---------------------|--------|
@@ -311,9 +303,9 @@ Experiment: `examples/bench/static_vs_v8_correlate.js` · `scripts/run-static-vs
 
 ## 5. Startup and tooling (cold paths)
 
-This chapter is about **tooling / cold-start / module-graph** cost — not the hot-loop shape and allocation smells in §1–§2 / §4.
+This chapter is about tooling, cold-start, and module-graph cost — not the hot-loop shape and allocation smells in §1–§2 / §4.
 
-Primary source: Marvin Hagemeister’s series **[Speeding up the JavaScript ecosystem](https://marvinh.dev/blog/speeding-up-javascript-ecosystem/)** (parts 1–13). Methods below are paraphrased; **do not treat his wall-clock numbers as ours** — re-measure on your machine.
+Primary source: Marvin Hagemeister’s series [Speeding up the JavaScript ecosystem](https://marvinh.dev/blog/speeding-up-javascript-ecosystem/) (parts 1–13). Methods below are paraphrased; do not treat his wall-clock numbers as ours — re-measure on your machine.
 
 | Concern | Chapters | What finds it |
 |---------|----------|---------------|
@@ -326,9 +318,9 @@ Before rewriting a library or CLI:
 
 1. Capture a CPU profile: `node --cpu-prof your-tool.js …` (or `node --cpu-prof $(which npm) run …` for npm scripts — see [part 4](https://marvinh.dev/blog/speeding-up-javascript-ecosystem-part-4/)).
 2. Open the `.cpuprofile` in [speedscope](https://www.speedscope.app/) (or Chrome DevTools).
-3. Ask: is time in **your** hot function, or in **loading / resolving** modules, casting, regex, FS?
+3. Ask: is time in your hot function, or in loading / resolving modules, casting, regex, FS?
 
-Marvin’s recurring method ([part 1](https://marvinh.dev/blog/speeding-up-javascript-ecosystem/)): find a top frame → open source → remove avoidable work → re-profile. Same loop as XPerf’s “measure before rewrite,” aimed at **build/lint/CLI** rather than app render loops.
+Marvin’s recurring method ([part 1](https://marvinh.dev/blog/speeding-up-javascript-ecosystem/)): find a top frame → open source → remove avoidable work → re-profile. Same loop as XPerf’s “measure before rewrite,” aimed at build/lint/CLI rather than app render loops.
 
 ### 5.2 Hot casts, short-string regex, inner functions (part 1 methods)
 
@@ -339,18 +331,18 @@ Paraphrased patterns from [part 1](https://marvinh.dev/blog/speeding-up-javascri
 - **Functions created inside hot outer functions** — closures recreated every call hurt ICs; lift helpers or pass args explicitly instead of capturing.
 - **Transpiler artifacts** — e.g. `for…of` rewritten into a fresh `_loop` function per iteration; inspect **published** output, not only source.
 
-These can overlap §4 (ICs) when the path is hot at runtime. In tooling they often dominate **startup or per-file** cost instead.
+These can overlap §4 (ICs) when the path is hot at runtime. In tooling they often dominate startup or per-file cost instead.
 
 ### 5.3 Module resolution (part 2 methods)
 
 From [part 2](https://marvinh.dev/blog/speeding-up-javascript-ecosystem-part-2/): resolution can outweigh parsing in lint/test/build traces.
 
-Adopt as checklist (paraphrase of his four takeaways):
+His four takeaways, paraphrased:
 
-1. **Avoid FS** — every `stat`/`exists` is expensive at scale.
-2. **Cache** resolved paths (watch mode: invalidate carefully).
-3. **`fs.statSync(path, { throwIfNoEntry: false })`** — avoid throwing + capturing stack traces for “file missing” (ENOENT path).
-4. **Limit upward `node_modules` walks** — especially when path aliases are mistaken for bare package imports.
+1. Avoid FS — every `stat`/`exists` is expensive at scale.
+2. Cache resolved paths (watch mode: invalidate carefully).
+3. `fs.statSync(path, { throwIfNoEntry: false })` — avoid throwing + capturing stack traces for “file missing” (ENOENT path).
+4. Limit upward `node_modules` walks — especially when path aliases are mistaken for bare package imports.
 
 Also watch **extension guessing** (`.js` → `.jsx` → … → `.ts`) and alias plugins that do not share the same resolver as TypeScript/`tsconfig` paths.
 
@@ -370,7 +362,7 @@ From [part 4](https://marvinh.dev/blog/speeding-up-javascript-ecosystem-part-4/)
 | | Runtime chapters (§1–§2, §4) | This chapter (§5) |
 |--|----------------------------|-------------------|
 | Typical win | Hot loop IC / GC / elements kind | Cold start, `npm run`, lint/test graph |
-| Lint | the jp-* rules (line-window heuristics) | **None today** — document-only companions |
+| Lint | the jp-* rules (line windows) | none today — document-only companions |
 | Evidence | `examples/bench/*`, `--trace-deopt` | `--cpu-prof` + speedscope; require-graph size |
 
 Do **not** interpret a clean jsperf-lint self-lint as “startup is fine.” Do **not** treat Marvin’s published speedups as transferable without a local profile.
@@ -383,7 +375,7 @@ Do **not** interpret a clean jsperf-lint self-lint as “startup is fine.” Do 
 
 ## 6. Constructors, JSON, DOM queries, and date formats
 
-Each hint below is one measured shape. The hint line states that premise. A call that only looks similar is not given that rewrite. Default **`--scope all`** reports these smells everywhere — extreme stacks treat drip-by-drip cost as in-scope even off a loop. Opt in to **`--scope loop`** for the former in-loop-only match. Messages do not tell readers or models that non-loop sites can be ignored.
+Each hint below is one measured shape. The hint line states that premise. A call that only looks similar is not given that rewrite. Default `--scope all` reports these smells everywhere — extreme stacks treat drip-by-drip cost as in-scope even off a loop. Opt in to `--scope loop` for the former in-loop-only match. Messages do not tell readers or models that non-loop sites can be ignored.
 
 `new RegExp(pattern)` compiles on every call when the pattern stays the same. A regex literal is cached. If the pattern is the loop variable, or `parts[i]`, the checker does not say to compile once. The bench compiled one fixed pattern, about 4.4× on Node 26.
 
@@ -395,12 +387,12 @@ Each hint below is one measured shape. The hint line states that premise. A call
 
 `Date.now` was about 26× and `performance.now` about 19× versus one sample, in a tight loop that did not wait. A loop that contains `await`, or a `for await` loop, is not reported for the clock rule. Sample once when a fresh time is not required each call. A rate limiter that must read the clock each pass has nothing to move.
 
-**jp-regex-ctor-hot** and **jp-json-hot** stay **hint** on the app and engine presets. JSONL exists for those two, and the 2026-10-22 verdict does not cover them. **jp-dom-query-hot** (about 16× on Node 26, a tiny linkedom document) and **jp-intl-datetimeformat-hot** (about 36× on Node 26, both sides still format) have JSONL and stay **hint**. They are outside that verdict. `--preset all` is error for every rule that still exists.
+`jp-regex-ctor-hot` and `jp-json-hot` stay hint on the app and engine presets. JSONL exists for those two, and the 2026-10-22 verdict does not cover them. `jp-dom-query-hot` (about 16× on Node 26, a tiny linkedom document) and `jp-intl-datetimeformat-hot` (about 36× on Node 26, both sides still format) have JSONL and stay hint. They are outside that verdict. `--preset all` is error for every rule that still exists.
 
 `Reflect.get` was about 8× and was not given a rule.
 
-Companion lint: **jp-regex-ctor-hot**, **jp-json-hot**, **jp-dom-query-hot**, **jp-intl-datetimeformat-hot**, **jp-readfile-sync-hot**, **jp-clock-hot**.
-### Lint map
+Lint: `jp-regex-ctor-hot`, `jp-json-hot`, `jp-dom-query-hot`, `jp-intl-datetimeformat-hot`, `jp-readfile-sync-hot`, `jp-clock-hot` (default hint).
+## Lint map
 
 | ID | Topic | Severity | Evidence / note |
 |----|--------|----------|-----------------|
@@ -417,9 +409,9 @@ Companion lint: **jp-regex-ctor-hot**, **jp-json-hot**, **jp-dom-query-hot**, **
 | jp-clock-hot | `Date.now` / `performance.now` | **hint** | Node 26 about 70× / 110× with no `await`; sample once when fresh time is not required |
 | *(none)* | module resolution / eager graph / barrels | — | §5 — use `--cpu-prof` |
 
-Severities above are the default `app` preset. Matching scope defaults to **`--scope all`** (everywhere); `--scope loop` restores in-loop-only matching. Policy: [`evidence-policy.md`](evidence-policy.md). Fixtures: `jsperf-lint/fixtures/{bad,good}/`.
+Severities above are the default `app` preset. Matching scope defaults to `--scope all` (everywhere); `--scope loop` restores in-loop-only matching. Policy: [`evidence-policy.md`](evidence-policy.md). Fixtures: `jsperf-lint/fixtures/{bad,good}/`.
 
-### References
+## References
 
 - [corpus.md](corpus.md)
 - `examples/bench/` · `scripts/run-v8-benches.sh` · `scripts/jit-check.sh` · `scripts/run-static-vs-v8.sh` · `scripts/regen-evidence.sh` · `examples/bench/require_cost_sketch.js`

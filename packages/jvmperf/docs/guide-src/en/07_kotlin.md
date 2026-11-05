@@ -329,7 +329,7 @@ fun main() {
 
 ### 7.9 Coroutines
 
-Each `suspend` function compiles to a state machine and needs a continuation object when it actually suspends. Each `launch` or `async` also creates an object. Split CPU-heavy work into chunks; **do not launch one coroutine per element**.
+Each `suspend` function compiles to a state machine and needs a continuation object when it actually suspends. Each `launch` or `async` also creates an object. Split CPU-heavy work into chunks; do not launch one coroutine per element.
 
 `examples/kotlin/K10_Coroutines.kt`
 

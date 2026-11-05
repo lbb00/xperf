@@ -3,7 +3,7 @@
 Less memory, more throughput.
 
 > **Target: Zig 0.17.0.** Examples under `examples/` are checked with Zig 0.17.0 on x86_64 Linux (`zig test` Debug and `-O fast`, or `zig build-exe`). Reproduce with `cd examples && zig build test`.
-> Numbers come from release notes, original PRs, or are labeled as local measurements. Nothing is invented.
+> Speedup claims cite a local bench, an upstream source, or are marked provisional. Corpus residual counts are lint hit counts, not wall-time savings. Numbers come from release notes, original PRs, or are labeled as local measurements. Nothing is invented.
 >
 > Companion: `zperf-lint/` — static checks for performance and memory anti-patterns (Chapter 9).
 
@@ -59,12 +59,12 @@ Sources: [0.14.0 release notes](https://ziglang.org/download/0.14.0/release-note
 
 TigerBeetle's TigerStyle order:
 
-1. **Estimate at design time.** Bandwidth and latency for network, disk, memory, and CPU. The largest reported gains (up to 1000×) come from design changes, before profiling is possible.
-2. **Fix the slowest resource first** (network > disk > memory > CPU), weighted by frequency. A cache miss repeated often enough can cost as much as an `fsync`.
-3. **Batch.** Amortize network, disk, memory, and CPU across batches; give the CPU large, predictable units of work.
-4. **Make hot work explicit.** e.g. a hot loop as a standalone function with raw parameters instead of `self` (see §5.6).
+1. Estimate at design time. Bandwidth and latency for network, disk, memory, and CPU. The largest reported gains (up to 1000×) come from design changes, before profiling is possible.
+2. Fix the slowest resource first (network > disk > memory > CPU), weighted by frequency. A cache miss repeated often enough can cost as much as an `fsync`.
+3. Batch. Amortize network, disk, memory, and CPU across batches; give the CPU large, predictable units of work.
+4. Make hot work explicit. e.g. a hot loop as a standalone function with raw parameters instead of `self` (see §5.6).
 
-Andrew Kelley's *Practical Data-Oriented Design*: **less memory can mean faster code** — fewer allocations and better cache use. This guide starts with memory, then computation.
+Andrew Kelley's *Practical Data-Oriented Design*: less memory can mean faster code — fewer allocations and better cache use. This guide starts with memory, then computation.
 
 Sources: [TigerStyle](https://github.com/tigerbeetle/tigerbeetle/blob/main/docs/TIGER_STYLE.md) · [Practical Data-Oriented Design (Handmade Seattle 2021)](https://handmade-seattle.com/media-sub/practical-data-oriented-design) · [Zig PR #7920](https://github.com/ziglang/zig/pull/7920)
 
@@ -356,7 +356,7 @@ test "buffer pool tryAlloc / release" {
 
 ### 2.5 Static allocation (TigerStyle)
 
-TigerBeetle's rule: **allocate everything at startup; after init, do not allocate or free.** That removes allocation latency jitter and use-after-free from the steady state. Fix limits for queues, loops, and connection counts.
+TigerBeetle's rule: allocate everything at startup; after init, do not allocate or free. That removes allocation latency jitter and use-after-free from the steady state. Fix limits for queues, loops, and connection counts.
 
 > Example: `examples/m11_static.zig` (checked with Zig 0.17.0 using `zig test`).
 
@@ -484,7 +484,7 @@ test "phase allocator: alloc only in init" {
 
 #### Size the object / message pool from concurrency
 
-Static allocation only works if the pool is **large enough to always make progress**. TigerBeetle's `MessagePool` sizes from worst-case concurrent holders: journal read/write IOPS, pipeline depth, connection send queues, grid repair reads, plus a small burst (+1) so a parse or ping cannot deadlock the replica. For any fixed-size frame pool:
+Static allocation only works if the pool is large enough to always make progress. TigerBeetle's `MessagePool` sizes from worst-case concurrent holders: journal read/write IOPS, pipeline depth, connection send queues, grid repair reads, plus a small burst (+1) so a parse or ping cannot deadlock the replica. For any fixed-size frame pool:
 
 1. List every concurrent holder (connections × in-flight, disk IOPS, pipelines, loops).
 2. Add one for “holding a message while allocating the next”.
@@ -1179,9 +1179,9 @@ test "delta + varint" {
 
 ### 2.16 Fragmentation, huge pages, and other notes
 
-- **Fragmentation:** Mixing many small objects with different sizes and lifetimes in one general-purpose heap can fragment memory. Group allocations by lifetime (arena), by size (`MemoryPool` / size-class pools), or use static allocation.
-- **Huge pages:** TLB misses can limit large, randomly accessed data such as hash tables and arrays. On Linux, `madvise(MADV_HUGEPAGE)` can request transparent huge pages for an `mmap` region. Measure the result with `perf stat -e dTLB-load-misses`.
-- **ArrayList growth:** Since 0.14, the Allocator has `remap`, and `page_allocator` supports `mremap`. Large ArrayList growth may therefore remap pages instead of copying them.
+- Fragmentation: Mixing many small objects with different sizes and lifetimes in one general-purpose heap can fragment memory. Group allocations by lifetime (arena), by size (`MemoryPool` / size-class pools), or use static allocation.
+- Huge pages: TLB misses can limit large, randomly accessed data such as hash tables and arrays. On Linux, `madvise(MADV_HUGEPAGE)` can request transparent huge pages for an `mmap` region. Measure the result with `perf stat -e dTLB-load-misses`.
+- ArrayList growth: Since 0.14, the Allocator has `remap`, and `page_allocator` supports `mremap`. Large ArrayList growth may therefore remap pages instead of copying them.
 - **`Deque` + `remap`:** `std.Deque` grows with `Allocator.remap` when the ring can stay in place; only then splits head/tail for a moving grow (`lib/std/deque.zig`). Prefer remap-friendly allocators behind large rings.
 
 ### 2.17 Relocatable slabs and idle physical reclaim (advanced)
@@ -1536,8 +1536,8 @@ Notes:
 
 ### 5.1 `comptime`: move work to compile time
 
-- **Lookup tables:** Build them in a `comptime` block so they live in read-only data and require no runtime initialization. For large loops, raise the compile-time branch quota with `@setEvalBranchQuota`.
-- **Generic specialization:** A `comptime N: usize` parameter generates specialized code for each N. `inline for` unrolls the loop at compile time.
+- Lookup tables: Build them in a `comptime` block so they live in read-only data and require no runtime initialization. For large loops, raise the compile-time branch quota with `@setEvalBranchQuota`.
+- Generic specialization: A `comptime N: usize` parameter generates specialized code for each N. `inline for` unrolls the loop at compile time.
 - Assert relationships between constants at compile time with `comptime std.debug.assert(...)`, as TigerStyle recommends.
 
 > Example: `examples/p01_comptime_lut.zig` (checked with Zig 0.17.0 using `zig test`).
@@ -1813,7 +1813,7 @@ Sources: [0.14 `@branchHint`](https://ziglang.org/download/0.14.0/release-notes.
 - **Use multiple accumulators or unroll loops** when measurements show a dependency chain is limiting throughput. `inline for` can create a fixed number of independent accumulators. Unrolling increases code size and instruction-cache pressure.
 - **`inline fn` is a language guarantee, not a hint.** The language reference calls it “semantic inlining”; compile-time-known arguments are compile-time-known inside the function. It can increase binary size and compile time, and can even hurt runtime performance. Usually let the compiler decide; use it when compile-time propagation or a specific stack-frame shape is required.
 - Pass large structs as `*const T` when they exceed 16 bytes and copying is not intended (TigerStyle). “Push ifs up, fors down”: move branches outside loops and move loops into batch-processing functions.
-- **Initialize large structs in place:** `fn init(self: *Big) void { self.* = .{...}; }` avoids constructing a temporary on the stack and copying it (TigerStyle).
+- Initialize large structs in place: `fn init(self: *Big) void { self.* = .{...}; }` avoids constructing a temporary on the stack and copying it (TigerStyle).
 
 > Example: `examples/p09_hot_loop.zig` (checked with Zig 0.17.0 using `zig test`).
 
@@ -2196,7 +2196,7 @@ pub fn build(b: *std.Build) void {
 
 ### 7.3 PGO
 
-Zig does **not** support PGO for user programs as of this writing. [#15137](https://github.com/ziglang/zig/issues/15137) is “not planned”; research [#237](https://github.com/ziglang/zig/issues/237) on test-driven PGO is still open. Fallbacks: branch hints, hot/cold separation, data layout.
+Zig does not support PGO for user programs as of this writing. [#15137](https://github.com/ziglang/zig/issues/15137) is “not planned”; research [#237](https://github.com/ziglang/zig/issues/237) on test-driven PGO is still open. Fallbacks: branch hints, hot/cold separation, data layout.
 
 Sources: `zig build-exe --help` (0.17.0) · [0.17 rename of lang.OptimizeMode to lang.Optimize](https://ziglang.org/download/0.17.0/release-notes.html) · [0.16 Lazy Field Analysis and loop safety-check code generation](https://ziglang.org/download/0.16.0/release-notes.html) · `lib/std/Build/Step/Compile.zig`
 
@@ -2210,10 +2210,10 @@ Useful when building tools that look like compilers (parsers, LSs, bundlers). Fu
 | SoA + `extra` + `string_bytes` | `lib/std/zig/Zir.zig` | Dense IR; rare ops out of line (§2.8) |
 | Sharded intern + tid indices | `src/InternPool.zig` | Concurrent intern without a global lock (§2.10) |
 | Labeled-switch tokenizer | `lib/std/zig/tokenizer.zig` | Same as §5.4; keywords via `StaticStringMap` |
-| Optional tracy hooks | `src/tracy.zig` | Instrument self-host builds when chasing compile time (**U**) |
+| Optional tracy hooks | `src/tracy.zig` | Instrument self-host builds when chasing compile time (U) |
 | Content-addressed build cache | `lib/std/Build/Cache.zig` | SipHash manifests for incremental artifacts (§8.4 adjacent) |
 
-Do not cargo-cult compiler internals into small apps. Steal the **shape** (indices, SoA, shard, ensure heuristics) after measuring.
+Do not copy compiler internals into small apps. Steal the shape (indices, SoA, shard, growth heuristics) after measuring.
 
 ---
 
@@ -2221,9 +2221,9 @@ Do not cargo-cult compiler internals into small apps. Steal the **shape** (indic
 
 ### 8.1 Microbenchmarks
 
-Since 0.16, `std.time.Timer` is gone. Time through `Io`: `std.Io.Clock.Timestamp.now(io, .awake)` and `.untilNow(io)`. Use `std.mem.doNotOptimizeAway` so the compiler cannot delete the work. Run several trials; keep the **best** (or report a distribution) to cut interrupt and cold-cache noise.
+Since 0.16, `std.time.Timer` is gone. Time through `Io`: `std.Io.Clock.Timestamp.now(io, .awake)` and `.untilNow(io)`. Use `std.mem.doNotOptimizeAway` so the compiler cannot delete the work. Run several trials; keep the best (or report a distribution) to cut interrupt and cold-cache noise.
 
-Record Zig version, optimize mode, OS, and CPU model so another machine can compare runs. The example prints one **JSONL** line per result.
+Record Zig version, optimize mode, OS, and CPU model so another machine can compare runs. The example prints one JSONL line per result.
 
 > Example: `examples/p12_bench.zig` (checked with Zig 0.17.0 using `zig run -O fast`).
 
@@ -2439,7 +2439,7 @@ They overlap little: zperf-lint is performance-oriented; zbc and Zwanzig cover r
 | Read a large file | `File.createMemoryMap` + zero-copy slices |
 | Growable ring | `Deque` (uses `Allocator.remap` when possible) |
 
-**Compute faster**
+Compute faster
 
 | Goal | Use |
 |---|---|

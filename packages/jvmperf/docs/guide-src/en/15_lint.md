@@ -1,6 +1,6 @@
 ## 15. jvmperf-lint: find patterns automatically
 
-`jvmperf-lint/` is the guide's static checker. It is written in Java and uses tree-sitter via the JVM bindings (`io.github.bonede:tree-sitter` with `tree-sitter-java` and `tree-sitter-kotlin`) to inspect `.java`, `.kt`, and `.kts` files. It reads syntax only and **does not resolve types**. This keeps it fast and configuration-free, but it can report false positives or miss issues; each rule documents its risk. See [`jvmperf-lint/README.md`](../../jvmperf-lint/README.md) for installation and usage.
+`jvmperf-lint/` is the guide's static checker. It is written in Java and uses tree-sitter via the JVM bindings (`io.github.bonede:tree-sitter` with `tree-sitter-java` and `tree-sitter-kotlin`) to inspect `.java`, `.kt`, and `.kts` files. It reads syntax only and does not resolve types. This keeps it fast and configuration-free, but it can report false positives or miss issues; each rule documents its risk. See [`jvmperf-lint/README.md`](../../jvmperf-lint/README.md) for installation and usage.
 
 ```sh
 cd jvmperf-lint
@@ -22,8 +22,8 @@ Default severity is `error`, `hint`, or `off`, as printed by `bin/jvmperf-lint -
 | jp-unpresized-collection | `unpresized-collection` | off | Java/Kotlin | A collection or `StringBuilder` is filled in a loop without initial capacity | 5.2 |
 | jp-boxed-stream | `boxed-stream` | error | Java | `reduce(0, Integer::sum)` or `Collectors.summingInt` on `Stream<Integer>` | 3.1 |
 | jp-exception-control-flow | `exception-control-flow` | off | Java/Kotlin | A loop catches parse exceptions to make a decision | 9.5 |
-| jp-legacy-synchronized-type | — | **removed** | — | measured ~1.08×; see `evidence/_removed/` | — |
-| jp-many-boolean-fields | — | **removed** | — | COH no win; see `evidence/_removed/` | — |
+| jp-legacy-synchronized-type | — | removed | — | measured ~1.08×; see `evidence/_removed/` | — |
+| jp-many-boolean-fields | — | removed | — | COH no win; see `evidence/_removed/` | — |
 | jp-enum-key-hash-collection | `enum-key-hash-collection` | error | Java/Kotlin | `HashMap` keyed by an enum or `HashSet` of enum values | 5.3 |
 | jp-collection-chain | `collection-chain` | off | Kotlin | A chain of 3+ `map`/`filter` operations, or 2 operations plus short-circuiting such as `first`, `take`, or `any` | 7.4 |
 | jp-value-class-boxing | `value-class-boxing` | hint | Kotlin | A value class used as a nullable value, generic argument, or array element | 7.2 |

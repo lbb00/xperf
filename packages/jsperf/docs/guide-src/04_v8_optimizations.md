@@ -1,12 +1,12 @@
 ## 4. V8 optimizations (Node / Chrome)
 
-This chapter deepens §1 for **V8** specifically. It does **not** apply to QuickJS, Hermes-like embeds, or 小程序 runtimes — see §3. Those engines share “stable shapes / fewer allocs” physics; they do **not** get Ignition → Maglev/Turbofan advice, elements-kind transitions, or `--trace-deopt` workflows.
+This chapter is V8-only. It does not apply to QuickJS, Hermes-like embeds, or 小程序 runtimes — see §3. Those engines still benefit from stable shapes and fewer allocations; they do not get Ignition → Maglev/Turbofan advice, elements-kind transitions, or `--trace-deopt` workflows.
 
-Dated as a **Node 22+ / modern V8 continuum** (measured on Node v22.22.3, V8 12.4.x). Pipeline tier names and flags drift; treat version pins below as “what we ran,” not forever guarantees.
+Measured on Node v22.22.3 (V8 12.4.x). Pipeline tier names and flags drift; treat the pins below as what we ran, not forever guarantees.
 
 ### 4.1 Hidden classes / maps and ICs (extends §1.1)
 
-V8 attaches a **map** (hidden class) to each object. Property addition order and type feedback build a transition tree. Property loads/stores go through **inline caches (ICs)**:
+V8 attaches a map (hidden class) to each object. Property addition order and type feedback build a transition tree. Property loads and stores go through inline caches (ICs):
 
 | IC state | Meaning (practical) |
 |----------|---------------------|
@@ -20,7 +20,7 @@ Microbench: `examples/bench/shape_mono_vs_poly.js` (same-order vs divergent cons
 
 ### 4.2 Elements kinds
 
-Arrays are not one representation. V8 tracks **elements kinds**, roughly:
+Arrays are not one representation. V8 tracks elements kinds, roughly:
 
 | Kind (concept) | Typical contents |
 |----------------|------------------|
@@ -36,13 +36,13 @@ Arrays are not one representation. V8 tracks **elements kinds**, roughly:
 - For numeric hot loops, prefer **typed arrays** (`Float64Array`, `Uint32Array`, …): fixed element type, no holey transition, contiguous storage. Ordinary `number[]` can stay packed, but mixed Smi/double transitions and boxing still cost.
 - Reading past `length` or relying on holes as “optional slots” is a shape smell; use a parallel length, a typed bitmask, or `undefined` tombstones on a **packed** array if you must.
 
-Lint: **jp-delete-array-hole** flags `delete arr[i]`-style member deletes (holey risk); measured gate [`evidence/jp-delete-array-hole`](../evidence/jp-delete-array-hole.md) (~**3.2×**). jp-delete-shape covers `delete obj.key` on ordinary members; it historically missed computed index deletes — jp-delete-array-hole closes that gap.
+Lint: `jp-delete-array-hole` flags `delete arr[i]`-style member deletes (holey risk); measured gate [`evidence/jp-delete-array-hole`](../evidence/jp-delete-array-hole.md) (~3.2×). jp-delete-shape covers `delete obj.key` on ordinary members; it historically missed computed index deletes — jp-delete-array-hole closes that gap.
 
 Microbenches: `examples/bench/elements_packed_vs_holey.js`, `examples/bench/typed_array_vs_number_array.js`.
 
 ### 4.3 Deopts — when they matter; how to check
 
-A **deopt** throws optimized code back to a slower tier because assumptions broke (unexpected map, elements kind, bounds, etc.). Occasional deopts at startup or on rare paths are normal. Deopts **matter** when they sit on a profiled hot function and repeat every iteration.
+A deopt throws optimized code back to a slower tier because assumptions broke (unexpected map, elements kind, bounds, etc.). Occasional deopts at startup or on rare paths are normal. Deopts matter when they sit on a profiled hot function and repeat every iteration.
 
 **Static jsperf-lint cannot detect JIT outcomes.** IC state, deopt, and optimization tier are runtime facts. The jp-* rules only flag allocation/shape *smells*. JIT verification = profile / `--trace-deopt` / bench — never “the linter said so.”
 
@@ -61,7 +61,7 @@ On this machine (Node v22.22.3), `deopt_probe` warmed `hotLoad` monomorphic then
 
 `[bailout … reason: wrong map … JSFunction hotLoad … Code TURBOFAN]`
 
-One-shot `-e` scripts often also print “Insufficient type feedback …” — treat that as **startup noise**, not proof your smell is hot.
+One-shot `-e` scripts often also print “Insufficient type feedback …” — treat that as startup noise, not proof the smell is hot.
 
 **Check (Chrome):** Performance panel → V8 markers where available; correlate with wall-clock before/after. No fake speedup percentages.
 
@@ -69,11 +69,11 @@ One-shot `-e` scripts often also print “Insufficient type feedback …” — 
 
 High level, modern V8/Node:
 
-1. **Ignition** — bytecode interpreter; gathers type feedback.
-2. **Maglev** — mid-tier optimizing compiler (present on current Node 22+ / recent V8 builds; exact enablement can depend on flags and workload).
-3. **Turbofan** — top-tier optimizing compiler for hot code.
+1. Ignition — bytecode interpreter; gathers type feedback.
+2. Maglev — mid-tier optimizing compiler (present on current Node 22+ / recent V8 builds; exact enablement can depend on flags and workload).
+3. Turbofan — top-tier optimizing compiler for hot code.
 
-Code may climb tiers as it heats up and fall back on deopt. **Do not** overclaim “always Maglev on Node N” or pin exact tier thresholds — they move. For embeds without this pipeline (§3), skip tier talk entirely.
+Code may climb tiers as it heats up and fall back on deopt. Do not claim “always Maglev on Node N” or pin exact tier thresholds — they move. For embeds without this pipeline (§3), skip tier talk entirely.
 
 ### 4.5 What jsperf-lint can and cannot see
 
@@ -88,11 +88,11 @@ Code may climb tiers as it heats up and fall back on deopt. **Do not** overclaim
 | jp-string-plus-in-loop | removed | `push` + `join` was not about 2× on the matched `+=` shapes |
 | jp-map-filter-chain | chained `.map` / `.filter` / `.flatMap` on one line | Array length; a 3-row chain and a 35000-row chain are different costs |
 
-Lint = allocation/shape smells. JIT verification = `jit-check.sh` / `--trace-deopt` / `examples/bench`. Polymorphic ICs leave **no** jp-* fingerprint.
+Lint = allocation/shape smells. JIT verification = `jit-check.sh` / `--trace-deopt` / `examples/bench`. Polymorphic ICs leave no jp-* signal.
 
 ### 4.6 Measured on this machine (Node v22.22.3)
 
-Ran 2026-10-21 18:49 Asia/Shanghai via `scripts/run-v8-benches.sh` → `examples/bench/out/`. Node **v22.22.3**, V8 **12.4.254.21-node.56**, linux x64. Warm-up 3 + 9 rounds; medians below. **Single-machine numbers only** — not a cross-machine claim.
+Ran 2026-10-21 18:49 Asia/Shanghai via `scripts/run-v8-benches.sh` → `examples/bench/out/`. Node v22.22.3, V8 12.4.254.21-node.56, linux x64. Warm-up 3 + 9 rounds; medians below. Single-machine numbers only — not a cross-machine claim.
 
 | Bench | Variant | N | Median ms | Ops/s (approx.) |
 |-------|---------|---|-----------|-----------------|
@@ -110,7 +110,7 @@ Full JSONL: `examples/bench/out/results.jsonl` (written by the script).
 
 ### 4.7 Correlation: static smell vs V8 time (PARTIAL)
 
-Experiment: `examples/bench/static_vs_v8_correlate.js` · `scripts/run-static-vs-v8.sh` (Node **v22.22.3**).
+Experiment: `examples/bench/static_vs_v8_correlate.js` · `scripts/run-static-vs-v8.sh` (Node v22.22.3).
 
 | Case | Static smell? | Ratio (smell/clean) | Agree? |
 |------|---------------|---------------------|--------|

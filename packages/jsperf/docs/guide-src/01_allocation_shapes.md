@@ -24,7 +24,7 @@ Prefer typed arrays (`examples/p01_typed_array.js`), object pools, or preallocat
 
 **Evidence (this machine):** [`evidence/jp-alloc-hot`](../evidence/jp-alloc-hot.md) — `new Uint8Array` in-loop vs once **~19×**; `.push({i})` vs prealloc fill **~6.4×** (Node v20.19.2). Mechanism is alloc/GC (STATIC-VS-V8 PARTIAL for deopt). Default severity is **off** (`--preset all` or `--severity jp-alloc-hot=hint` enables it) — see [evidence-policy](evidence-policy.md). Default **`--scope all`** reports these patterns outside loops too; `--scope loop` keeps the former in-loop-only match.
 
-### 1.3 Corpus dogfood (heuristic)
+### 1.3 Corpus hit counts
 
 Counts below come from earlier line-window revisions of the linter (r1–r3) and show how the heuristics were narrowed; current corpus results are in [corpus.md](corpus.md).
 
@@ -73,7 +73,7 @@ On this machine (same Node as §1.5), both sides build the result array:
 
 The 3-row filter-then-map case is under 2×. Four passes on 3 rows is above 2×, and 20000 calls still finish in under a millisecond. The 35000-row cases are where one pass is clearly faster. The hint names that length. Rewriting a short list is optional.
 
-Lint: **jp-map-filter-chain** — default **hint**. `//` comments and block comments are stripped before the match. Codegen `gen-*.js` files are path-skipped. Evidence: [`jp-map-filter-chain`](../evidence/jp-map-filter-chain.md).
+Lint: `jp-map-filter-chain` — default hint. `//` comments and block comments are stripped before the match. Codegen `gen-*.js` files are path-skipped. Evidence: [`jp-map-filter-chain`](../evidence/jp-map-filter-chain.md).
 
 ---
 

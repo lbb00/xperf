@@ -62,7 +62,7 @@ Avoid it for ordinary business objects. Off-heap data needs manual serialization
 
 ### 8.2 Direct `ByteBuffer`
 
-This older API is limited by `-XX:MaxDirectMemorySize` (zero by default means the maximum heap size) and is indirectly freed by a `Cleaner` during GC. Allocation and release cost more than heap memory, so **reuse direct buffers** (see Chapter 10) instead of creating one per request. A `ByteBuffer` is limited to 2 GB because it uses `int` indexes; `MemorySegment` has no such limit.
+This older API is limited by `-XX:MaxDirectMemorySize` (zero by default means the maximum heap size) and is indirectly freed by a `Cleaner` during GC. Allocation and release cost more than heap memory, so reuse direct buffers (see Chapter 10) instead of creating one per request. A `ByteBuffer` is limited to 2 GB because it uses `int` indexes; `MemorySegment` has no such limit.
 
 ### 8.3 I/O
 
@@ -117,7 +117,7 @@ Sources: [JEP 454: FFM API](https://openjdk.org/jeps/454) · [`Arena`](https://d
 
 ### 9.1 Escape analysis and scalar replacement
 
-C2 checks whether an object escapes a method (for example, by being stored in a field or array, returned, or passed to a method that is not inlined). A non-escaping object can be **scalar-replaced**: its fields become local variables and the object is never allocated on the heap.
+C2 checks whether an object escapes a method (for example, by being stored in a field or array, returned, or passed to a method that is not inlined). A non-escaping object can be scalar-replaced: its fields become local variables and the object is never allocated on the heap.
 
 **Measured locally** with `research/EaProbe.java`, which uses `ThreadMXBean.getThreadAllocatedBytes` to measure 1,000 iterations of `new Vec(...).plus(new Vec(1,1))`:
 
@@ -157,7 +157,7 @@ public class J08_EscapeAnalysis {
 }
 ```
 
-For escape-analysis-friendly code, keep methods small enough to inline, do not store short-lived objects in fields or collections, and avoid complex control-flow merges. Small arrays can also be scalar-replaced, up to a limit (64 elements on the measurement machine: `EliminateAllocationArraySizeLimit`). **Do not rely on this optimization:** escape analysis takes effect only after C2 compilation, not during interpretation or C1. Android ART uses different AOT/JIT optimizations.
+For escape-analysis-friendly code, keep methods small enough to inline, do not store short-lived objects in fields or collections, and avoid complex control-flow merges. Small arrays can also be scalar-replaced, up to a limit (64 elements on the measurement machine: `EliminateAllocationArraySizeLimit`). Do not rely on this optimization: escape analysis takes effect only after C2 compilation, not during interpretation or C1. Android ART uses different AOT/JIT optimizations.
 
 **Evidence (correlate):** Static JP smells vs HotSpot wall-clock/B/op — `scripts/run-static-vs-hotspot.sh` output `research/benches/static-vs-hotspot.jsonl` (cases 4 EA, 6 Vector control; JP rules never observe C1/C2 or call-site type profile). Package gate: `docs/evidence-policy.md`.
 
@@ -203,7 +203,7 @@ public class J09_JitFriendly {
 
 ### 9.3 Intrinsics
 
-HotSpot intrinsics such as `Integer.bitCount`, `Long.numberOfTrailingZeros`, `Math.fma`, `System.arraycopy`, `Arrays.equals`/`mismatch`, `String.indexOf`, and CRC32 compile to specialized instruction sequences. **Prefer JDK methods over hand-written bit tricks intended to optimize them.**
+HotSpot intrinsics such as `Integer.bitCount`, `Long.numberOfTrailingZeros`, `Math.fma`, `System.arraycopy`, `Arrays.equals`/`mismatch`, `String.indexOf`, and CRC32 compile to specialized instruction sequences. Prefer JDK methods over hand-written bit tricks intended to optimize them.
 
 ### 9.4 Vector API (still incubating)
 
@@ -335,7 +335,7 @@ Do not add padding without real write contention; it can waste 256 bytes per fie
 
 Virtual threads were finalized in JDK 21 (JEP 444). They suit services with many tasks that spend most of their time blocked on I/O.
 
-- Use one virtual thread per task; **do not pool virtual threads**. Use a `Semaphore` to limit access to downstream resources.
+- Use one virtual thread per task; do not pool virtual threads. Use a `Semaphore` to limit access to downstream resources.
 - Since JDK 24, `synchronized` no longer pins a virtual thread to its carrier (JEP 491). Native and foreign-function calls can still pin it.
 - CPU-bound tasks do not benefit; use a platform-thread pool or `ForkJoinPool`.
 - `ThreadLocal` memory adds up across millions of virtual threads. Replace `ThreadLocal` caches of large objects such as `SimpleDateFormat`; consider Scoped Values for shared data (finalized in JDK 25, JEP 506).
@@ -368,7 +368,7 @@ public class J11_VirtualThreads {
 
 ### 10.3 Object pools: when to use them
 
-Allocation in a thread-local allocation buffer (TLAB) is a pointer bump, and collecting short-lived young-generation objects is very cheap. Pooling small objects is often **slower**: they may be promoted to the old generation, need clearing or resetting, require synchronization, and can leak. Pool only genuinely expensive resources such as direct `ByteBuffer`s, large arrays, database connections, threads, or costly non-thread-safe objects such as `MessageDigest` and `Cipher`.
+Allocation in a thread-local allocation buffer (TLAB) is a pointer bump, and collecting short-lived young-generation objects is very cheap. Pooling small objects is often slower: they may be promoted to the old generation, need clearing or resetting, require synchronization, and can leak. Pool only genuinely expensive resources such as direct `ByteBuffer`s, large arrays, database connections, threads, or costly non-thread-safe objects such as `MessageDigest` and `Cipher`.
 
 **Evidence (local):** JMH 1.37 on JDK 25 (`J24_PoolVsAlloc`) — batch of small escaping `Point` objects via TLAB `new` + `Blackhole` vs thread-local `ArrayDeque` pool reuse (`-prof gc`). JSONL: `research/bench-results/J24_PoolVsAlloc.jsonl` (re-run before citing). Pool cuts B/op near zero; wall time is often worse than TLAB for this size.
 

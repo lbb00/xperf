@@ -53,7 +53,7 @@ pub fn build(b: *std.Build) void {
 
 ### 7.3 PGO
 
-Zig does **not** support PGO for user programs as of this writing. [#15137](https://github.com/ziglang/zig/issues/15137) is “not planned”; research [#237](https://github.com/ziglang/zig/issues/237) on test-driven PGO is still open. Fallbacks: branch hints, hot/cold separation, data layout.
+Zig does not support PGO for user programs as of this writing. [#15137](https://github.com/ziglang/zig/issues/15137) is “not planned”; research [#237](https://github.com/ziglang/zig/issues/237) on test-driven PGO is still open. Fallbacks: branch hints, hot/cold separation, data layout.
 
 Sources: `zig build-exe --help` (0.17.0) · [0.17 rename of lang.OptimizeMode to lang.Optimize](https://ziglang.org/download/0.17.0/release-notes.html) · [0.16 Lazy Field Analysis and loop safety-check code generation](https://ziglang.org/download/0.16.0/release-notes.html) · `lib/std/Build/Step/Compile.zig`
 
@@ -67,10 +67,10 @@ Useful when building tools that look like compilers (parsers, LSs, bundlers). Fu
 | SoA + `extra` + `string_bytes` | `lib/std/zig/Zir.zig` | Dense IR; rare ops out of line (§2.8) |
 | Sharded intern + tid indices | `src/InternPool.zig` | Concurrent intern without a global lock (§2.10) |
 | Labeled-switch tokenizer | `lib/std/zig/tokenizer.zig` | Same as §5.4; keywords via `StaticStringMap` |
-| Optional tracy hooks | `src/tracy.zig` | Instrument self-host builds when chasing compile time (**U**) |
+| Optional tracy hooks | `src/tracy.zig` | Instrument self-host builds when chasing compile time (U) |
 | Content-addressed build cache | `lib/std/Build/Cache.zig` | SipHash manifests for incremental artifacts (§8.4 adjacent) |
 
-Do not cargo-cult compiler internals into small apps. Steal the **shape** (indices, SoA, shard, ensure heuristics) after measuring.
+Do not copy compiler internals into small apps. Steal the shape (indices, SoA, shard, growth heuristics) after measuring.
 
 ---
 

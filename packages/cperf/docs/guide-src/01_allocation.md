@@ -6,28 +6,28 @@
 
 | Pattern | When |
 |---------|------|
-| **Arena** (bump pointer; free / reset all at once) | Same lifetime: request, frame, parse, batch |
-| **Size-class pool** | Many equal-sized objects; checkout / release |
-| **Stack / VLA / fixed buffer** | Bound known and small; lifetime nested in the caller |
-| **Hoist out of the loop** | One buffer reused across iterations |
+| Arena (bump pointer; free / reset all at once) | Same lifetime: request, frame, parse, batch |
+| Size-class pool | Many equal-sized objects; checkout / release |
+| Stack / VLA / fixed buffer | Bound known and small; lifetime nested in the caller |
+| Hoist out of the loop | One buffer reused across iterations |
 
 See `examples/m01_arena.c`.
 
-Lint: **cp-alloc-hot** — `malloc` / `calloc` / `realloc` inside a `for` / `while` / `do` body (brace-depth heuristic).
+Lint: `cp-alloc-hot` (`malloc` / `calloc` / `realloc` inside a `for` / `while` / `do` body; brace-depth heuristic).
 
-**Measured evidence (error-tier):** [`evidence/cp-alloc-hot.md`](../evidence/cp-alloc-hot.md) · [`cp-alloc-hot.jsonl`](../evidence/cp-alloc-hot.jsonl) — `cc -std=c11 -O2` (Debian gcc 14.2.0), malloc+free per iter vs arena bump ~**10.8×** (N=2e5, median of 9). Policy: [evidence-policy.md](evidence-policy.md). Harness: `examples/bench/cp001_malloc_vs_arena.c`.
+Measured evidence (error-tier): [`evidence/cp-alloc-hot.md`](../evidence/cp-alloc-hot.md) · [`cp-alloc-hot.jsonl`](../evidence/cp-alloc-hot.jsonl) — `cc -std=c11 -O2` (Debian gcc 14.2.0), malloc+free per iter vs arena bump ~**10.8×** (N=2e5, median of 9). Policy: [evidence-policy.md](evidence-policy.md). Harness: `examples/bench/cp001_malloc_vs_arena.c`.
 
-**Evidence (dogfood, not bench):** On mature VMs, true hot-path `malloc`-in-loop is rare after skips. After r2 wrapper / brace fixes: quickjs cp-alloc-hot **0**; lua cp-alloc-hot **0**. Remaining cp-alloc-hot pressure is mostly compact trees and glue: sqlite `src/` r3 **14** cp-alloc-hot (e.g. `tclsqlite.c` realloc in a line loop); gcc sparse r3 **28** cp-alloc-hot. Thin `return realloc(...)` wrappers were false positives in r1 (cleared in r2). Treat cp-alloc-hot hits as review prompts — init loops that allocate once per known N are often fine.
+Corpus hits (not a bench): On mature VMs, true hot-path `malloc`-in-loop is rare after skips. After r2 wrapper / brace fixes: quickjs cp-alloc-hot **0**; lua cp-alloc-hot **0**. Remaining cp-alloc-hot pressure is mostly compact trees and glue: sqlite `src/` r3 **14** cp-alloc-hot (e.g. `tclsqlite.c` realloc in a line loop); gcc sparse r3 **28** cp-alloc-hot. Thin `return realloc(...)` wrappers were false positives in r1 (cleared in r2). Treat cp-alloc-hot hits as review prompts — init loops that allocate once per known N are often fine.
 
 ### 1.2 Growth without capacity (cp-realloc-grow-one)
 
 Repeated `realloc(p, n + 1)` (or `old + 1`) is quadratic and moves buffers. Track `len` and `cap` separately; grow by doubling (or another fixed factor).
 
-Lint: **cp-realloc-grow-one** — best-effort regex for `realloc` grow-by-one.
+Lint: `cp-realloc-grow-one` (best-effort regex for `realloc` grow-by-one; default error).
 
-**Measured evidence (error-tier):** [`evidence/cp-realloc-grow-one.md`](../evidence/cp-realloc-grow-one.md) · [`cp-realloc-grow-one.jsonl`](../evidence/cp-realloc-grow-one.jsonl) — realloc(+1) vs capacity doubling ~**12.6×** (N=1e5); companion STATIC-VS-O2 case4 ~**3×**. Severity **error**.
+Measured evidence (error-tier): [`evidence/cp-realloc-grow-one.md`](../evidence/cp-realloc-grow-one.md) · [`cp-realloc-grow-one.jsonl`](../evidence/cp-realloc-grow-one.jsonl) — realloc(+1) vs capacity doubling ~**12.6×** (N=1e5); companion STATIC-VS-O2 case4 ~**3×**. Severity **error**.
 
-**Evidence (dogfood):** Almost never fired on engine corpora — quickjs / lua **0**; gcc sparse **1**; sqlite **1** (r3). Pattern is uncommon in mature code; the measured gate still makes greenfield growth fail CI under `--preset app`.
+Corpus hits: Almost never fired on engine corpora — quickjs / lua **0**; gcc sparse **1**; sqlite **1** (r3). Pattern is uncommon in mature code; the measured gate still makes greenfield growth fail CI under `--preset app`.
 
 ### 1.3 What corpora taught about noise
 
@@ -45,11 +45,11 @@ RSS spikes from unbounded freelists / caches need a working-set cap — not meas
 
 ### 1.5 `strlen` in loop condition (cp-strlen-in-cond)
 
-`for (i = 0; i < strlen(s); i++)` recomputes length every iteration (often O(n²)). Hoist `size_t n = strlen(s)` (or use a known length). Lint: **cp-strlen-in-cond** — default **hint**. About 125× when the compiler must recompute the length; about 1× when `-O2` hoists it.
+`for (i = 0; i < strlen(s); i++)` recomputes length every iteration (often O(n²)). Hoist `size_t n = strlen(s)` (or use a known length). Lint: `cp-strlen-in-cond` (default hint). About 125× when the compiler must recompute the length; about 1× when `-O2` hoists it.
 
 ### 1.6 `strcat` in a loop (cp-strcat-hot)
 
-Repeated `strcat`/`strncat` walks the destination from the start each time. Prefer an end pointer + `memcpy`, or `stpcpy` where available. Lint: **cp-strcat-hot** — default **off** after G3. A local run of fixed chunks was about 221× an end pointer. Enable with `--severity cp-strcat-hot=hint`.
+Repeated `strcat`/`strncat` walks the destination from the start each time. Prefer an end pointer + `memcpy`, or `stpcpy` where available. Lint: `cp-strcat-hot` (default off after G3). A local run of fixed chunks was about 221× an end pointer. Enable with `--severity cp-strcat-hot=hint`.
 
 ### 1.7 `alloca` in a loop (cp-alloca-hot)
 
